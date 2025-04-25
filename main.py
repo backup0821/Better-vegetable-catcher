@@ -1,4 +1,4 @@
-# V1.1
+# V1.2
 import requests
 import pandas as pd
 import numpy as np
@@ -15,7 +15,7 @@ import webbrowser
 class FarmDataApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("農產品交易資料分析 v1.1")
+        self.root.title("農產品交易資料分析 v1.2")
         self.root.geometry("1200x800")
         
         # 設定主題和樣式
@@ -168,7 +168,7 @@ class FarmDataApp:
             status_bar.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
             
             # 綁定事件
-            self.crop_combo.bind("<<ComboboxSelected>>", self.update_display)
+            self.crop_combo.bind("<<ComboboxSelected>>", self.load_data_for_selected_crop)
             self.calc_method_combo.bind("<<ComboboxSelected>>", self.update_display)
             
         except Exception as e:
@@ -689,6 +689,65 @@ class FarmDataApp:
     def clear_cache(self):
         """清除快取資料"""
         self.cache = {}
+
+    def load_data_for_selected_crop(self, event=None):
+        """根據選取的作物載入資料"""
+        try:
+            crop_name = self.crop_var.get()
+            if not crop_name:
+                self.status_var.set("請選擇作物")
+                return
+
+            self.status_var.set(f"正在載入 {crop_name} 的資料...")
+            self.root.update()
+            self.data = self.fetch_data_for_crop(crop_name)
+            if self.data and isinstance(self.data, list) and len(self.data) > 0:
+                # 初始化分析器
+                self.analyzer = DataAnalyzer(self.data)
+                self.update_display()
+                self.status_var.set(f"{crop_name} 的資料載入成功")
+            else:
+                self.status_var.set(f"沒有可用的 {crop_name} 資料")
+                messagebox.showwarning("警告", f"沒有可用的 {crop_name} 資料")
+        except Exception as e:
+            self.status_var.set(f"載入 {crop_name} 資料時發生錯誤：{str(e)}")
+            messagebox.showerror("錯誤", f"載入 {crop_name} 資料時發生錯誤：{str(e)}")
+
+    def fetch_data_for_crop(self, crop_name, max_retries=3):
+        """從農產品交易資料平台下載特定作物的資料，加入重試機制"""
+        url = f"https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?crop={crop_name}"
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+
+                if isinstance(data, list) and len(data) > 0:
+                    return data
+                else:
+                    last_error = ValueError("回傳的資料格式不正確")
+
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    continue
+
+            except ValueError as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    continue
+
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    continue
+
+        raise Exception(f"下載 {crop_name} 資料失敗: {str(last_error)}")
 
 def main():
     try:
