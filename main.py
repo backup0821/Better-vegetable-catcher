@@ -4,13 +4,18 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, scrolledtext
 from ttkthemes import ThemedTk
 from tkinter import messagebox
 import time
 import os
 from analysis_utils import DataAnalyzer
 import webbrowser
+import pyperclip
+
+# 連接本地 Ollama API
+OLLAMA_API_URL = "http://26.64.105.58:11434/api/generate"
+MODEL_NAME = "gemma3:1b"
 
 class FarmDataApp:
     def __init__(self, root):
@@ -115,6 +120,26 @@ class FarmDataApp:
             # 添加自定義報告按鈕
             ttk.Button(button_frame, text="生成自定義報告", command=self.create_custom_report).pack(side=tk.LEFT, padx=5)
             ttk.Button(button_frame, text="複製報告內容", command=self.copy_report_to_clipboard).pack(side=tk.LEFT, padx=5)
+            
+            # 聊天框
+            self.chat_box = scrolledtext.ScrolledText(self.root, wrap=tk.WORD, width=60, height=20, state=tk.DISABLED)
+            self.chat_box.tag_config("user", foreground="blue")
+            self.chat_box.tag_config("bot", foreground="green")
+            self.chat_box.pack(pady=10)
+
+            # 輸入框
+            self.entry = tk.Entry(self.root, width=50)
+            self.entry.pack(pady=5)
+
+            # 按鈕區
+            btn_frame = tk.Frame(self.root)
+            btn_frame.pack()
+
+            send_btn = tk.Button(btn_frame, text="發送 🚀", command=self.send_message)
+            send_btn.grid(row=0, column=0, padx=5)
+
+            copy_btn = tk.Button(btn_frame, text="📋 複製回應", command=self.copy_last_response)
+            copy_btn.grid(row=0, column=1, padx=5)
             
             # 搜尋和篩選框架
             filter_frame = ttk.LabelFrame(main_frame, text="搜尋和篩選", padding="10")
@@ -615,58 +640,66 @@ class FarmDataApp:
                 messagebox.showwarning("警告", "沒有足夠的資料進行預測")
                 return
             
-            # 轉換日期格式
-            df['交易日期'] = pd.to_datetime(df['交易日期'])
+            # 轉換日期格式並排序
+            # 將民國年轉換為西元年
+            def convert_tw_date(date_str):
+                try:
+                    year, month, day = map(int, date_str.split('.'))
+                    # 民國年轉西元年
+                    year += 1911
+                    return f"{year}/{month:02d}/{day:02d}"
+                except:
+                    return date_str
+
+            # 先轉換民國年為西元年，再轉換為日期格式
+            df['交易日期'] = df['交易日期'].apply(convert_tw_date)
+            df['交易日期'] = pd.to_datetime(df['交易日期'], format='%Y/%m/%d')
             df = df.sort_values('交易日期')
             
-            # 計算移動平均
+            # 收集相關數據
+            last_price = df['平均價'].iloc[-1]
+            total_volume = df['交易量'].sum()
+            avg_price = df['平均價'].mean()
+            
+            # 計算7日和30日移動平均
             df['MA7'] = df['平均價'].rolling(window=7).mean()
             df['MA30'] = df['平均價'].rolling(window=30).mean()
             
-            # 計算價格趨勢
-            df['價格趨勢'] = df['MA7'].diff().apply(lambda x: 1 if x > 0 else (-1 if x < 0 else 0))
-            
-            # 考慮季節性因素
-            df['月份'] = df['交易日期'].dt.month
-            monthly_avg = df.groupby('月份')['平均價'].mean()
-            current_month = datetime.now().month
-            seasonal_factor = monthly_avg.get(current_month, 1.0) / monthly_avg.mean()
-            
-            # 計算預測價格
-            last_price = df['平均價'].iloc[-1]
+            # 獲取最近的移動平均數據
             last_ma7 = df['MA7'].iloc[-1]
             last_ma30 = df['MA30'].iloc[-1]
-            price_trend = df['價格趨勢'].iloc[-1]
             
-            # 綜合多個因素進行預測
-            base_prediction = (last_price * 0.4 + last_ma7 * 0.4 + last_ma30 * 0.2)
-            predicted_price = base_prediction * seasonal_factor
+            # 計算價格趨勢（最近7天）
+            recent_trend = df['平均價'].iloc[-7:].diff().mean()
+            trend_direction = "上升" if recent_trend > 0 else "下降" if recent_trend < 0 else "穩定"
             
-            # 計算預測區間
-            price_std = df['平均價'].std()
-            confidence_interval = 1.96 * price_std / np.sqrt(len(df))
+            # 構建提示
+            prompt = (
+                f"請根據以下數據，預測 {crop_name} 未來七天的價格趨勢：\n\n"
+                f"目前價格：{last_price:.2f} 元/公斤\n"
+                f"7日移動平均：{last_ma7:.2f} 元/公斤\n"
+                f"30日移動平均：{last_ma30:.2f} 元/公斤\n"
+                f"總交易量：{total_volume:.2f} 公斤\n"
+                f"平均價格：{avg_price:.2f} 元/公斤\n"
+                f"最近7天價格趨勢：{trend_direction}\n"
+                f"價格變化幅度：{abs(recent_trend):.2f} 元/公斤\n\n"
+                f"請提供：\n"
+                f"1. 未來七天的每日價格預測\n"
+                f"2. 價格變動的可能原因\n"
+                f"3. 建議的交易策略\n"
+                f"4. 可能影響價格的風險因素\n"
+            )
+            
+            # 使用 AI 進行預測
+            response = self.chat_with_ollama(prompt)
             
             # 更新顯示
             self.text_area.config(state=tk.NORMAL)
             self.text_area.delete(1.0, tk.END)
-            
-            result_text = f"""作物：{crop_name}
-預測結果：
------------------
-目前價格：{last_price:.2f} 元/公斤
-預測價格：{predicted_price:.2f} 元/公斤
-預測區間：{(predicted_price - confidence_interval):.2f} ~ {(predicted_price + confidence_interval):.2f} 元/公斤
-
-預測依據：
-• 近期價格趨勢：{'上升' if price_trend > 0 else '下降' if price_trend < 0 else '穩定'}
-• 季節性因素：{seasonal_factor:.2f}
-• 7日移動平均：{last_ma7:.2f}
-• 30日移動平均：{last_ma30:.2f}
-
-註：此預測基於歷史數據分析，僅供參考。
-實際價格可能受到天氣、市場供需等多種因素影響。"""
-            
-            self.text_area.insert(tk.END, result_text)
+            self.text_area.insert(tk.END, f"作物：{crop_name}\n")
+            self.text_area.insert(tk.END, f"預測時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            self.text_area.insert(tk.END, "-" * 50 + "\n\n")
+            self.text_area.insert(tk.END, response)
             self.text_area.config(state=tk.DISABLED)
             
         except Exception as e:
@@ -783,6 +816,41 @@ class FarmDataApp:
             messagebox.showinfo("成功", "報告內容已複製到剪貼板")
         except Exception as e:
             messagebox.showerror("錯誤", f"複製報告內容時發生錯誤：{str(e)}")
+
+    def chat_with_ollama(self, prompt):
+        payload = {
+            "model": MODEL_NAME,
+            "prompt": prompt,
+            "stream": False
+        }
+        try:
+            response = requests.post(OLLAMA_API_URL, json=payload)
+            response.raise_for_status()
+            return response.json().get("response", "⚠️ 沒有回應！")
+        except Exception as e:
+            return f"⚠️ 錯誤：{e}"
+
+    def send_message(self):
+        user_input = self.entry.get()
+        if not user_input.strip():
+            return
+        
+        self.chat_box.config(state=tk.NORMAL)
+        self.chat_box.insert(tk.END, f"🧑‍💻 你：{user_input}\n", "user")
+        self.entry.delete(0, tk.END)
+
+        # 呼叫 Ollama
+        response = self.chat_with_ollama(user_input)
+        self.chat_box.insert(tk.END, f"🤖 Gemma：{response}\n\n", "bot")
+
+        self.chat_box.config(state=tk.DISABLED)
+        self.chat_box.yview(tk.END)
+
+    def copy_last_response(self):
+        text = self.chat_box.get("end-3l", "end-1l").strip()
+        if text:
+            pyperclip.copy(text)
+            messagebox.showinfo("複製成功", "已複製 Gemma 的回應！")
 
 def main():
     try:
