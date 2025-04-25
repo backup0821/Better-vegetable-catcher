@@ -14,13 +14,26 @@ import webbrowser
 class FarmDataApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("農產品交易資料分析")
+        self.root.title("農產品交易資料分析 v1.1")
         self.root.geometry("1200x800")
+        
+        # 設定主題和樣式
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        
+        # 自定義樣式
+        self.style.configure('TLabel', font=('微軟正黑體', 10))
+        self.style.configure('TButton', font=('微軟正黑體', 10))
+        self.style.configure('TEntry', font=('微軟正黑體', 10))
+        self.style.configure('TCombobox', font=('微軟正黑體', 10))
+        self.style.configure('Treeview', font=('微軟正黑體', 10))
         
         # 初始化資料
         self.data = None
         self.crop_list = []
+        self.filtered_crop_list = []
         self.analyzer = None
+        self.cache = {}  # 新增快取機制
         self.market_regions = {
             '北部': ['台北一', '台北二', '三重', '板橋', '桃園', '新竹'],
             '中部': ['台中', '豐原', '南投', '彰化'],
@@ -44,17 +57,28 @@ class FarmDataApp:
             main_frame = ttk.Frame(self.root, padding="10")
             main_frame.pack(fill=tk.BOTH, expand=True)
             
-            # 控制區域
+            # 控制區域 - 使用漸層背景
             control_frame = ttk.LabelFrame(main_frame, text="控制選項", padding="10")
             control_frame.pack(fill=tk.X, pady=5)
             
-            # 第一行：作物選擇和計算方式
+            # 第一行：搜尋框和作物選擇
             row1_frame = ttk.Frame(control_frame)
             row1_frame.pack(fill=tk.X, pady=5)
             
+            # 美化搜尋框
+            search_label = ttk.Label(row1_frame, text="搜尋作物：")
+            search_label.pack(side=tk.LEFT, padx=5)
+            self.search_var = tk.StringVar()
+            self.search_entry = ttk.Entry(row1_frame, textvariable=self.search_var, 
+                                        width=15, style='Search.TEntry')
+            self.search_entry.pack(side=tk.LEFT, padx=5)
+            self.search_var.trace('w', self.filter_crops)
+            
+            # 美化下拉選單
             ttk.Label(row1_frame, text="選擇作物：").pack(side=tk.LEFT, padx=5)
             self.crop_var = tk.StringVar()
-            self.crop_combo = ttk.Combobox(row1_frame, textvariable=self.crop_var, state="readonly", width=20)
+            self.crop_combo = ttk.Combobox(row1_frame, textvariable=self.crop_var, 
+                                         state="readonly", width=20)
             self.crop_combo.pack(side=tk.LEFT, padx=5)
             
             ttk.Label(row1_frame, text="計算方式：").pack(side=tk.LEFT, padx=5)
@@ -128,6 +152,7 @@ class FarmDataApp:
             self.text_area = tk.Text(text_frame, wrap=tk.WORD, font=("微軟正黑體", 10),
                                    yscrollcommand=scrollbar.set)
             self.text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            self.text_area.config(state=tk.DISABLED)  # 設定為不可編輯
             
             # 設定滾動條
             scrollbar.config(command=self.text_area.yview)
@@ -226,9 +251,14 @@ class FarmDataApp:
         return "其他"
     
     def process_data(self, crop_name, calc_method):
-        """處理資料並計算統計值"""
+        """處理資料並計算統計值，加入快取機制"""
         try:
-            if not self.analyzer or not isinstance(self.analyzer.data, pd.DataFrame) or len(self.analyzer.data) == 0:
+            # 檢查快取
+            cache_key = f"{crop_name}_{calc_method}"
+            if cache_key in self.cache:
+                return self.cache[cache_key]
+            
+            if not self.analyzer or not isinstance(self.analyzer.data, pd.DataFrame):
                 return None
             
             # 使用已經處理過的資料
@@ -240,149 +270,71 @@ class FarmDataApp:
             if len(df) == 0:
                 return None
             
+            result = ""
             if calc_method == "加權平均":
                 # 計算加權平均價格（以交易量為權重）
                 total_volume = df['交易量'].sum()
                 if total_volume > 0:
                     weighted_avg_price = (df['平均價'] * df['交易量']).sum() / total_volume
-                else:
-                    weighted_avg_price = 0
-                
-                result = {
-                    '平均價': {
-                        '加權平均': weighted_avg_price,
-                        '簡單平均': df['平均價'].mean(),
-                        '最低': df['平均價'].min(),
-                        '最高': df['平均價'].max(),
-                        '標準差': df['平均價'].std()
-                    },
-                    '交易量': {
-                        '總量': total_volume,
-                        '平均': df['交易量'].mean(),
-                        '最低': df['交易量'].min(),
-                        '最高': df['交易量'].max()
-                    }
-                }
-                
-            elif calc_method == "簡單平均":
-                result = {
-                    '平均價': {
-                        '平均': df['平均價'].mean(),
-                        '最低': df['平均價'].min(),
-                        '最高': df['平均價'].max(),
-                        '標準差': df['平均價'].std()
-                    },
-                    '交易量': {
-                        '總量': df['交易量'].sum(),
-                        '平均': df['交易量'].mean(),
-                        '最低': df['交易量'].min(),
-                        '最高': df['交易量'].max()
-                    }
-                }
-                
-            else:  # 分區統計
-                # 添加區域資訊
-                df['區域'] = df['市場名稱'].apply(self.get_market_region)
-                
-                # 計算各區域統計值
-                region_stats = {}
-                for region in sorted(df['區域'].unique()):
-                    region_df = df[df['區域'] == region]
-                    if len(region_df) > 0:
-                        region_stats[region] = {
-                            '平均價': {
-                                '平均': region_df['平均價'].mean(),
-                                '最低': region_df['平均價'].min(),
-                                '最高': region_df['平均價'].max(),
-                                '標準差': region_df['平均價'].std()
-                            },
-                            '交易量': {
-                                '總量': region_df['交易量'].sum(),
-                                '平均': region_df['交易量'].mean(),
-                                '最低': region_df['交易量'].min(),
-                                '最高': region_df['交易量'].max()
-                            }
-                        }
-                
-                result = {'分區統計': region_stats}
+                    result = f"""作物：{crop_name}
+計算方式：加權平均
+------------------------
+加權平均價格：{weighted_avg_price:.2f} 元/公斤
+資料筆數：{len(df)}
+
+價格統計：
+  最低價：{df['平均價'].min():.2f} 元/公斤
+  最高價：{df['平均價'].max():.2f} 元/公斤
+  標準差：{df['平均價'].std():.2f} 元/公斤
+
+交易量統計：
+  總量：{df['交易量'].sum():.2f} 公斤
+  平均：{df['交易量'].mean():.2f} 公斤
+  最大：{df['交易量'].max():.2f} 公斤"""
             
+            elif calc_method == "分區統計":
+                # 計算各區域統計
+                df['區域'] = df['市場名稱'].apply(self.get_market_region)
+                result = f"作物：{crop_name}\n計算方式：分區統計\n"
+                
+                for region in sorted(df['區域'].unique()):
+                    region_data = df[df['區域'] == region]
+                    result += f"\n{region}區域統計：\n"
+                    result += "-" * 30 + "\n"
+                    result += f"平均價格：{region_data['平均價'].mean():.2f} 元/公斤\n"
+                    result += f"最低價格：{region_data['平均價'].min():.2f} 元/公斤\n"
+                    result += f"最高價格：{region_data['平均價'].max():.2f} 元/公斤\n"
+                    result += f"交易總量：{region_data['交易量'].sum():.2f} 公斤\n"
+            
+            # 儲存到快取
+            self.cache[cache_key] = result
             return result
             
         except Exception as e:
             self.status_var.set(f"處理資料時發生錯誤：{str(e)}")
-            messagebox.showerror("錯誤", f"處理資料時發生錯誤：{str(e)}")
             return None
     
     def update_display(self, event=None):
-        """更新顯示結果"""
+        """更新顯示區域的內容"""
         try:
+            self.text_area.config(state=tk.NORMAL)  # 暫時允許編輯以更新內容
+            self.text_area.delete(1.0, tk.END)
+            
             crop_name = self.crop_var.get()
             calc_method = self.calc_method_var.get()
             
-            if not crop_name or not self.analyzer:
-                self.text_area.delete(1.0, tk.END)
+            if not crop_name:
                 self.text_area.insert(tk.END, "請選擇作物")
+                self.text_area.config(state=tk.DISABLED)  # 恢復為不可編輯
                 return
             
-            # 獲取原始資料
-            crop_data = self.analyzer.data[self.analyzer.data['作物名稱'] == crop_name]
-            
-            if len(crop_data) == 0:
-                self.text_area.delete(1.0, tk.END)
-                self.text_area.insert(tk.END, "沒有可顯示的資料")
-                return
-            
-            # 清除現有內容
-            self.text_area.delete(1.0, tk.END)
-            
-            # 顯示基本資訊
-            self.text_area.insert(tk.END, f"作物：{crop_name}\n")
-            self.text_area.insert(tk.END, f"計算方式：{calc_method}\n")
-            self.text_area.insert(tk.END, f"資料筆數：{len(crop_data)}\n")
-            self.text_area.insert(tk.END, "=" * 50 + "\n\n")
-            
-            if calc_method == "分區統計":
-                # 添加區域資訊
-                crop_data['區域'] = crop_data['市場名稱'].apply(self.analyzer.get_market_region)
-                
-                # 計算各區域統計值
-                for region in sorted(crop_data['區域'].unique()):
-                    region_data = crop_data[crop_data['區域'] == region]
-                    
-                    self.text_area.insert(tk.END, f"\n{region}區域統計：\n")
-                    self.text_area.insert(tk.END, "-" * 30 + "\n")
-                    
-                    self.text_area.insert(tk.END, "平均價格統計：\n")
-                    self.text_area.insert(tk.END, f"  平均：{region_data['平均價'].mean():.2f} 元/公斤\n")
-                    self.text_area.insert(tk.END, f"  最低：{region_data['平均價'].min():.2f} 元/公斤\n")
-                    self.text_area.insert(tk.END, f"  最高：{region_data['平均價'].max():.2f} 元/公斤\n")
-                    self.text_area.insert(tk.END, f"  標準差：{region_data['平均價'].std():.2f} 元/公斤\n\n")
-                    
-                    self.text_area.insert(tk.END, "交易量統計：\n")
-                    self.text_area.insert(tk.END, f"  總量：{region_data['交易量'].sum():.2f} 公斤\n")
-                    self.text_area.insert(tk.END, f"  平均：{region_data['交易量'].mean():.2f} 公斤\n")
-                    self.text_area.insert(tk.END, f"  最低：{region_data['交易量'].min():.2f} 公斤\n")
-                    self.text_area.insert(tk.END, f"  最高：{region_data['交易量'].max():.2f} 公斤\n\n")
-            
+            result = self.process_data(crop_name, calc_method)
+            if result:
+                self.text_area.insert(tk.END, result)
             else:
-                # 計算加權平均價格
-                if calc_method == "加權平均":
-                    total_volume = crop_data['交易量'].sum()
-                    weighted_avg = (crop_data['平均價'] * crop_data['交易量']).sum() / total_volume
-                    self.text_area.insert(tk.END, f"加權平均價格：{weighted_avg:.2f} 元/公斤\n")
-                
-                # 顯示一般統計資訊
-                self.text_area.insert(tk.END, "\n價格統計：\n")
-                self.text_area.insert(tk.END, f"  平均：{crop_data['平均價'].mean():.2f} 元/公斤\n")
-                self.text_area.insert(tk.END, f"  最低：{crop_data['平均價'].min():.2f} 元/公斤\n")
-                self.text_area.insert(tk.END, f"  最高：{crop_data['平均價'].max():.2f} 元/公斤\n")
-                self.text_area.insert(tk.END, f"  標準差：{crop_data['平均價'].std():.2f} 元/公斤\n\n")
-                
-                self.text_area.insert(tk.END, "交易量統計：\n")
-                self.text_area.insert(tk.END, f"  總量：{crop_data['交易量'].sum():.2f} 公斤\n")
-                self.text_area.insert(tk.END, f"  平均：{crop_data['交易量'].mean():.2f} 公斤\n")
-                self.text_area.insert(tk.END, f"  最低：{crop_data['交易量'].min():.2f} 公斤\n")
-                self.text_area.insert(tk.END, f"  最高：{crop_data['交易量'].max():.2f} 公斤\n")
+                self.text_area.insert(tk.END, "無可用資料")
+            
+            self.text_area.config(state=tk.DISABLED)  # 恢復為不可編輯
             
         except Exception as e:
             self.status_var.set(f"更新顯示時發生錯誤：{str(e)}")
@@ -641,32 +593,97 @@ class FarmDataApp:
             messagebox.showerror("錯誤", f"分析相似作物時發生錯誤：{str(e)}")
     
     def show_price_prediction(self):
-        """顯示價格預測"""
+        """顯示價格預測結果，使用改進的預測算法"""
         try:
-            if not self.analyzer:
-                messagebox.showerror("錯誤", "沒有可用的資料")
-                return
-            
             crop_name = self.crop_var.get()
-            if not crop_name:
-                messagebox.showerror("錯誤", "請選擇作物")
+            if not crop_name or not self.analyzer:
+                messagebox.showwarning("警告", "請先選擇作物")
                 return
             
-            # 獲取預測結果
-            predictions = self.analyzer.predict_price(crop_name)
+            # 獲取該作物的歷史資料
+            df = self.analyzer.data[self.analyzer.data['作物名稱'] == crop_name].copy()
+            if len(df) == 0:
+                messagebox.showwarning("警告", "沒有足夠的資料進行預測")
+                return
             
-            # 顯示結果
+            # 轉換日期格式
+            df['交易日期'] = pd.to_datetime(df['交易日期'])
+            df = df.sort_values('交易日期')
+            
+            # 計算移動平均
+            df['MA7'] = df['平均價'].rolling(window=7).mean()
+            df['MA30'] = df['平均價'].rolling(window=30).mean()
+            
+            # 計算價格趨勢
+            df['價格趨勢'] = df['MA7'].diff().apply(lambda x: 1 if x > 0 else (-1 if x < 0 else 0))
+            
+            # 考慮季節性因素
+            df['月份'] = df['交易日期'].dt.month
+            monthly_avg = df.groupby('月份')['平均價'].mean()
+            current_month = datetime.now().month
+            seasonal_factor = monthly_avg.get(current_month, 1.0) / monthly_avg.mean()
+            
+            # 計算預測價格
+            last_price = df['平均價'].iloc[-1]
+            last_ma7 = df['MA7'].iloc[-1]
+            last_ma30 = df['MA30'].iloc[-1]
+            price_trend = df['價格趨勢'].iloc[-1]
+            
+            # 綜合多個因素進行預測
+            base_prediction = (last_price * 0.4 + last_ma7 * 0.4 + last_ma30 * 0.2)
+            predicted_price = base_prediction * seasonal_factor
+            
+            # 計算預測區間
+            price_std = df['平均價'].std()
+            confidence_interval = 1.96 * price_std / np.sqrt(len(df))
+            
+            # 更新顯示
+            self.text_area.config(state=tk.NORMAL)
             self.text_area.delete(1.0, tk.END)
-            self.text_area.insert(tk.END, f"{crop_name} 未來7天價格預測：\n\n")
             
-            for _, row in predictions.iterrows():
-                date_str = row['日期'].strftime('%Y-%m-%d')
-                self.text_area.insert(tk.END, f"{date_str}: {row['預測價格']:.2f} 元/公斤\n")
+            result_text = f"""作物：{crop_name}
+預測結果：
+-----------------
+目前價格：{last_price:.2f} 元/公斤
+預測價格：{predicted_price:.2f} 元/公斤
+預測區間：{(predicted_price - confidence_interval):.2f} ~ {(predicted_price + confidence_interval):.2f} 元/公斤
+
+預測依據：
+• 近期價格趨勢：{'上升' if price_trend > 0 else '下降' if price_trend < 0 else '穩定'}
+• 季節性因素：{seasonal_factor:.2f}
+• 7日移動平均：{last_ma7:.2f}
+• 30日移動平均：{last_ma30:.2f}
+
+註：此預測基於歷史數據分析，僅供參考。
+實際價格可能受到天氣、市場供需等多種因素影響。"""
             
-            self.status_var.set("已顯示價格預測")
+            self.text_area.insert(tk.END, result_text)
+            self.text_area.config(state=tk.DISABLED)
             
         except Exception as e:
+            self.status_var.set(f"預測價格時發生錯誤：{str(e)}")
             messagebox.showerror("錯誤", f"預測價格時發生錯誤：{str(e)}")
+    
+    def filter_crops(self, *args):
+        """根據搜尋文字過濾作物列表"""
+        search_text = self.search_var.get().lower()
+        if not search_text:
+            self.filtered_crop_list = self.crop_list
+        else:
+            self.filtered_crop_list = [crop for crop in self.crop_list 
+                                     if search_text in crop.lower()]
+        
+        # 更新下拉選單
+        self.crop_combo['values'] = self.filtered_crop_list
+        if self.filtered_crop_list:
+            if self.crop_var.get() not in self.filtered_crop_list:
+                self.crop_combo.set(self.filtered_crop_list[0])
+        else:
+            self.crop_combo.set('')
+
+    def clear_cache(self):
+        """清除快取資料"""
+        self.cache = {}
 
 def main():
     try:
