@@ -1,4 +1,4 @@
-# V1.2
+# V1.3
 import requests
 import pandas as pd
 import numpy as np
@@ -15,7 +15,7 @@ import webbrowser
 class FarmDataApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("農產品交易資料分析 v1.2")
+        self.root.title("農產品交易資料分析 v1.3")
         self.root.geometry("1200x800")
         
         # 設定主題和樣式
@@ -111,6 +111,10 @@ class FarmDataApp:
             # 分析相關按鈕
             ttk.Button(button_frame, text="相似作物分析", command=self.show_similar_crops).pack(side=tk.LEFT, padx=5)
             ttk.Button(button_frame, text="價格預測", command=self.show_price_prediction).pack(side=tk.LEFT, padx=5)
+            
+            # 添加自定義報告按鈕
+            ttk.Button(button_frame, text="生成自定義報告", command=self.create_custom_report).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame, text="複製報告內容", command=self.copy_report_to_clipboard).pack(side=tk.LEFT, padx=5)
             
             # 搜尋和篩選框架
             filter_frame = ttk.LabelFrame(main_frame, text="搜尋和篩選", padding="10")
@@ -748,6 +752,37 @@ class FarmDataApp:
                     continue
 
         raise Exception(f"下載 {crop_name} 資料失敗: {str(last_error)}")
+
+    def create_custom_report(self):
+        """生成自定義報告並顯示在文本區域中"""
+        try:
+            crop_name = self.crop_var.get()
+            if not crop_name:
+                messagebox.showerror("錯誤", "請選擇作物")
+                return
+
+            # 根據使用者選擇生成報告
+            report_content = f"自定義報告 - 作物：{crop_name}\n"
+            report_content += "-----------------------------\n"
+            report_content += self.process_data(crop_name, self.calc_method_var.get())
+
+            # 顯示報告
+            self.text_area.config(state=tk.NORMAL)
+            self.text_area.delete(1.0, tk.END)
+            self.text_area.insert(tk.END, report_content)
+            self.text_area.config(state=tk.DISABLED)
+
+        except Exception as e:
+            messagebox.showerror("錯誤", f"生成自定義報告時發生錯誤：{str(e)}")
+
+    def copy_report_to_clipboard(self):
+        """將報告內容複製到剪貼板"""
+        try:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.text_area.get(1.0, tk.END))
+            messagebox.showinfo("成功", "報告內容已複製到剪貼板")
+        except Exception as e:
+            messagebox.showerror("錯誤", f"複製報告內容時發生錯誤：{str(e)}")
 
 def main():
     try:
