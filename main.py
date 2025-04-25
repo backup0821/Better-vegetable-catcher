@@ -89,6 +89,10 @@ class FarmDataApp:
                                                 values=calc_methods, state="readonly", width=15)
             self.calc_method_combo.pack(side=tk.LEFT, padx=5)
             
+            # 添加計算方式說明
+            calc_method_desc = ttk.Label(row1_frame, text="(加權平均：考慮交易量 | 簡單平均：所有價格平均 | 分區統計：按區域分析)")
+            calc_method_desc.pack(side=tk.LEFT, padx=5)
+            
             # 第二行：功能按鈕
             button_frame = ttk.Frame(control_frame)
             button_frame.pack(fill=tk.X, pady=5)
