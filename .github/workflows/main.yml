@@ -26,7 +26,7 @@ jobs:
 
     - name: Build EXE
       run: |
-        pyinstaller --onefile --add-data ./ main.py
+        pyinstaller --onefile --add-data output --add-data __pycache__ --add-data analysis_utils.py main.py
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
