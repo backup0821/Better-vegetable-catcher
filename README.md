@@ -35,17 +35,7 @@ python main.py
 
 ## 📁 專案結構  
 
-```
-├── main.py                  # 主程式介面
-├── modules/                # 功能模組
-│   ├── fetcher.py          # 資料抓取邏輯
-│   ├── predictor.py        # 預測模型
-│   └── visualizer.py       # 圖表生成模組
-├── assets/                 # 圖片與圖示資源
-├── config/                 # 設定檔與快取機制
-├── requirements.txt        # 所需套件清單
-└── README.md               # 使用說明
-```
+暫時不提供
 
 ---
 
