@@ -675,19 +675,13 @@ class FarmDataApp:
             
             # 構建提示
             prompt = (
-                f"請根據以下數據，預測 {crop_name} 未來七天的價格趨勢：\n\n"
-                f"目前價格：{last_price:.2f} 元/公斤\n"
-                f"7日移動平均：{last_ma7:.2f} 元/公斤\n"
-                f"30日移動平均：{last_ma30:.2f} 元/公斤\n"
-                f"總交易量：{total_volume:.2f} 公斤\n"
-                f"平均價格：{avg_price:.2f} 元/公斤\n"
-                f"最近7天價格趨勢：{trend_direction}\n"
-                f"價格變化幅度：{abs(recent_trend):.2f} 元/公斤\n\n"
-                f"請提供：\n"
-                f"1. 未來七天的每日價格預測\n"
-                f"2. 價格變動的可能原因\n"
-                f"3. 建議的交易策略\n"
-                f"4. 可能影響價格的風險因素\n"
+                f"請用100字以內，簡短預測{crop_name}未來七天的價格趨勢。\n"
+                f"目前價格：{last_price:.2f}元/公斤\n"
+                f"7日均價：{last_ma7:.2f}元/公斤\n"
+                f"趨勢：{trend_direction}\n"
+                f"\n請直接給出：\n"
+                f"1. 預測價格\n"
+                f"2. 建議操作\n"
             )
             
             # 使用 AI 進行預測
@@ -820,7 +814,7 @@ class FarmDataApp:
     def chat_with_ollama(self, prompt):
         payload = {
             "model": MODEL_NAME,
-            "prompt": prompt,
+            "prompt": f"請用簡短的語言回答（100字以內）：\n{prompt}",
             "stream": False
         }
         try:
