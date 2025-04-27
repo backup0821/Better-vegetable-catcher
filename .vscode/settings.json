@@ -8,5 +8,11 @@
         "statusBarItem.remoteBackground": "#000000",
         "titleBar.activeBackground": "#000000",
         "titleBar.inactiveBackground": "#00000099"
-    }
+    },
+    "python.analysis.typeCheckingMode": "off",
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
