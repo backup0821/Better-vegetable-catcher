@@ -16,10 +16,12 @@ import pyperclip
 import re
 from packaging import version
 import json
+from price_alert import PriceAlertSystem
+from advanced_visualization import AdvancedVisualizer
 
 # 版本資訊
-CURRENT_VERSION = "2.1"
-CURRENT_BUILD = "2.1"
+CURRENT_VERSION = "2.2"
+CURRENT_BUILD = "2.2"
 GITHUB_REPO = "backup0821/Better-vegetable-catcher"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO}/releases"
@@ -81,6 +83,9 @@ class FarmDataApp:
             
             # 檢查更新
             self.check_for_updates()
+            
+            self.alert_system = PriceAlertSystem()
+            self.visualizer = None  # 將在載入資料時初始化
             
         except Exception as e:
             messagebox.showerror("初始化錯誤", f"程式初始化時發生錯誤：\n{str(e)}")
@@ -247,32 +252,16 @@ class FarmDataApp:
             ttk.Label(button_frame, text="進階分析：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
             ttk.Button(button_frame, text="🔍 相似作物分析", command=self.show_similar_crops).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="🎯 價格預測", command=self.show_price_prediction).pack(fill=tk.X, pady=2)
-            
-            # 設定 Canvas 滾動區域
-            def configure_scroll_region(event):
-                canvas.configure(scrollregion=canvas.bbox("all"))
-            
-            # 綁定事件
-            control_frame.bind("<Configure>", configure_scroll_region)
-            
-            # 設定 Canvas 的滾動
-            def _on_mousewheel(event):
-                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-            
-            canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            ttk.Button(button_frame, text="⚠️ 價格預警設定", command=self.create_alert_window).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, text="📊 進階圖表分析", command=self.show_advanced_visualization).pack(fill=tk.X, pady=2)
             
             # 右側顯示區域
             display_frame = ttk.LabelFrame(main_frame, text="分析結果", padding="10")
             display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
             
             # 文字顯示區域
-            self.text_area = tk.Text(display_frame, wrap=tk.WORD, font=("微軟正黑體", 11))
+            self.text_area = scrolledtext.ScrolledText(display_frame, wrap=tk.WORD, font=("微軟正黑體", 11))
             self.text_area.pack(fill=tk.BOTH, expand=True)
-            
-            # 滾動條
-            scrollbar = ttk.Scrollbar(display_frame, command=self.text_area.yview)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            self.text_area.config(yscrollcommand=scrollbar.set)
             
             # 綁定事件
             self.crop_combo.bind("<<ComboboxSelected>>", self.load_data_for_selected_crop)
@@ -303,6 +292,8 @@ class FarmDataApp:
             if self.data and isinstance(self.data, list) and len(self.data) > 0:
                 # 初始化分析器
                 self.analyzer = DataAnalyzer(self.data)
+                # 初始化視覺化工具
+                self.visualizer = AdvancedVisualizer(self.analyzer.data)
                 
                 # 更新作物列表
                 self.crop_list = sorted(self.analyzer.data['作物名稱'].unique().tolist())
@@ -310,6 +301,8 @@ class FarmDataApp:
                     self.crop_combo['values'] = self.crop_list
                     self.crop_combo.set(self.crop_list[0])
                     self.update_display()
+                    # 檢查價格預警
+                    self.check_price_alerts()
                     self.status_var.set("資料載入成功")
                 else:
                     self.status_var.set("沒有有效的作物資料")
@@ -543,7 +536,7 @@ class FarmDataApp:
     def show_price_trend(self):
         """顯示價格趨勢圖"""
         try:
-            if not self.analyzer:
+            if not self.visualizer:
                 messagebox.showerror("錯誤", "沒有可用的資料")
                 return
             
@@ -552,8 +545,8 @@ class FarmDataApp:
                 messagebox.showerror("錯誤", "請選擇作物")
                 return
             
-            # 生成圖表
-            fig = self.analyzer.create_price_trend_plot(crop_name)
+            # 使用新的互動式圖表
+            fig = self.visualizer.create_interactive_price_trend(crop_name)
             
             # 儲存圖表
             filename = os.path.join(self.output_dir, f"{crop_name}_價格趨勢.html")
@@ -561,7 +554,7 @@ class FarmDataApp:
             
             # 開啟瀏覽器顯示圖表
             webbrowser.open(f"file://{os.path.abspath(filename)}")
-            self.status_var.set("已顯示價格趨勢圖")
+            self.status_var.set("已顯示進階價格趨勢圖")
             
         except Exception as e:
             messagebox.showerror("錯誤", f"顯示價格趨勢圖時發生錯誤：{str(e)}")
@@ -966,6 +959,204 @@ class FarmDataApp:
         except Exception as e:
             self.status_var.set("獲取更新歷史失敗")
             messagebox.showerror("錯誤", f"獲取更新歷史時發生錯誤：\n{str(e)}")
+
+    def create_alert_window(self):
+        """建立價格預警設定視窗"""
+        try:
+            alert_window = tk.Toplevel(self.root)
+            alert_window.title("價格預警設定")
+            alert_window.geometry("600x700")
+            
+            # 主要內容框架
+            main_frame = ttk.Frame(alert_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # 作物選擇區域
+            crop_frame = ttk.LabelFrame(main_frame, text="作物選擇", padding="10")
+            crop_frame.pack(fill=tk.X, pady=5)
+            
+            crop_var = tk.StringVar(value=self.crop_var.get())
+            ttk.Label(crop_frame, text="選擇作物：").pack(anchor=tk.W)
+            crop_combo = ttk.Combobox(crop_frame, 
+                                     textvariable=crop_var,
+                                     values=self.crop_list,
+                                     state="readonly")
+            crop_combo.pack(fill=tk.X, pady=5)
+            
+            # 價格設定區域
+            price_frame = ttk.LabelFrame(main_frame, text="價格範圍設定", padding="10")
+            price_frame.pack(fill=tk.X, pady=5)
+            
+            # 上限價格
+            upper_frame = ttk.Frame(price_frame)
+            upper_frame.pack(fill=tk.X, pady=2)
+            ttk.Label(upper_frame, text="價格上限：").pack(side=tk.LEFT)
+            upper_var = tk.StringVar()
+            upper_entry = ttk.Entry(upper_frame, textvariable=upper_var)
+            upper_entry.pack(side=tk.LEFT, padx=5)
+            ttk.Label(upper_frame, text="元/公斤").pack(side=tk.LEFT)
+            
+            # 下限價格
+            lower_frame = ttk.Frame(price_frame)
+            lower_frame.pack(fill=tk.X, pady=2)
+            ttk.Label(lower_frame, text="價格下限：").pack(side=tk.LEFT)
+            lower_var = tk.StringVar()
+            lower_entry = ttk.Entry(lower_frame, textvariable=lower_var)
+            lower_entry.pack(side=tk.LEFT, padx=5)
+            ttk.Label(lower_frame, text="元/公斤").pack(side=tk.LEFT)
+            
+            # 通知設定
+            notify_frame = ttk.LabelFrame(main_frame, text="通知設定", padding="10")
+            notify_frame.pack(fill=tk.X, pady=5)
+            
+            notify_var = tk.StringVar(value="system")
+            ttk.Radiobutton(notify_frame, 
+                           text="系統通知", 
+                           variable=notify_var,
+                           value="system").pack(anchor=tk.W)
+            ttk.Radiobutton(notify_frame, 
+                           text="電子郵件", 
+                           variable=notify_var,
+                           value="email").pack(anchor=tk.W)
+            
+            # 預警列表
+            list_frame = ttk.LabelFrame(main_frame, text="現有預警", padding="10")
+            list_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+            
+            # 建立 Treeview
+            columns = ("作物", "上限價格", "下限價格", "通知方式", "狀態")
+            tree = ttk.Treeview(list_frame, columns=columns, show="headings")
+            
+            # 設定欄位標題
+            for col in columns:
+                tree.heading(col, text=col)
+                tree.column(col, width=100)
+            
+            # 加入捲軸
+            scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=tree.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            tree.configure(yscrollcommand=scrollbar.set)
+            tree.pack(fill=tk.BOTH, expand=True)
+            
+            def save_alert():
+                """儲存預警設定"""
+                try:
+                    crop = crop_var.get()
+                    upper = float(upper_var.get())
+                    lower = float(lower_var.get())
+                    
+                    if not crop:
+                        messagebox.showerror("錯誤", "請選擇作物")
+                        return
+                    
+                    if upper <= lower:
+                        messagebox.showerror("錯誤", "上限價格必須大於下限價格")
+                        return
+                    
+                    # 儲存預警設定
+                    self.alert_system.add_alert(
+                        crop_name=crop,
+                        upper_limit=upper,
+                        lower_limit=lower,
+                        notification_type=notify_var.get()
+                    )
+                    
+                    # 清空輸入
+                    upper_var.set("")
+                    lower_var.set("")
+                    
+                    # 更新列表
+                    refresh_alerts()
+                    
+                    messagebox.showinfo("成功", "預警設定已儲存")
+                    
+                except ValueError:
+                    messagebox.showerror("錯誤", "請輸入有效的價格數值")
+            
+            def refresh_alerts():
+                """重新整理預警列表"""
+                # 清空現有項目
+                for item in tree.get_children():
+                    tree.delete(item)
+                
+                # 載入最新預警列表
+                alerts = self.alert_system.get_all_alerts()
+                for alert in alerts:
+                    tree.insert("", tk.END, values=(
+                        alert["crop_name"],
+                        f"{alert['upper_limit']:.2f}",
+                        f"{alert['lower_limit']:.2f}",
+                        "系統通知" if alert["notification_type"] == "system" else "電子郵件",
+                        "啟用" if alert["is_active"] else "停用"
+                    ))
+            
+            # 按鈕區域
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(fill=tk.X, pady=10)
+            
+            ttk.Button(button_frame, 
+                       text="儲存設定", 
+                       command=save_alert).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                       text="重新整理",
+                       command=refresh_alerts).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                       text="關閉",
+                       command=alert_window.destroy).pack(side=tk.RIGHT, padx=5)
+            
+            # 初始載入預警列表
+            refresh_alerts()
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"建立預警視窗時發生錯誤：{str(e)}")
+
+    def check_price_alerts(self):
+        """檢查價格預警"""
+        try:
+            if not self.analyzer or not isinstance(self.analyzer.data, pd.DataFrame):
+                return
+            
+            df = self.analyzer.data
+            current_prices = {}
+            
+            # 獲取最新價格
+            for crop_name in df['作物名稱'].unique():
+                crop_data = df[df['作物名稱'] == crop_name]
+                if not crop_data.empty:
+                    current_prices[crop_name] = crop_data['平均價'].iloc[-1]
+            
+            # 檢查每個作物的預警條件
+            for crop_name, price in current_prices.items():
+                self.alert_system.check_price(crop_name, price)
+            
+        except Exception as e:
+            self.status_var.set(f"檢查價格預警時發生錯誤：{str(e)}")
+
+    def show_advanced_visualization(self):
+        """顯示進階視覺化分析"""
+        try:
+            if not self.visualizer:
+                messagebox.showerror("錯誤", "沒有可用的資料")
+                return
+            
+            crop_name = self.crop_var.get()
+            if not crop_name:
+                messagebox.showerror("錯誤", "請選擇作物")
+                return
+            
+            # 生成互動式圖表
+            fig = self.visualizer.create_interactive_price_trend(crop_name)
+            
+            # 儲存圖表
+            filename = os.path.join(self.output_dir, f"{crop_name}_進階分析.html")
+            fig.write_html(filename)
+            
+            # 開啟瀏覽器顯示圖表
+            webbrowser.open(f"file://{os.path.abspath(filename)}")
+            self.status_var.set("已顯示進階視覺化分析")
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"顯示進階視覺化分析時發生錯誤：{str(e)}")
 
 def main():
     try:
