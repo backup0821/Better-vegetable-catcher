@@ -13,6 +13,17 @@ import os
 from analysis_utils import DataAnalyzer
 import webbrowser
 import pyperclip
+import re
+from packaging import version
+import json
+
+# 版本資訊
+CURRENT_VERSION = "2.0-beta-1"
+CURRENT_BUILD = "2.1"
+GITHUB_REPO = "backup0821/Better-vegetable-catcher"
+GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO}/releases"
+GITHUB_REPO_URL = f"https://github.com/{GITHUB_REPO}"
 
 # 檢查必要套件
 try:
@@ -36,7 +47,7 @@ class FarmDataApp:
     def __init__(self, root):
         try:
             self.root = root
-            self.root.title("農產品交易資料分析 v2.0-beta-1(2.1)")
+            self.root.title(f"農產品交易資料分析 v{CURRENT_VERSION}({CURRENT_BUILD})")
             self.root.geometry("1200x800")
             
             # 初始化重要變數
@@ -67,6 +78,9 @@ class FarmDataApp:
             
             # 載入資料
             self.load_data()
+            
+            # 檢查更新
+            self.check_for_updates()
             
         except Exception as e:
             messagebox.showerror("初始化錯誤", f"程式初始化時發生錯誤：\n{str(e)}")
@@ -141,6 +155,22 @@ class FarmDataApp:
                 text="快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策", 
                 style='Subtitle.TLabel')
             subtitle_label.pack(pady=5)
+            
+            # 版本資訊和更新按鈕
+            version_frame = ttk.Frame(title_frame)
+            version_frame.pack(pady=5)
+            
+            version_label = ttk.Label(version_frame, 
+                text=f"版本：v{CURRENT_VERSION}({CURRENT_BUILD})", 
+                style='Subtitle.TLabel')
+            version_label.pack(side=tk.LEFT, padx=5)
+            
+            ttk.Button(version_frame, 
+                      text="檢查更新", 
+                      command=self.check_for_updates).pack(side=tk.LEFT, padx=5)
+            ttk.Button(version_frame, 
+                      text="更新歷史", 
+                      command=self.show_update_history).pack(side=tk.LEFT, padx=5)
             
             # 建立主框架
             main_frame = ttk.Frame(self.root, padding="10")
@@ -775,6 +805,139 @@ class FarmDataApp:
                 
         except Exception as e:
             messagebox.showerror("錯誤", f"匯出CSV時發生錯誤：{str(e)}")
+
+    def check_for_updates(self):
+        """檢查是否有新版本可用"""
+        try:
+            self.status_var.set("正在檢查更新...")
+            self.root.update()
+            
+            # 取得最新版本資訊
+            headers = {'Accept': 'application/vnd.github.v3+json'}
+            response = requests.get(GITHUB_API_URL, headers=headers, timeout=5)
+            response.raise_for_status()
+            latest_release = response.json()
+            
+            if 'tag_name' not in latest_release:
+                self.status_var.set("無法獲取版本資訊")
+                return
+            
+            # 解析版本號
+            latest_version_tag = latest_release['tag_name'].replace('v', '')
+            latest_version = version.parse(latest_version_tag)
+            current_version = version.parse(CURRENT_VERSION)
+            
+            if latest_version > current_version:
+                # 有新版本可用
+                update_msg = f"""發現新版本！
+
+目前版本：v{CURRENT_VERSION}({CURRENT_BUILD})
+最新版本：v{latest_version_tag}
+
+更新內容：
+{latest_release.get('body', '暫無更新說明')}
+
+是否要前往下載頁面？"""
+                
+                if messagebox.askyesno("版本更新", update_msg):
+                    webbrowser.open(latest_release.get('html_url', GITHUB_RELEASES_URL))
+                    self.status_var.set("已開啟下載頁面")
+                else:
+                    self.status_var.set("已取消更新")
+            else:
+                self.status_var.set("已是最新版本")
+                messagebox.showinfo("版本檢查", "您使用的已經是最新版本！")
+                
+        except requests.exceptions.ConnectionError:
+            self.status_var.set("網路連線失敗，無法檢查更新")
+            messagebox.showerror("錯誤", "網路連線失敗，請檢查網路連線後再試")
+        except requests.exceptions.Timeout:
+            self.status_var.set("檢查更新超時")
+            messagebox.showerror("錯誤", "檢查更新超時，請稍後再試")
+        except Exception as e:
+            self.status_var.set(f"檢查更新時發生錯誤")
+            messagebox.showerror("錯誤", f"檢查更新時發生錯誤：\n{str(e)}")
+
+    def show_update_history(self):
+        """顯示更新歷史"""
+        try:
+            self.status_var.set("正在獲取更新歷史...")
+            self.root.update()
+            
+            # 取得所有發布版本
+            headers = {'Accept': 'application/vnd.github.v3+json'}
+            response = requests.get(f"https://api.github.com/repos/{GITHUB_REPO}/releases", 
+                                 headers=headers, timeout=5)
+            response.raise_for_status()
+            releases = response.json()
+            
+            if not releases:
+                messagebox.showinfo("更新歷史", "目前沒有任何發布版本")
+                self.status_var.set("無更新歷史")
+                return
+            
+            # 建立更新歷史視窗
+            history_window = tk.Toplevel(self.root)
+            history_window.title("更新歷史")
+            history_window.geometry("800x600")
+            
+            # 設定視窗圖示和樣式
+            history_window.transient(self.root)
+            history_window.grab_set()
+            
+            # 新增文字區域
+            text_area = scrolledtext.ScrolledText(history_window, 
+                                                wrap=tk.WORD, 
+                                                width=80, 
+                                                height=30,
+                                                font=("微軟正黑體", 10))
+            text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+            
+            # 顯示更新歷史
+            for release in releases:
+                version_tag = release['tag_name']
+                publish_date = datetime.strptime(release['published_at'], 
+                                               '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d %H:%M:%S')
+                
+                text_area.insert(tk.END, f"版本：{version_tag}\n", "version")
+                text_area.insert(tk.END, f"發布日期：{publish_date}\n", "date")
+                text_area.insert(tk.END, f"下載連結：{release['html_url']}\n", "link")
+                text_area.insert(tk.END, "\n更新內容：\n", "header")
+                text_area.insert(tk.END, f"{release.get('body', '暫無更新說明')}\n", "content")
+                text_area.insert(tk.END, "\n" + "=" * 80 + "\n\n", "separator")
+            
+            # 設定文字樣式
+            text_area.tag_configure("version", font=("微軟正黑體", 12, "bold"))
+            text_area.tag_configure("date", font=("微軟正黑體", 10))
+            text_area.tag_configure("link", font=("微軟正黑體", 10, "underline"), foreground="blue")
+            text_area.tag_configure("header", font=("微軟正黑體", 10, "bold"))
+            text_area.tag_configure("content", font=("微軟正黑體", 10))
+            text_area.tag_configure("separator", foreground="gray")
+            
+            text_area.config(state=tk.DISABLED)
+            
+            # 新增底部按鈕
+            button_frame = ttk.Frame(history_window)
+            button_frame.pack(pady=10)
+            
+            ttk.Button(button_frame, 
+                      text="前往發布頁面", 
+                      command=lambda: webbrowser.open(GITHUB_RELEASES_URL)).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame, 
+                      text="關閉", 
+                      command=history_window.destroy).pack(side=tk.LEFT, padx=5)
+            
+            self.status_var.set("更新歷史載入完成")
+            
+        except requests.exceptions.ConnectionError:
+            self.status_var.set("網路連線失敗")
+            messagebox.showerror("錯誤", "網路連線失敗，請檢查網路連線後再試")
+        except requests.exceptions.Timeout:
+            self.status_var.set("獲取更新歷史超時")
+            messagebox.showerror("錯誤", "獲取更新歷史超時，請稍後再試")
+        except Exception as e:
+            self.status_var.set("獲取更新歷史失敗")
+            messagebox.showerror("錯誤", f"獲取更新歷史時發生錯誤：\n{str(e)}")
 
 def main():
     try:
