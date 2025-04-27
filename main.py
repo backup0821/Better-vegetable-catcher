@@ -1,4 +1,4 @@
-# V2.0-beta-1 (2.1)
+# V2.1 (2.1)
 import sys
 import requests
 import pandas as pd
@@ -18,7 +18,7 @@ from packaging import version
 import json
 
 # 版本資訊
-CURRENT_VERSION = "2.0-beta-1"
+CURRENT_VERSION = "2.1"
 CURRENT_BUILD = "2.1"
 GITHUB_REPO = "backup0821/Better-vegetable-catcher"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
