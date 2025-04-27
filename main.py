@@ -1,4 +1,4 @@
-# V2.0-beta-1 (2.1)
+# V2.1 (2.1)
 import sys
 import requests
 import pandas as pd
@@ -18,7 +18,7 @@ from packaging import version
 import json
 
 # 版本資訊
-CURRENT_VERSION = "2.0-beta-1"
+CURRENT_VERSION = "2.1"
 CURRENT_BUILD = "2.1"
 GITHUB_REPO = "backup0821/Better-vegetable-catcher"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -176,9 +176,24 @@ class FarmDataApp:
             main_frame = ttk.Frame(self.root, padding="10")
             main_frame.pack(fill=tk.BOTH, expand=True)
             
-            # 左側控制面板
-            control_frame = ttk.LabelFrame(main_frame, text="操作面板", padding="10")
-            control_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
+            # 左側控制面板（新增滾動功能）
+            left_frame = ttk.Frame(main_frame)
+            left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
+            
+            # 建立 Canvas 和 Scrollbar
+            canvas = tk.Canvas(left_frame, width=250)
+            scrollbar = ttk.Scrollbar(left_frame, orient="vertical", command=canvas.yview)
+            control_frame = ttk.Frame(canvas)
+            
+            # 配置滾動
+            canvas.configure(yscrollcommand=scrollbar.set)
+            
+            # 打包元件
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            canvas.pack(side=tk.LEFT, fill=tk.Y)
+            
+            # 在 Canvas 中建立視窗
+            canvas_frame = canvas.create_window((0, 0), window=control_frame, anchor="nw")
             
             # 搜尋和選擇區域
             search_frame = ttk.LabelFrame(control_frame, text="作物選擇", padding="10")
@@ -207,19 +222,6 @@ class FarmDataApp:
                                                 values=calc_methods, state="readonly")
             self.calc_method_combo.pack(fill=tk.X, pady=2)
             
-            # 右側顯示區域
-            display_frame = ttk.LabelFrame(main_frame, text="分析結果", padding="10")
-            display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-            
-            # 文字顯示區域
-            self.text_area = tk.Text(display_frame, wrap=tk.WORD, font=("微軟正黑體", 11))
-            self.text_area.pack(fill=tk.BOTH, expand=True)
-            
-            # 滾動條
-            scrollbar = ttk.Scrollbar(display_frame, command=self.text_area.yview)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            self.text_area.config(yscrollcommand=scrollbar.set)
-            
             # 功能按鈕區
             button_frame = ttk.LabelFrame(control_frame, text="功能選單", padding="10")
             button_frame.pack(fill=tk.X, pady=5)
@@ -246,14 +248,40 @@ class FarmDataApp:
             ttk.Button(button_frame, text="🔍 相似作物分析", command=self.show_similar_crops).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="🎯 價格預測", command=self.show_price_prediction).pack(fill=tk.X, pady=2)
             
-            # 狀態列
-            status_bar = ttk.Label(self.root, textvariable=self.status_var, 
-                                 relief=tk.SUNKEN, padding=(5, 2))
-            status_bar.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
+            # 設定 Canvas 滾動區域
+            def configure_scroll_region(event):
+                canvas.configure(scrollregion=canvas.bbox("all"))
+            
+            # 綁定事件
+            control_frame.bind("<Configure>", configure_scroll_region)
+            
+            # 設定 Canvas 的滾動
+            def _on_mousewheel(event):
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            
+            canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            
+            # 右側顯示區域
+            display_frame = ttk.LabelFrame(main_frame, text="分析結果", padding="10")
+            display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+            
+            # 文字顯示區域
+            self.text_area = tk.Text(display_frame, wrap=tk.WORD, font=("微軟正黑體", 11))
+            self.text_area.pack(fill=tk.BOTH, expand=True)
+            
+            # 滾動條
+            scrollbar = ttk.Scrollbar(display_frame, command=self.text_area.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.text_area.config(yscrollcommand=scrollbar.set)
             
             # 綁定事件
             self.crop_combo.bind("<<ComboboxSelected>>", self.load_data_for_selected_crop)
             self.calc_method_combo.bind("<<ComboboxSelected>>", self.update_display)
+            
+            # 狀態列
+            status_bar = ttk.Label(self.root, textvariable=self.status_var, 
+                                 relief=tk.SUNKEN, padding=(5, 2))
+            status_bar.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
             
         except Exception as e:
             messagebox.showerror("錯誤", f"建立介面時發生錯誤：{str(e)}")
