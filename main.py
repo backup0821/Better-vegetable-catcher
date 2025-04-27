@@ -195,10 +195,25 @@ class FarmDataApp:
             
             # 打包元件
             scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            canvas.pack(side=tk.LEFT, fill=tk.Y)
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             
             # 在 Canvas 中建立視窗
-            canvas_frame = canvas.create_window((0, 0), window=control_frame, anchor="nw")
+            canvas_frame = canvas.create_window((0, 0), window=control_frame, anchor="nw", width=canvas.winfo_width())
+            
+            # 更新 Canvas 滾動區域
+            def _configure_canvas(event):
+                canvas.configure(scrollregion=canvas.bbox("all"))
+                # 更新 control_frame 的寬度以符合 canvas
+                canvas.itemconfig(canvas_frame, width=canvas.winfo_width())
+            
+            # 綁定事件
+            control_frame.bind("<Configure>", _configure_canvas)
+            canvas.bind("<Configure>", lambda e: canvas.itemconfig(canvas_frame, width=canvas.winfo_width()))
+            
+            # 綁定滑鼠滾輪事件
+            def _on_mousewheel(event):
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            canvas.bind_all("<MouseWheel>", _on_mousewheel)
             
             # 搜尋和選擇區域
             search_frame = ttk.LabelFrame(control_frame, text="作物選擇", padding="10")
