@@ -1,4 +1,4 @@
-# V2.2 - DEV VERSION (2.2)
+# v2.2 (2.2 - RELEASE-VERSION)
 import sys
 import requests
 import pandas as pd
@@ -20,8 +20,8 @@ from price_alert import PriceAlertSystem
 from advanced_visualization import AdvancedVisualizer
 
 # 版本資訊
-CURRENT_VERSION = "2.2 - DEV-VERSION"
-CURRENT_BUILD = "2.2 - DEV-VERSION"
+CURRENT_VERSION = "2.2"
+CURRENT_BUILD = "2.2 - RELEASE-VERSION"
 GITHUB_REPO = "backup0821/Better-vegetable-catcher"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO}/releases"
