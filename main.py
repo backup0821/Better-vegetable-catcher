@@ -21,8 +21,8 @@ from advanced_visualization import AdvancedVisualizer
 from token_manager import TokenManager
 
 # 版本資訊
-CURRENT_VERSION = "2.2"
-CURRENT_BUILD = "2.2 - RELEASE-VERSION"
+CURRENT_VERSION = "2.3"
+CURRENT_BUILD = "2.3 - INSIDE-VERSION"
 GITHUB_REPO = "backup0821/Better-vegetable-catcher"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 GITHUB_RELEASES_URL = f"https://github.com/{GITHUB_REPO}/releases"
@@ -1788,4 +1788,10 @@ def main():
         messagebox.showerror("錯誤", f"程式啟動時發生錯誤：{str(e)}")
 
 if __name__ == "__main__":
+    print("程式啟動")
+    print("版本：", CURRENT_VERSION)
+    print("建置：", CURRENT_BUILD)  
+    print("GitHub 倉庫：", GITHUB_REPO)
+    print("GitHub API URL：", GITHUB_API_URL)
+    print("GitHub Releases URL：", GITHUB_RELEASES_URL)
     main() 
