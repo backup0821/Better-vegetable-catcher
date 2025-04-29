@@ -1,4 +1,4 @@
-# v2.2 (2.2 - RELEASE-VERSION)
+# v2.3 (2.3 - INSIDE-VERSION)
 import sys
 import requests
 import pandas as pd
@@ -140,6 +140,8 @@ class FarmDataApp:
                 '南部': ['高雄', '鳳山', '屏東', '台南'],
                 '東部': ['宜蘭', '花蓮', '台東']
             }
+            # 初始化日期變數
+            self.selected_date = "全部日期"
         except Exception as e:
             messagebox.showerror("資料初始化錯誤", f"初始化資料結構時發生錯誤：\n{str(e)}")
             raise
@@ -247,6 +249,16 @@ class FarmDataApp:
             self.calc_method_combo = ttk.Combobox(analysis_frame, textvariable=self.calc_method_var, 
                                                 values=calc_methods, state="readonly")
             self.calc_method_combo.pack(fill=tk.X, pady=2)
+            
+            # 新增日期選擇區域
+            ttk.Label(analysis_frame, text="📅 日期選擇：").pack(anchor=tk.W, pady=2)
+            date_frame = ttk.Frame(analysis_frame)
+            date_frame.pack(fill=tk.X, pady=2)
+            
+            # 日期選擇按鈕
+            self.date_var = tk.StringVar(value="全部日期")
+            self.date_button = ttk.Button(date_frame, textvariable=self.date_var, command=self.show_calendar)
+            self.date_button.pack(fill=tk.X, pady=2)
             
             # 功能按鈕區
             button_frame = ttk.LabelFrame(control_frame, text="功能選單", padding="10")
@@ -391,7 +403,7 @@ class FarmDataApp:
         """處理資料並計算統計值，加入快取機制"""
         try:
             # 檢查快取
-            cache_key = f"{crop_name}_{calc_method}"
+            cache_key = f"{crop_name}_{calc_method}_{self.date_var.get()}"
             if cache_key in self.cache:
                 return self.cache[cache_key]
             
@@ -404,6 +416,28 @@ class FarmDataApp:
             # 篩選特定作物
             df = df[df['作物名稱'] == crop_name]
             
+            # 篩選日期（如果已選擇）
+            selected_date = self.date_var.get()
+            if selected_date != "全部日期":
+                try:
+                    # 將民國年轉換為西元年
+                    def convert_tw_date(date_str):
+                        try:
+                            year, month, day = map(int, date_str.split('.'))
+                            # 民國年轉西元年
+                            year += 1911
+                            return f"{year}/{month:02d}/{day:02d}"
+                        except:
+                            return date_str
+                    
+                    # 轉換日期格式
+                    df['交易日期'] = df['交易日期'].apply(convert_tw_date)
+                    
+                    # 篩選選擇的日期
+                    df = df[df['交易日期'] == selected_date]
+                except Exception as e:
+                    self.status_var.set(f"日期篩選時發生錯誤：{str(e)}")
+            
             if len(df) == 0:
                 return None
             
@@ -415,8 +449,29 @@ class FarmDataApp:
                     weighted_avg_price = (df['平均價'] * df['交易量']).sum() / total_volume
                     result = f"""作物：{crop_name}
 計算方式：加權平均
+日期：{selected_date}
 ------------------------
 加權平均價格：{weighted_avg_price:.2f} 元/公斤
+資料筆數：{len(df)}
+
+價格統計：
+  最低價：{df['平均價'].min():.2f} 元/公斤
+  最高價：{df['平均價'].max():.2f} 元/公斤
+  標準差：{df['平均價'].std():.2f} 元/公斤
+
+交易量統計：
+  總量：{df['交易量'].sum():.2f} 公斤
+  平均：{df['交易量'].mean():.2f} 公斤
+  最大：{df['交易量'].max():.2f} 公斤"""
+            
+            elif calc_method == "簡單平均":
+                # 計算簡單平均價格
+                avg_price = df['平均價'].mean()
+                result = f"""作物：{crop_name}
+計算方式：簡單平均
+日期：{selected_date}
+------------------------
+簡單平均價格：{avg_price:.2f} 元/公斤
 資料筆數：{len(df)}
 
 價格統計：
@@ -432,7 +487,7 @@ class FarmDataApp:
             elif calc_method == "分區統計":
                 # 計算各區域統計
                 df['區域'] = df['市場名稱'].apply(self.get_market_region)
-                result = f"作物：{crop_name}\n計算方式：分區統計\n"
+                result = f"作物：{crop_name}\n計算方式：分區統計\n日期：{selected_date}\n"
                 
                 for region in sorted(df['區域'].unique()):
                     region_data = df[df['區域'] == region]
@@ -464,6 +519,9 @@ class FarmDataApp:
                 self.text_area.insert(tk.END, "請選擇作物")
                 self.text_area.config(state=tk.DISABLED)  # 恢復為不可編輯
                 return
+            
+            # 清除快取，確保使用最新的日期篩選
+            self.clear_cache()
             
             result = self.process_data(crop_name, calc_method)
             if result:
@@ -1569,6 +1627,157 @@ class FarmDataApp:
             
         except Exception as e:
             messagebox.showerror("錯誤", f"建立 Token 管理視窗時發生錯誤：{str(e)}")
+
+    def show_calendar(self):
+        """顯示日曆視窗讓使用者選擇日期"""
+        try:
+            # 建立日曆視窗
+            calendar_window = tk.Toplevel(self.root)
+            calendar_window.title("選擇日期")
+            calendar_window.geometry("300x350")
+            calendar_window.transient(self.root)
+            calendar_window.grab_set()
+            
+            # 主要內容框架
+            main_frame = ttk.Frame(calendar_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # 標題
+            ttk.Label(main_frame, text="請選擇日期", style='Subtitle.TLabel').pack(pady=5)
+            
+            # 建立日曆框架
+            calendar_frame = ttk.Frame(main_frame)
+            calendar_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+            
+            # 取得當前日期
+            current_date = datetime.now()
+            
+            # 建立年月選擇
+            date_control_frame = ttk.Frame(calendar_frame)
+            date_control_frame.pack(fill=tk.X, pady=5)
+            
+            # 年份選擇
+            year_var = tk.IntVar(value=current_date.year)
+            year_frame = ttk.Frame(date_control_frame)
+            year_frame.pack(side=tk.LEFT, padx=5)
+            ttk.Label(year_frame, text="年：").pack(side=tk.LEFT)
+            year_spinbox = ttk.Spinbox(year_frame, from_=2000, to=2100, width=6, textvariable=year_var)
+            year_spinbox.pack(side=tk.LEFT)
+            
+            # 月份選擇
+            month_var = tk.IntVar(value=current_date.month)
+            month_frame = ttk.Frame(date_control_frame)
+            month_frame.pack(side=tk.LEFT, padx=5)
+            ttk.Label(month_frame, text="月：").pack(side=tk.LEFT)
+            month_spinbox = ttk.Spinbox(month_frame, from_=1, to=12, width=4, textvariable=month_var)
+            month_spinbox.pack(side=tk.LEFT)
+            
+            # 建立日曆表格
+            calendar_table = ttk.Frame(calendar_frame)
+            calendar_table.pack(fill=tk.BOTH, expand=True, pady=5)
+            
+            # 星期標題
+            weekdays = ["日", "一", "二", "三", "四", "五", "六"]
+            for i, day in enumerate(weekdays):
+                ttk.Label(calendar_table, text=day, width=3).grid(row=0, column=i, padx=2, pady=2)
+            
+            # 日期按鈕
+            date_buttons = []
+            selected_date = None
+            
+            def update_calendar(*args):
+                """更新日曆顯示"""
+                # 清空現有按鈕
+                for button in date_buttons:
+                    button.destroy()
+                date_buttons.clear()
+                
+                # 取得選擇的年月
+                year = year_var.get()
+                month = month_var.get()
+                
+                # 計算該月第一天是星期幾
+                first_day = datetime(year, month, 1)
+                weekday = first_day.weekday()
+                
+                # 計算該月天數
+                if month == 12:
+                    next_month = datetime(year + 1, 1, 1)
+                else:
+                    next_month = datetime(year, month + 1, 1)
+                days_in_month = (next_month - first_day).days
+                
+                # 建立日期按鈕
+                for i in range(42):  # 6週 x 7天
+                    row = i // 7 + 1
+                    col = i % 7
+                    
+                    day = i - weekday + 1
+                    if 1 <= day <= days_in_month:
+                        date_str = f"{year}/{month:02d}/{day:02d}"
+                        btn = ttk.Button(calendar_table, text=str(day), width=3)
+                        btn.grid(row=row, column=col, padx=2, pady=2)
+                        
+                        # 如果是今天，標記為特殊樣式
+                        if year == current_date.year and month == current_date.month and day == current_date.day:
+                            btn.configure(style='Today.TButton')
+                        
+                        # 綁定點擊事件
+                        btn.configure(command=lambda d=date_str: select_date(d, btn))
+                        date_buttons.append(btn)
+            
+            def select_date(date_str, button):
+                """選擇日期"""
+                nonlocal selected_date
+                selected_date = date_str
+                
+                # 更新按鈕樣式
+                for btn in date_buttons:
+                    btn.configure(style='TButton')
+                button.configure(style='Selected.TButton')
+            
+            # 綁定年月變更事件
+            year_var.trace_add('write', update_calendar)
+            month_var.trace_add('write', update_calendar)
+            
+            # 初始化日曆
+            update_calendar()
+            
+            # 按鈕區域
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(fill=tk.X, pady=10)
+            
+            def apply_date():
+                """套用選擇的日期"""
+                if selected_date:
+                    self.date_var.set(selected_date)
+                    self.update_display()
+                    calendar_window.destroy()
+                else:
+                    messagebox.showwarning("警告", "請選擇日期")
+            
+            def clear_date():
+                """清除日期選擇"""
+                self.date_var.set("全部日期")
+                self.update_display()
+                calendar_window.destroy()
+            
+            ttk.Button(button_frame, 
+                      text="套用", 
+                      command=apply_date).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="清除",
+                      command=clear_date).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="取消",
+                      command=calendar_window.destroy).pack(side=tk.RIGHT, padx=5)
+            
+            # 設定樣式
+            self.style.configure('Today.TButton', background='#e6f7ff')
+            self.style.configure('Selected.TButton', background='#b3e0ff')
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"顯示日曆時發生錯誤：{str(e)}")
 
 def main():
     try:
