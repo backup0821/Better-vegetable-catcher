@@ -1795,3 +1795,5 @@ if __name__ == "__main__":
     print("GitHub API URL：", GITHUB_API_URL)
     print("GitHub Releases URL：", GITHUB_RELEASES_URL)
     main() 
+
+#test
