@@ -12,7 +12,10 @@
         <header>
             <h1>農產品交易資料分析系統</h1>
             <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
-            <p class="version">版本：v1.0</p>
+            <div class="version-info">
+                <p class="version">版本：<span id="versionNumber">v1.0</span></p>
+                <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
+            </div>
         </header>
 
         <main>
@@ -36,6 +39,15 @@
                         <button id="showVolumeDist">📊 交易量分布</button>
                         <button id="showPriceDist">📉 價格分布</button>
                         <button id="showSeasonal">📅 季節性分析</button>
+                        <button id="showPricePrediction">🔮 價格預測</button>
+                    </div>
+                </div>
+
+                <div class="export-section">
+                    <h2>資料匯出</h2>
+                    <div class="export-buttons">
+                        <button id="exportExcel">📥 匯出 Excel</button>
+                        <button id="exportCSV">📥 匯出 CSV</button>
                     </div>
                 </div>
             </div>
@@ -50,6 +62,7 @@
 
         <footer>
             <p>資料來源：行政院農業委員會農產品交易行情站</p>
+            <p>資料更新時間：<span id="dataUpdateTime">載入中...</span></p>
         </footer>
     </div>
     <script src="script.js"></script>
