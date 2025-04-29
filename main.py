@@ -18,6 +18,7 @@ from packaging import version
 import json
 from price_alert import PriceAlertSystem
 from advanced_visualization import AdvancedVisualizer
+from token_manager import TokenManager
 
 # 版本資訊
 CURRENT_VERSION = "2.2"
@@ -55,6 +56,8 @@ class FarmDataApp:
             # 初始化重要變數
             self.status_var = tk.StringVar(value="系統就緒")
             self.filter_crops = []
+            self.token_manager = TokenManager()
+            self.current_token = None
             
             # 確保視窗大小合適
             screen_width = self.root.winfo_screenwidth()
@@ -86,6 +89,9 @@ class FarmDataApp:
             
             self.alert_system = PriceAlertSystem()
             self.visualizer = None  # 將在載入資料時初始化
+            
+            # 檢查開發者通知
+            self.check_dev_notifications()
             
         except Exception as e:
             messagebox.showerror("初始化錯誤", f"程式初始化時發生錯誤：\n{str(e)}")
@@ -269,6 +275,12 @@ class FarmDataApp:
             ttk.Button(button_frame, text="🎯 價格預測", command=self.show_price_prediction).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="⚠️ 價格預警設定", command=self.create_alert_window).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="📊 進階圖表分析", command=self.show_advanced_visualization).pack(fill=tk.X, pady=2)
+            
+            # 開發者功能
+            ttk.Label(button_frame, text="開發者功能：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
+            ttk.Button(button_frame, text="📢 發送通知", command=self.create_notification_window).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, text="📋 查看通知", command=self.show_notifications).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, text="🔑 Token 管理", command=self.create_token_management_window).pack(fill=tk.X, pady=2)
             
             # 右側顯示區域
             display_frame = ttk.LabelFrame(main_frame, text="分析結果", padding="10")
@@ -1184,6 +1196,379 @@ class FarmDataApp:
             
         except Exception as e:
             messagebox.showerror("錯誤", f"顯示進階視覺化分析時發生錯誤：{str(e)}")
+
+    def create_notification_window(self):
+        """建立發送通知視窗"""
+        try:
+            # 先驗證 token
+            if not self.verify_token():
+                return
+            
+            notification_window = tk.Toplevel(self.root)
+            notification_window.title("發送通知")
+            notification_window.geometry("500x400")
+            
+            # 主要內容框架
+            main_frame = ttk.Frame(notification_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # 標題輸入
+            title_frame = ttk.Frame(main_frame)
+            title_frame.pack(fill=tk.X, pady=5)
+            ttk.Label(title_frame, text="通知標題：").pack(side=tk.LEFT)
+            title_var = tk.StringVar()
+            title_entry = ttk.Entry(title_frame, textvariable=title_var, width=40)
+            title_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+            
+            # 訊息輸入
+            message_frame = ttk.Frame(main_frame)
+            message_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+            ttk.Label(message_frame, text="通知內容：").pack(anchor=tk.W)
+            message_text = scrolledtext.ScrolledText(message_frame, wrap=tk.WORD, height=10)
+            message_text.pack(fill=tk.BOTH, expand=True)
+            
+            # 通知方式選擇
+            notify_frame = ttk.LabelFrame(main_frame, text="通知方式", padding="10")
+            notify_frame.pack(fill=tk.X, pady=5)
+            
+            notify_var = tk.StringVar(value="system")
+            ttk.Radiobutton(notify_frame, 
+                           text="系統通知", 
+                           variable=notify_var,
+                           value="system").pack(anchor=tk.W)
+            ttk.Radiobutton(notify_frame, 
+                           text="電子郵件", 
+                           variable=notify_var,
+                           value="email").pack(anchor=tk.W)
+            
+            def send_notification():
+                """發送通知"""
+                try:
+                    title = title_var.get().strip()
+                    message = message_text.get("1.0", tk.END).strip()
+                    
+                    if not title:
+                        messagebox.showerror("錯誤", "請輸入通知標題")
+                        return
+                    
+                    if not message:
+                        messagebox.showerror("錯誤", "請輸入通知內容")
+                        return
+                    
+                    # 發送通知
+                    if self.alert_system.send_dev_notification(
+                        title=title,
+                        message=message,
+                        notification_type=notify_var.get()
+                    ):
+                        messagebox.showinfo("成功", "通知已發送")
+                        notification_window.destroy()
+                    else:
+                        messagebox.showerror("錯誤", "發送通知失敗")
+                    
+                except Exception as e:
+                    messagebox.showerror("錯誤", f"發送通知時發生錯誤：{str(e)}")
+            
+            # 按鈕區域
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(fill=tk.X, pady=10)
+            
+            ttk.Button(button_frame, 
+                      text="發送", 
+                      command=send_notification).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="取消",
+                      command=notification_window.destroy).pack(side=tk.RIGHT, padx=5)
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"建立通知視窗時發生錯誤：{str(e)}")
+
+    def show_notifications(self):
+        """顯示通知列表"""
+        try:
+            # 先驗證 token
+            if not self.verify_token():
+                return
+            
+            notifications_window = tk.Toplevel(self.root)
+            notifications_window.title("通知列表")
+            notifications_window.geometry("800x600")
+            
+            # 主要內容框架
+            main_frame = ttk.Frame(notifications_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # 建立 Treeview
+            columns = ("標題", "內容", "通知方式", "時間", "狀態")
+            tree = ttk.Treeview(main_frame, columns=columns, show="headings")
+            
+            # 設定欄位標題
+            for col in columns:
+                tree.heading(col, text=col)
+                tree.column(col, width=100)
+            
+            # 加入捲軸
+            scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=tree.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            tree.configure(yscrollcommand=scrollbar.set)
+            tree.pack(fill=tk.BOTH, expand=True)
+            
+            def refresh_notifications():
+                """重新整理通知列表"""
+                # 清空現有項目
+                for item in tree.get_children():
+                    tree.delete(item)
+                
+                # 載入最新通知列表
+                notifications = self.alert_system.get_dev_notifications()
+                for notif in notifications:
+                    tree.insert("", tk.END, values=(
+                        notif["title"],
+                        notif["message"][:50] + "..." if len(notif["message"]) > 50 else notif["message"],
+                        "系統通知" if notif["notification_type"] == "system" else "電子郵件",
+                        notif["created_at"],
+                        "未讀" if notif["is_read"] == 0 else "已讀"
+                    ))
+            
+            def mark_selected_read():
+                """標記選中的通知為已讀"""
+                selected = tree.selection()
+                if not selected:
+                    messagebox.showwarning("警告", "請選擇要標記的通知")
+                    return
+                
+                for item in selected:
+                    values = tree.item(item)["values"]
+                    # 這裡需要根據實際情況修改，可能需要添加通知ID
+                    # self.alert_system.mark_notification_read(notification_id)
+                
+                refresh_notifications()
+            
+            # 按鈕區域
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(fill=tk.X, pady=10)
+            
+            ttk.Button(button_frame, 
+                      text="重新整理", 
+                      command=refresh_notifications).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="標記已讀",
+                      command=mark_selected_read).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="關閉",
+                      command=notifications_window.destroy).pack(side=tk.RIGHT, padx=5)
+            
+            # 初始載入通知列表
+            refresh_notifications()
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"顯示通知列表時發生錯誤：{str(e)}")
+
+    def check_dev_notifications(self):
+        """檢查開發者通知"""
+        try:
+            notifications = self.alert_system.get_dev_notifications(unread_only=True)
+            if notifications:
+                # 顯示未讀通知數量
+                self.status_var.set(f"您有 {len(notifications)} 則未讀通知")
+                
+                # 顯示最新通知
+                latest = notifications[0]
+                self.notify(latest["title"], latest["message"])
+                
+        except Exception as e:
+            print(f"檢查開發者通知時發生錯誤：{str(e)}")
+
+    def verify_token(self):
+        """驗證 token"""
+        try:
+            # 建立驗證視窗
+            verify_window = tk.Toplevel(self.root)
+            verify_window.title("Token 驗證")
+            verify_window.geometry("400x200")
+            verify_window.transient(self.root)
+            verify_window.grab_set()
+            
+            # 主要內容框架
+            main_frame = ttk.Frame(verify_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # Token 輸入
+            token_frame = ttk.Frame(main_frame)
+            token_frame.pack(fill=tk.X, pady=5)
+            ttk.Label(token_frame, text="請輸入 Token：").pack(side=tk.LEFT)
+            token_var = tk.StringVar()
+            token_entry = ttk.Entry(token_frame, textvariable=token_var, width=30)
+            token_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+            
+            # 驗證結果標籤
+            result_var = tk.StringVar()
+            result_label = ttk.Label(main_frame, textvariable=result_var)
+            result_label.pack(pady=5)
+            
+            def do_verify():
+                token = token_var.get().strip()
+                if not token:
+                    result_var.set("請輸入 Token")
+                    return
+                
+                if self.token_manager.verify_token(token):
+                    self.current_token = token
+                    user_name = self.token_manager.get_user_name(token)
+                    result_var.set(f"驗證成功！歡迎 {user_name}")
+                    verify_window.after(1000, verify_window.destroy)
+                else:
+                    result_var.set("Token 無效")
+                    token_var.set("")
+            
+            # 按鈕區域
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(fill=tk.X, pady=10)
+            
+            ttk.Button(button_frame, 
+                      text="驗證", 
+                      command=do_verify).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="取消",
+                      command=verify_window.destroy).pack(side=tk.RIGHT, padx=5)
+            
+            # 綁定 Enter 鍵
+            token_entry.bind('<Return>', lambda e: do_verify())
+            
+            # 等待視窗關閉
+            self.root.wait_window(verify_window)
+            
+            return self.current_token is not None
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"Token 驗證時發生錯誤：{str(e)}")
+            return False
+
+    def create_token_management_window(self):
+        """建立 token 管理視窗"""
+        try:
+            # 先驗證 token
+            if not self.verify_token():
+                return
+            
+            token_window = tk.Toplevel(self.root)
+            token_window.title("Token 管理")
+            token_window.geometry("600x400")
+            
+            # 主要內容框架
+            main_frame = ttk.Frame(token_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # Token 列表
+            list_frame = ttk.LabelFrame(main_frame, text="Token 列表", padding="10")
+            list_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+            
+            # 建立 Treeview
+            columns = ("Token", "使用者名稱", "建立時間")
+            tree = ttk.Treeview(list_frame, columns=columns, show="headings")
+            
+            # 設定欄位標題
+            for col in columns:
+                tree.heading(col, text=col)
+                tree.column(col, width=150)
+            
+            # 加入捲軸
+            scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=tree.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            tree.configure(yscrollcommand=scrollbar.set)
+            tree.pack(fill=tk.BOTH, expand=True)
+            
+            # 新增 Token 區域
+            add_frame = ttk.LabelFrame(main_frame, text="新增 Token", padding="10")
+            add_frame.pack(fill=tk.X, pady=5)
+            
+            # Token 輸入
+            token_frame = ttk.Frame(add_frame)
+            token_frame.pack(fill=tk.X, pady=2)
+            ttk.Label(token_frame, text="Token：").pack(side=tk.LEFT)
+            token_var = tk.StringVar()
+            token_entry = ttk.Entry(token_frame, textvariable=token_var)
+            token_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+            
+            # 使用者名稱輸入
+            name_frame = ttk.Frame(add_frame)
+            name_frame.pack(fill=tk.X, pady=2)
+            ttk.Label(name_frame, text="使用者名稱：").pack(side=tk.LEFT)
+            name_var = tk.StringVar()
+            name_entry = ttk.Entry(name_frame, textvariable=name_var)
+            name_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+            
+            def refresh_tokens():
+                """重新整理 Token 列表"""
+                # 清空現有項目
+                for item in tree.get_children():
+                    tree.delete(item)
+                
+                # 載入最新 Token 列表
+                tokens = self.token_manager.get_all_tokens()
+                for token, info in tokens.items():
+                    tree.insert("", tk.END, values=(
+                        token,
+                        info["user_name"],
+                        info["created_at"]
+                    ))
+            
+            def add_token():
+                """新增 Token"""
+                token = token_var.get().strip()
+                user_name = name_var.get().strip()
+                
+                if not token:
+                    messagebox.showerror("錯誤", "請輸入 Token")
+                    return
+                
+                if not user_name:
+                    messagebox.showerror("錯誤", "請輸入使用者名稱")
+                    return
+                
+                if self.token_manager.add_token(token, user_name):
+                    messagebox.showinfo("成功", "Token 新增成功")
+                    token_var.set("")
+                    name_var.set("")
+                    refresh_tokens()
+                else:
+                    messagebox.showerror("錯誤", "Token 新增失敗")
+            
+            def remove_token():
+                """移除選中的 Token"""
+                selected = tree.selection()
+                if not selected:
+                    messagebox.showwarning("警告", "請選擇要移除的 Token")
+                    return
+                
+                if messagebox.askyesno("確認", "確定要移除選中的 Token？"):
+                    for item in selected:
+                        token = tree.item(item)["values"][0]
+                        if self.token_manager.remove_token(token):
+                            tree.delete(item)
+            
+            # 按鈕區域
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(fill=tk.X, pady=10)
+            
+            ttk.Button(button_frame, 
+                      text="新增", 
+                      command=add_token).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="移除",
+                      command=remove_token).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="重新整理",
+                      command=refresh_tokens).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="關閉",
+                      command=token_window.destroy).pack(side=tk.RIGHT, padx=5)
+            
+            # 初始載入 Token 列表
+            refresh_tokens()
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"建立 Token 管理視窗時發生錯誤：{str(e)}")
 
 def main():
     try:

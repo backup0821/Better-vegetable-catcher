@@ -2,6 +2,9 @@ import sqlite3
 import os
 from datetime import datetime
 from win10toast import ToastNotifier
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 class PriceAlertSystem:
     def __init__(self):
@@ -23,6 +26,14 @@ class PriceAlertSystem:
                      is_active INTEGER,
                      created_at TIMESTAMP,
                      last_triggered TIMESTAMP)''')
+        
+        c.execute('''CREATE TABLE IF NOT EXISTS dev_notifications
+                    (id INTEGER PRIMARY KEY,
+                     title TEXT,
+                     message TEXT,
+                     notification_type TEXT,
+                     created_at TIMESTAMP,
+                     is_read INTEGER DEFAULT 0)''')
         conn.commit()
         conn.close()
 
@@ -79,3 +90,71 @@ class PriceAlertSystem:
     def notify(self, title, message):
         """發送通知"""
         self.notifier.show_toast(title, message, duration=10)
+
+    def send_dev_notification(self, title, message, notification_type="system"):
+        """開發者發送通知"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            c = conn.cursor()
+            c.execute("""INSERT INTO dev_notifications 
+                        (title, message, notification_type, created_at)
+                        VALUES (?, ?, ?, ?)""",
+                     (title, message, notification_type, datetime.now()))
+            conn.commit()
+            conn.close()
+
+            # 根據通知類型發送通知
+            if notification_type == "system":
+                self.notify(title, message)
+            elif notification_type == "email":
+                self.send_email_notification(title, message)
+            
+            return True
+        except Exception as e:
+            print(f"發送通知時發生錯誤：{str(e)}")
+            return False
+
+    def get_dev_notifications(self, unread_only=False):
+        """獲取開發者通知"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            c = conn.cursor()
+            if unread_only:
+                notifications = c.execute("SELECT * FROM dev_notifications WHERE is_read = 0 ORDER BY created_at DESC").fetchall()
+            else:
+                notifications = c.execute("SELECT * FROM dev_notifications ORDER BY created_at DESC").fetchall()
+            conn.close()
+            
+            return [
+                {
+                    "id": notif[0],
+                    "title": notif[1],
+                    "message": notif[2],
+                    "notification_type": notif[3],
+                    "created_at": notif[4],
+                    "is_read": notif[5]
+                }
+                for notif in notifications
+            ]
+        except Exception as e:
+            print(f"獲取通知時發生錯誤：{str(e)}")
+            return []
+
+    def mark_notification_read(self, notification_id):
+        """標記通知為已讀"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            c = conn.cursor()
+            c.execute("UPDATE dev_notifications SET is_read = 1 WHERE id = ?", (notification_id,))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"標記通知已讀時發生錯誤：{str(e)}")
+            return False
+
+    def send_email_notification(self, title, message):
+        """發送電子郵件通知"""
+        # 這裡需要實作電子郵件發送功能
+        # 可以使用 smtplib 或其他郵件服務
+        pass
