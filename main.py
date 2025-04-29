@@ -858,8 +858,20 @@ class FarmDataApp:
                 self.status_var.set("無法獲取版本資訊")
                 return
             
-            # 解析版本號
+            # 解析版本號，排除網頁版本
             latest_version_tag = latest_release['tag_name'].replace('v', '')
+            if '.web' in latest_version_tag:
+                # 如果是網頁版本，嘗試獲取下一個非網頁版本
+                response = requests.get(f"https://api.github.com/repos/{GITHUB_REPO}/releases", headers=headers, timeout=5)
+                response.raise_for_status()
+                releases = response.json()
+                for release in releases:
+                    version_tag = release['tag_name'].replace('v', '')
+                    if '.web' not in version_tag:
+                        latest_version_tag = version_tag
+                        latest_release = release
+                        break
+            
             latest_version = version.parse(latest_version_tag)
             current_version = version.parse(CURRENT_VERSION)
             

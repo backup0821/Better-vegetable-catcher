@@ -38,6 +38,28 @@ header h1 {
     margin-top: 10px;
 }
 
+.version-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+.version-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.update-notice {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+}
+
 main {
     display: flex;
     gap: 20px;
@@ -138,4 +160,32 @@ footer {
     .analysis-buttons {
         grid-template-columns: 1fr;
     }
+}
+
+.export-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.export-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.export-buttons button {
+    background-color: #34a853;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.export-buttons button:hover {
+    background-color: #2d8a46;
 } 

@@ -1,3 +1,7 @@
+// 版本資訊
+const VERSION = 'v1.0';
+const VERSION_CHECK_URL = 'https://api.github.com/repos/your-repo/Better-vegetable-catcher/releases/latest';
+
 // DOM 元素
 const searchInput = document.getElementById('searchInput');
 const cropSelect = document.getElementById('cropSelect');
@@ -7,10 +11,33 @@ const showPriceTrendBtn = document.getElementById('showPriceTrend');
 const showVolumeDistBtn = document.getElementById('showVolumeDist');
 const showPriceDistBtn = document.getElementById('showPriceDist');
 const showSeasonalBtn = document.getElementById('showSeasonal');
+const versionNumber = document.getElementById('versionNumber');
+const lastUpdate = document.getElementById('lastUpdate');
+const dataUpdateTime = document.getElementById('dataUpdateTime');
 
 // 資料相關變數
 let cropData = [];
 let selectedCrop = '';
+
+// 檢查版本更新
+async function checkForUpdates() {
+    try {
+        const response = await fetch(VERSION_CHECK_URL);
+        if (!response.ok) throw new Error('無法檢查更新');
+        const data = await response.json();
+        const latestVersion = data.tag_name;
+        
+        if (latestVersion !== VERSION) {
+            const updateMessage = `發現新版本 ${latestVersion}！目前版本：${VERSION}`;
+            resultArea.innerHTML = `<p class="update-notice">${updateMessage}</p>`;
+        }
+        
+        versionNumber.textContent = VERSION;
+        lastUpdate.textContent = new Date().toLocaleString('zh-TW');
+    } catch (error) {
+        console.error('檢查更新時發生錯誤:', error);
+    }
+}
 
 // 從農產品交易行情站獲取資料
 async function fetchData() {
@@ -20,6 +47,13 @@ async function fetchData() {
         const data = await response.json();
         cropData = data;
         updateCropList();
+        
+        // 更新資料時間
+        const now = new Date();
+        dataUpdateTime.textContent = now.toLocaleString('zh-TW');
+        
+        // 檢查更新
+        await checkForUpdates();
     } catch (error) {
         console.error('獲取資料時發生錯誤:', error);
         resultArea.innerHTML = '<p class="error">無法獲取資料，請稍後再試</p>';
@@ -169,6 +203,114 @@ function showSeasonalAnalysis() {
     showBasicStats(cropData);
 }
 
+// 進階分析功能
+function showPricePrediction() {
+    if (!selectedCrop) return;
+    
+    const cropData = getCropData(selectedCrop);
+    const dates = cropData.map(item => new Date(item.交易日期));
+    const prices = cropData.map(item => Number(item.平均價));
+    
+    // 使用簡單的線性回歸進行預測
+    const xMean = dates.reduce((a, b) => a + b.getTime(), 0) / dates.length;
+    const yMean = prices.reduce((a, b) => a + b, 0) / prices.length;
+    
+    const numerator = dates.reduce((sum, date, i) => 
+        sum + (date.getTime() - xMean) * (prices[i] - yMean), 0);
+    const denominator = dates.reduce((sum, date) => 
+        sum + Math.pow(date.getTime() - xMean, 2), 0);
+    
+    const slope = numerator / denominator;
+    const intercept = yMean - slope * xMean;
+    
+    // 預測未來30天
+    const futureDates = Array.from({length: 30}, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        return date;
+    });
+    
+    const predictedPrices = futureDates.map(date => 
+        slope * date.getTime() + intercept);
+    
+    const trace1 = {
+        x: dates,
+        y: prices,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: '歷史價格',
+        line: { color: '#1a73e8' }
+    };
+    
+    const trace2 = {
+        x: futureDates,
+        y: predictedPrices,
+        type: 'scatter',
+        mode: 'lines',
+        name: '預測價格',
+        line: { 
+            color: '#ea4335',
+            dash: 'dash'
+        }
+    };
+    
+    const layout = {
+        title: `${selectedCrop} 價格預測`,
+        xaxis: { title: '日期' },
+        yaxis: { title: '價格 (元/公斤)' }
+    };
+    
+    Plotly.newPlot(chartArea, [trace1, trace2], layout);
+    showBasicStats(cropData);
+}
+
+// 匯出資料功能
+function exportData(format) {
+    if (!selectedCrop || !cropData.length) return;
+    
+    const cropData = getCropData(selectedCrop);
+    let content = '';
+    let filename = `${selectedCrop}_交易資料`;
+    
+    if (format === 'excel') {
+        // 轉換為 Excel 格式
+        content = convertToExcel(cropData);
+        filename += '.xlsx';
+    } else {
+        // 轉換為 CSV 格式
+        content = convertToCSV(cropData);
+        filename += '.csv';
+    }
+    
+    // 建立下載連結
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+
+function convertToCSV(data) {
+    const headers = ['交易日期', '市場名稱', '作物名稱', '平均價', '交易量'];
+    const rows = data.map(item => [
+        item.交易日期,
+        item.市場名稱,
+        item.作物名稱,
+        item.平均價,
+        item.交易量
+    ]);
+    
+    return [headers, ...rows]
+        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .join('\n');
+}
+
+function convertToExcel(data) {
+    // 這裡需要引入額外的 Excel 處理庫
+    // 暫時返回 CSV 格式
+    return convertToCSV(data);
+}
+
 // 獲取特定作物的資料
 function getCropData(cropName) {
     return cropData.filter(item => item.作物名稱 === cropName);
@@ -208,6 +350,11 @@ showPriceTrendBtn.addEventListener('click', showPriceTrend);
 showVolumeDistBtn.addEventListener('click', showVolumeDistribution);
 showPriceDistBtn.addEventListener('click', showPriceDistribution);
 showSeasonalBtn.addEventListener('click', showSeasonalAnalysis);
+
+// 新增按鈕事件監聽器
+document.getElementById('showPricePrediction').addEventListener('click', showPricePrediction);
+document.getElementById('exportExcel').addEventListener('click', () => exportData('excel'));
+document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
 
 // 初始化
 fetchData(); 
