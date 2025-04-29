@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>農產品交易資料分析系統 v1.0</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>農產品交易資料分析系統</h1>
+            <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
+            <p class="version">版本：v1.0</p>
+        </header>
+
+        <main>
+            <div class="control-panel">
+                <div class="search-section">
+                    <h2>作物選擇</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
+                    </div>
+                    <div class="crop-select">
+                        <select id="cropSelect">
+                            <option value="">請選擇作物</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="analysis-section">
+                    <h2>分析功能</h2>
+                    <div class="analysis-buttons">
+                        <button id="showPriceTrend">📈 價格趨勢</button>
+                        <button id="showVolumeDist">📊 交易量分布</button>
+                        <button id="showPriceDist">📉 價格分布</button>
+                        <button id="showSeasonal">📅 季節性分析</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="display-panel">
+                <div id="chartArea" class="chart-area"></div>
+                <div id="resultArea" class="result-area">
+                    <p>請選擇作物以查看分析結果</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>資料來源：行政院農業委員會農產品交易行情站</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
