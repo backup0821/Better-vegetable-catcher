@@ -12,6 +12,7 @@
 
 其目標是幫助使用者有效掌握市場變化，支援資料整合、視覺化分析、價格趨勢預測等進階功能。無論是農業研究、資料分析，還是教學應用，這款工具都能成為你的強力助手 🌟
 
+目前有提供免費的網頁版本 [網頁版點我]()https://backup0821.github.io/Better-vegetable-catcher/WEB/
 ---
 
 ## ⚙️ 安裝方式  
@@ -32,6 +33,8 @@ python main.py
 ```
 
 ---
+
+目前有提供免費的網頁版本 [網頁版點我]()https://backup0821.github.io/Better-vegetable-catcher/WEB/
 
 ## 📁 專案結構  
 
