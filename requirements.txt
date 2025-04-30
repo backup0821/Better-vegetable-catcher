@@ -11,4 +11,5 @@ scikit-learn==1.3.0
 seaborn==0.12.2
 kaleido==0.2.1
 win10toast-click>=0.1.2  # Windows 10 通知支援
-plotly-express>=0.4.0  # 用於進階視覺化 
+plotly-express>=0.4.0  # 用於進階視覺化
+tkcalendar>=1.6.1  # 用於日期選擇 
