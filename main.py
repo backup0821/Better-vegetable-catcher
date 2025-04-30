@@ -58,6 +58,7 @@ class FarmDataApp:
             self.filter_crops = []
             self.token_manager = TokenManager()
             self.current_token = None
+            self.is_premium = False  # 新增進階功能標記
             
             # 確保視窗大小合適
             screen_width = self.root.winfo_screenwidth()
@@ -81,6 +82,9 @@ class FarmDataApp:
             # 建立輸出目錄
             self.setup_output_directory()
             
+            # 設定 token 檔案路徑
+            self.token_file = os.path.join("Better-vegetable-catcher", "token.txt")
+            
             # 載入資料
             self.load_data()
             
@@ -89,9 +93,6 @@ class FarmDataApp:
             
             self.alert_system = PriceAlertSystem()
             self.visualizer = None  # 將在載入資料時初始化
-            
-            # 檢查開發者通知
-            self.check_dev_notifications()
             
         except Exception as e:
             messagebox.showerror("初始化錯誤", f"程式初始化時發生錯誤：\n{str(e)}")
@@ -281,18 +282,17 @@ class FarmDataApp:
             ttk.Button(button_frame, text="📊 價格分布", command=self.show_price_distribution).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="📅 季節性分析", command=self.show_seasonal_analysis).pack(fill=tk.X, pady=2)
             
-            # 進階分析
+            # 進階分析（需要 token）
             ttk.Label(button_frame, text="進階分析：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
             ttk.Button(button_frame, text="🔍 相似作物分析", command=self.show_similar_crops).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="🎯 價格預測", command=self.show_price_prediction).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="⚠️ 價格預警設定", command=self.create_alert_window).pack(fill=tk.X, pady=2)
             ttk.Button(button_frame, text="📊 進階圖表分析", command=self.show_advanced_visualization).pack(fill=tk.X, pady=2)
             
-            # 開發者功能
-            ttk.Label(button_frame, text="開發者功能：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
-            ttk.Button(button_frame, text="📢 發送通知", command=self.create_notification_window).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="📋 查看通知", command=self.show_notifications).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="🔑 Token 管理", command=self.create_token_management_window).pack(fill=tk.X, pady=2)
+            # Token 管理
+            ttk.Label(button_frame, text="Token 管理：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
+            ttk.Button(button_frame, text="🔑 解鎖進階功能", command=self.verify_token).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, text="📋 Token 管理", command=self.create_token_management_window).pack(fill=tk.X, pady=2)
             
             # 右側顯示區域
             display_frame = ttk.LabelFrame(main_frame, text="分析結果", padding="10")
@@ -724,6 +724,11 @@ class FarmDataApp:
     
     def show_similar_crops(self):
         """顯示相似作物分析"""
+        if not self.is_premium:
+            messagebox.showinfo("進階功能", "此功能需要解鎖進階功能才能使用")
+            self.verify_token()
+            return
+            
         try:
             if not self.analyzer:
                 messagebox.showerror("錯誤", "沒有可用的資料")
@@ -750,7 +755,12 @@ class FarmDataApp:
             messagebox.showerror("錯誤", f"分析相似作物時發生錯誤：{str(e)}")
     
     def show_price_prediction(self):
-        """顯示價格預測結果，使用改進的預測算法"""
+        """顯示價格預測結果"""
+        if not self.is_premium:
+            messagebox.showinfo("進階功能", "此功能需要解鎖進階功能才能使用")
+            self.verify_token()
+            return
+            
         try:
             crop_name = self.crop_var.get()
             if not crop_name or not self.analyzer:
@@ -1231,6 +1241,11 @@ class FarmDataApp:
 
     def show_advanced_visualization(self):
         """顯示進階視覺化分析"""
+        if not self.is_premium:
+            messagebox.showinfo("進階功能", "此功能需要解鎖進階功能才能使用")
+            self.verify_token()
+            return
+            
         try:
             if not self.visualizer:
                 messagebox.showerror("錯誤", "沒有可用的資料")
@@ -1255,194 +1270,12 @@ class FarmDataApp:
         except Exception as e:
             messagebox.showerror("錯誤", f"顯示進階視覺化分析時發生錯誤：{str(e)}")
 
-    def create_notification_window(self):
-        """建立發送通知視窗"""
-        try:
-            # 先驗證 token
-            if not self.verify_token():
-                return
-            
-            notification_window = tk.Toplevel(self.root)
-            notification_window.title("發送通知")
-            notification_window.geometry("500x400")
-            
-            # 主要內容框架
-            main_frame = ttk.Frame(notification_window, padding="10")
-            main_frame.pack(fill=tk.BOTH, expand=True)
-            
-            # 標題輸入
-            title_frame = ttk.Frame(main_frame)
-            title_frame.pack(fill=tk.X, pady=5)
-            ttk.Label(title_frame, text="通知標題：").pack(side=tk.LEFT)
-            title_var = tk.StringVar()
-            title_entry = ttk.Entry(title_frame, textvariable=title_var, width=40)
-            title_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-            
-            # 訊息輸入
-            message_frame = ttk.Frame(main_frame)
-            message_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-            ttk.Label(message_frame, text="通知內容：").pack(anchor=tk.W)
-            message_text = scrolledtext.ScrolledText(message_frame, wrap=tk.WORD, height=10)
-            message_text.pack(fill=tk.BOTH, expand=True)
-            
-            # 通知方式選擇
-            notify_frame = ttk.LabelFrame(main_frame, text="通知方式", padding="10")
-            notify_frame.pack(fill=tk.X, pady=5)
-            
-            notify_var = tk.StringVar(value="system")
-            ttk.Radiobutton(notify_frame, 
-                           text="系統通知", 
-                           variable=notify_var,
-                           value="system").pack(anchor=tk.W)
-            ttk.Radiobutton(notify_frame, 
-                           text="電子郵件", 
-                           variable=notify_var,
-                           value="email").pack(anchor=tk.W)
-            
-            def send_notification():
-                """發送通知"""
-                try:
-                    title = title_var.get().strip()
-                    message = message_text.get("1.0", tk.END).strip()
-                    
-                    if not title:
-                        messagebox.showerror("錯誤", "請輸入通知標題")
-                        return
-                    
-                    if not message:
-                        messagebox.showerror("錯誤", "請輸入通知內容")
-                        return
-                    
-                    # 發送通知
-                    if self.alert_system.send_dev_notification(
-                        title=title,
-                        message=message,
-                        notification_type=notify_var.get()
-                    ):
-                        messagebox.showinfo("成功", "通知已發送")
-                        notification_window.destroy()
-                    else:
-                        messagebox.showerror("錯誤", "發送通知失敗")
-                    
-                except Exception as e:
-                    messagebox.showerror("錯誤", f"發送通知時發生錯誤：{str(e)}")
-            
-            # 按鈕區域
-            button_frame = ttk.Frame(main_frame)
-            button_frame.pack(fill=tk.X, pady=10)
-            
-            ttk.Button(button_frame, 
-                      text="發送", 
-                      command=send_notification).pack(side=tk.LEFT, padx=5)
-            ttk.Button(button_frame,
-                      text="取消",
-                      command=notification_window.destroy).pack(side=tk.RIGHT, padx=5)
-            
-        except Exception as e:
-            messagebox.showerror("錯誤", f"建立通知視窗時發生錯誤：{str(e)}")
-
-    def show_notifications(self):
-        """顯示通知列表"""
-        try:
-            # 先驗證 token
-            if not self.verify_token():
-                return
-            
-            notifications_window = tk.Toplevel(self.root)
-            notifications_window.title("通知列表")
-            notifications_window.geometry("800x600")
-            
-            # 主要內容框架
-            main_frame = ttk.Frame(notifications_window, padding="10")
-            main_frame.pack(fill=tk.BOTH, expand=True)
-            
-            # 建立 Treeview
-            columns = ("標題", "內容", "通知方式", "時間", "狀態")
-            tree = ttk.Treeview(main_frame, columns=columns, show="headings")
-            
-            # 設定欄位標題
-            for col in columns:
-                tree.heading(col, text=col)
-                tree.column(col, width=100)
-            
-            # 加入捲軸
-            scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=tree.yview)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            tree.configure(yscrollcommand=scrollbar.set)
-            tree.pack(fill=tk.BOTH, expand=True)
-            
-            def refresh_notifications():
-                """重新整理通知列表"""
-                # 清空現有項目
-                for item in tree.get_children():
-                    tree.delete(item)
-                
-                # 載入最新通知列表
-                notifications = self.alert_system.get_dev_notifications()
-                for notif in notifications:
-                    tree.insert("", tk.END, values=(
-                        notif["title"],
-                        notif["message"][:50] + "..." if len(notif["message"]) > 50 else notif["message"],
-                        "系統通知" if notif["notification_type"] == "system" else "電子郵件",
-                        notif["created_at"],
-                        "未讀" if notif["is_read"] == 0 else "已讀"
-                    ))
-            
-            def mark_selected_read():
-                """標記選中的通知為已讀"""
-                selected = tree.selection()
-                if not selected:
-                    messagebox.showwarning("警告", "請選擇要標記的通知")
-                    return
-                
-                for item in selected:
-                    values = tree.item(item)["values"]
-                    # 這裡需要根據實際情況修改，可能需要添加通知ID
-                    # self.alert_system.mark_notification_read(notification_id)
-                
-                refresh_notifications()
-            
-            # 按鈕區域
-            button_frame = ttk.Frame(main_frame)
-            button_frame.pack(fill=tk.X, pady=10)
-            
-            ttk.Button(button_frame, 
-                      text="重新整理", 
-                      command=refresh_notifications).pack(side=tk.LEFT, padx=5)
-            ttk.Button(button_frame,
-                      text="標記已讀",
-                      command=mark_selected_read).pack(side=tk.LEFT, padx=5)
-            ttk.Button(button_frame,
-                      text="關閉",
-                      command=notifications_window.destroy).pack(side=tk.RIGHT, padx=5)
-            
-            # 初始載入通知列表
-            refresh_notifications()
-            
-        except Exception as e:
-            messagebox.showerror("錯誤", f"顯示通知列表時發生錯誤：{str(e)}")
-
-    def check_dev_notifications(self):
-        """檢查開發者通知"""
-        try:
-            notifications = self.alert_system.get_dev_notifications(unread_only=True)
-            if notifications:
-                # 顯示未讀通知數量
-                self.status_var.set(f"您有 {len(notifications)} 則未讀通知")
-                
-                # 顯示最新通知
-                latest = notifications[0]
-                self.notify(latest["title"], latest["message"])
-                
-        except Exception as e:
-            print(f"檢查開發者通知時發生錯誤：{str(e)}")
-
     def verify_token(self):
-        """驗證 token"""
+        """驗證 token 以解鎖進階功能"""
         try:
             # 建立驗證視窗
             verify_window = tk.Toplevel(self.root)
-            verify_window.title("Token 驗證")
+            verify_window.title("進階功能解鎖")
             verify_window.geometry("400x200")
             verify_window.transient(self.root)
             verify_window.grab_set()
@@ -1454,7 +1287,7 @@ class FarmDataApp:
             # Token 輸入
             token_frame = ttk.Frame(main_frame)
             token_frame.pack(fill=tk.X, pady=5)
-            ttk.Label(token_frame, text="請輸入 Token：").pack(side=tk.LEFT)
+            ttk.Label(token_frame, text="請輸入解鎖碼：").pack(side=tk.LEFT)
             token_var = tk.StringVar()
             token_entry = ttk.Entry(token_frame, textvariable=token_var, width=30)
             token_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
@@ -1467,16 +1300,16 @@ class FarmDataApp:
             def do_verify():
                 token = token_var.get().strip()
                 if not token:
-                    result_var.set("請輸入 Token")
+                    result_var.set("請輸入解鎖碼")
                     return
                 
                 if self.token_manager.verify_token(token):
                     self.current_token = token
-                    user_name = self.token_manager.get_user_name(token)
-                    result_var.set(f"驗證成功！歡迎 {user_name}")
+                    self.is_premium = True
+                    result_var.set("解鎖成功！已啟用進階功能")
                     verify_window.after(1000, verify_window.destroy)
                 else:
-                    result_var.set("Token 無效")
+                    result_var.set("解鎖碼無效")
                     token_var.set("")
             
             # 按鈕區域
@@ -1496,11 +1329,81 @@ class FarmDataApp:
             # 等待視窗關閉
             self.root.wait_window(verify_window)
             
-            return self.current_token is not None
+            return self.is_premium
             
         except Exception as e:
-            messagebox.showerror("錯誤", f"Token 驗證時發生錯誤：{str(e)}")
+            messagebox.showerror("錯誤", f"驗證解鎖碼時發生錯誤：{str(e)}")
             return False
+
+    def show_calendar(self):
+        """顯示日曆視窗讓使用者選擇日期"""
+        try:
+            # 建立日曆視窗
+            calendar_window = tk.Toplevel(self.root)
+            calendar_window.title("選擇日期")
+            calendar_window.geometry("400x450")
+            calendar_window.transient(self.root)
+            calendar_window.grab_set()
+            
+            # 主要內容框架
+            main_frame = ttk.Frame(calendar_window, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # 標題
+            ttk.Label(main_frame, text="請選擇日期", style='Subtitle.TLabel').pack(pady=5)
+            
+            # 建立日曆框架
+            calendar_frame = ttk.Frame(main_frame)
+            calendar_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+            
+            # 建立日曆元件
+            from tkcalendar import Calendar
+            cal = Calendar(calendar_frame, 
+                         selectmode='day',
+                         year=datetime.now().year,
+                         month=datetime.now().month,
+                         day=datetime.now().day,
+                         locale='zh_TW',
+                         date_pattern='y.m.d')
+            cal.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            
+            # 按鈕區域
+            button_frame = ttk.Frame(main_frame)
+            button_frame.pack(fill=tk.X, pady=10)
+            
+            def apply_date():
+                """套用選擇的日期"""
+                try:
+                    # 取得選擇的日期並轉換為民國年格式
+                    selected_date = cal.get_date()
+                    year, month, day = map(int, selected_date.split('.'))
+                    roc_year = year - 1911
+                    date_str = f"{roc_year}.{month:02d}.{day:02d}"
+                    
+                    self.date_var.set(date_str)
+                    self.update_display()
+                    calendar_window.destroy()
+                except Exception as e:
+                    messagebox.showerror("錯誤", f"日期格式轉換錯誤：{str(e)}")
+            
+            def clear_date():
+                """清除日期選擇"""
+                self.date_var.set("全部日期")
+                self.update_display()
+                calendar_window.destroy()
+            
+            ttk.Button(button_frame, 
+                      text="套用", 
+                      command=apply_date).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="清除",
+                      command=clear_date).pack(side=tk.LEFT, padx=5)
+            ttk.Button(button_frame,
+                      text="取消",
+                      command=calendar_window.destroy).pack(side=tk.RIGHT, padx=5)
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"顯示日曆時發生錯誤：{str(e)}")
 
     def create_token_management_window(self):
         """建立 token 管理視窗"""
@@ -1628,157 +1531,6 @@ class FarmDataApp:
         except Exception as e:
             messagebox.showerror("錯誤", f"建立 Token 管理視窗時發生錯誤：{str(e)}")
 
-    def show_calendar(self):
-        """顯示日曆視窗讓使用者選擇日期"""
-        try:
-            # 建立日曆視窗
-            calendar_window = tk.Toplevel(self.root)
-            calendar_window.title("選擇日期")
-            calendar_window.geometry("300x350")
-            calendar_window.transient(self.root)
-            calendar_window.grab_set()
-            
-            # 主要內容框架
-            main_frame = ttk.Frame(calendar_window, padding="10")
-            main_frame.pack(fill=tk.BOTH, expand=True)
-            
-            # 標題
-            ttk.Label(main_frame, text="請選擇日期", style='Subtitle.TLabel').pack(pady=5)
-            
-            # 建立日曆框架
-            calendar_frame = ttk.Frame(main_frame)
-            calendar_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-            
-            # 取得當前日期
-            current_date = datetime.now()
-            
-            # 建立年月選擇
-            date_control_frame = ttk.Frame(calendar_frame)
-            date_control_frame.pack(fill=tk.X, pady=5)
-            
-            # 年份選擇
-            year_var = tk.IntVar(value=current_date.year)
-            year_frame = ttk.Frame(date_control_frame)
-            year_frame.pack(side=tk.LEFT, padx=5)
-            ttk.Label(year_frame, text="年：").pack(side=tk.LEFT)
-            year_spinbox = ttk.Spinbox(year_frame, from_=2000, to=2100, width=6, textvariable=year_var)
-            year_spinbox.pack(side=tk.LEFT)
-            
-            # 月份選擇
-            month_var = tk.IntVar(value=current_date.month)
-            month_frame = ttk.Frame(date_control_frame)
-            month_frame.pack(side=tk.LEFT, padx=5)
-            ttk.Label(month_frame, text="月：").pack(side=tk.LEFT)
-            month_spinbox = ttk.Spinbox(month_frame, from_=1, to=12, width=4, textvariable=month_var)
-            month_spinbox.pack(side=tk.LEFT)
-            
-            # 建立日曆表格
-            calendar_table = ttk.Frame(calendar_frame)
-            calendar_table.pack(fill=tk.BOTH, expand=True, pady=5)
-            
-            # 星期標題
-            weekdays = ["日", "一", "二", "三", "四", "五", "六"]
-            for i, day in enumerate(weekdays):
-                ttk.Label(calendar_table, text=day, width=3).grid(row=0, column=i, padx=2, pady=2)
-            
-            # 日期按鈕
-            date_buttons = []
-            selected_date = None
-            
-            def update_calendar(*args):
-                """更新日曆顯示"""
-                # 清空現有按鈕
-                for button in date_buttons:
-                    button.destroy()
-                date_buttons.clear()
-                
-                # 取得選擇的年月
-                year = year_var.get()
-                month = month_var.get()
-                
-                # 計算該月第一天是星期幾
-                first_day = datetime(year, month, 1)
-                weekday = first_day.weekday()
-                
-                # 計算該月天數
-                if month == 12:
-                    next_month = datetime(year + 1, 1, 1)
-                else:
-                    next_month = datetime(year, month + 1, 1)
-                days_in_month = (next_month - first_day).days
-                
-                # 建立日期按鈕
-                for i in range(42):  # 6週 x 7天
-                    row = i // 7 + 1
-                    col = i % 7
-                    
-                    day = i - weekday + 1
-                    if 1 <= day <= days_in_month:
-                        date_str = f"{year}/{month:02d}/{day:02d}"
-                        btn = ttk.Button(calendar_table, text=str(day), width=3)
-                        btn.grid(row=row, column=col, padx=2, pady=2)
-                        
-                        # 如果是今天，標記為特殊樣式
-                        if year == current_date.year and month == current_date.month and day == current_date.day:
-                            btn.configure(style='Today.TButton')
-                        
-                        # 綁定點擊事件
-                        btn.configure(command=lambda d=date_str: select_date(d, btn))
-                        date_buttons.append(btn)
-            
-            def select_date(date_str, button):
-                """選擇日期"""
-                nonlocal selected_date
-                selected_date = date_str
-                
-                # 更新按鈕樣式
-                for btn in date_buttons:
-                    btn.configure(style='TButton')
-                button.configure(style='Selected.TButton')
-            
-            # 綁定年月變更事件
-            year_var.trace_add('write', update_calendar)
-            month_var.trace_add('write', update_calendar)
-            
-            # 初始化日曆
-            update_calendar()
-            
-            # 按鈕區域
-            button_frame = ttk.Frame(main_frame)
-            button_frame.pack(fill=tk.X, pady=10)
-            
-            def apply_date():
-                """套用選擇的日期"""
-                if selected_date:
-                    self.date_var.set(selected_date)
-                    self.update_display()
-                    calendar_window.destroy()
-                else:
-                    messagebox.showwarning("警告", "請選擇日期")
-            
-            def clear_date():
-                """清除日期選擇"""
-                self.date_var.set("全部日期")
-                self.update_display()
-                calendar_window.destroy()
-            
-            ttk.Button(button_frame, 
-                      text="套用", 
-                      command=apply_date).pack(side=tk.LEFT, padx=5)
-            ttk.Button(button_frame,
-                      text="清除",
-                      command=clear_date).pack(side=tk.LEFT, padx=5)
-            ttk.Button(button_frame,
-                      text="取消",
-                      command=calendar_window.destroy).pack(side=tk.RIGHT, padx=5)
-            
-            # 設定樣式
-            self.style.configure('Today.TButton', background='#e6f7ff')
-            self.style.configure('Selected.TButton', background='#b3e0ff')
-            
-        except Exception as e:
-            messagebox.showerror("錯誤", f"顯示日曆時發生錯誤：{str(e)}")
-
 def main():
     try:
         root = ThemedTk(theme="arc")
@@ -1795,5 +1547,4 @@ if __name__ == "__main__":
     print("GitHub API URL：", GITHUB_API_URL)
     print("GitHub Releases URL：", GITHUB_RELEASES_URL)
     main() 
-
-#test
+    
