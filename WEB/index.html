@@ -12,7 +12,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="農產分析">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="image/png/icon-192.png">
+    <link rel="icon" type="image/png" href="image/png/icon-192.png">
 </head>
 <body>
     <div class="container">
@@ -75,10 +76,62 @@
     <script src="script.js"></script>
 </body>
 <script>
+    // 註冊 Service Worker
     if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(() => console.log('✅ Service Worker 已註冊！'))
-    .catch((err) => console.error('❌ Service Worker 註冊失敗：', err));
-}
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(registration => {
+                    console.log('✅ Service Worker 已註冊：', registration.scope);
+                })
+                .catch(error => {
+                    console.error('❌ Service Worker 註冊失敗：', error);
+                });
+        });
+    }
+
+    // 處理安裝提示
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // 防止 Chrome 自動顯示安裝提示
+        e.preventDefault();
+        // 儲存事件以便稍後使用
+        deferredPrompt = e;
+        // 顯示自訂安裝按鈕
+        showInstallPromotion();
+    });
+
+    function showInstallPromotion() {
+        // 檢查是否已經安裝
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            return;
+        }
+        
+        // 創建並顯示安裝按鈕
+        const installButton = document.createElement('button');
+        installButton.textContent = '安裝應用程式';
+        installButton.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        `;
+        
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`使用者選擇：${outcome}`);
+                deferredPrompt = null;
+            }
+        });
+        
+        document.body.appendChild(installButton);
+    }
 </script>
 </html> 

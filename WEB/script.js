@@ -1,6 +1,6 @@
 // 版本資訊
 const VERSION = 'v1.0';
-const VERSION_CHECK_URL = 'https://api.github.com/repos/your-repo/Better-vegetable-catcher/releases/latest';
+const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
 // DOM 元素
 const searchInput = document.getElementById('searchInput');
