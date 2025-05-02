@@ -1,8 +1,6 @@
 {
     "name": "果菜市場高級分析系統 - 網頁版",
     "short_name": "果菜分析網站",
-    "description": "果菜市場高級分析系統 - 網頁版",
-    "lang": "zh-TW",
     "start_url": "index.html",
     "display": "standalone",
     "background_color": "#ffffff",
