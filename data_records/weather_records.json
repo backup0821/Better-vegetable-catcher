@@ -1,0 +1,36 @@
+{
+  "records": [
+    {
+      "timestamp": "2025-05-02 20:28:30",
+      "city": "南投縣",
+      "district": "南投市",
+      "temperature": "27.1",
+      "humidity": "75",
+      "weather": "陰"
+    },
+    {
+      "timestamp": "2025-05-02 20:28:33",
+      "city": "南投縣",
+      "district": "鹿谷鄉",
+      "temperature": "27.1",
+      "humidity": "75",
+      "weather": "陰"
+    },
+    {
+      "timestamp": "2025-05-02 20:31:28",
+      "city": "南投縣",
+      "district": "南投市",
+      "temperature": "27.1",
+      "humidity": "75",
+      "weather": "陰"
+    }
+  ],
+  "city_averages": {
+    "南投縣": {
+      "average_temperature": 27.1,
+      "average_humidity": 75.0,
+      "last_updated": "2025-05-02 20:31:28",
+      "record_count": 3
+    }
+  }
+}

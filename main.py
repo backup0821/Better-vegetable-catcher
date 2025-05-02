@@ -19,6 +19,7 @@ import json
 from price_alert import PriceAlertSystem
 from advanced_visualization import AdvancedVisualizer
 from token_manager import TokenManager
+from data_recorder import DataRecorder
 
 # 版本資訊
 CURRENT_VERSION = "2.3"
@@ -60,6 +61,38 @@ class FarmDataApp:
             self.current_token = None
             self.is_premium = False  # 新增進階功能標記
             
+            # 初始化天氣相關變數
+            self.weather_data = None
+            self.location_var = tk.StringVar(value="台北市")
+            self.weather_update_interval = 1800  # 30分鐘更新一次
+            self.last_weather_update = 0
+            
+            # 初始化地點資料
+            self.locations = {
+                "台北市": ["中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", "北投區", "內湖區", "南港區", "文山區"],
+                "新北市": ["板橋區", "三重區", "中和區", "永和區", "新莊區", "新店區", "樹林區", "鶯歌區", "三峽區", "淡水區", "汐止區", "瑞芳區", "土城區", "蘆洲區", "五股區", "泰山區", "林口區", "深坑區", "石碇區", "坪林區", "三芝區", "石門區", "八里區", "平溪區", "雙溪區", "貢寮區", "金山區", "萬里區", "烏來區"],
+                "桃園市": ["桃園區", "中壢區", "平鎮區", "八德區", "楊梅區", "蘆竹區", "大溪區", "龍潭區", "龜山區", "大園區", "觀音區", "新屋區", "復興區"],
+                "台中市": ["中區", "東區", "南區", "西區", "北區", "北屯區", "西屯區", "南屯區", "太平區", "大里區", "霧峰區", "烏日區", "豐原區", "后里區", "石岡區", "東勢區", "和平區", "新社區", "潭子區", "大雅區", "神岡區", "大肚區", "沙鹿區", "龍井區", "梧棲區", "清水區", "大甲區", "外埔區", "大安區"],
+                "台南市": ["中西區", "東區", "南區", "北區", "安平區", "安南區", "永康區", "歸仁區", "新化區", "左鎮區", "玉井區", "楠西區", "南化區", "仁德區", "關廟區", "龍崎區", "官田區", "麻豆區", "佳里區", "西港區", "七股區", "將軍區", "學甲區", "北門區", "新營區", "後壁區", "白河區", "東山區", "六甲區", "下營區", "柳營區", "鹽水區", "善化區", "大內區", "山上區", "新市區", "安定區"],
+                "高雄市": ["楠梓區", "左營區", "鼓山區", "三民區", "鹽埕區", "前金區", "新興區", "苓雅區", "前鎮區", "旗津區", "小港區", "鳳山區", "大寮區", "鳥松區", "林園區", "仁武區", "大樹區", "大社區", "岡山區", "路竹區", "橋頭區", "梓官區", "彌陀區", "永安區", "燕巢區", "田寮區", "阿蓮區", "茄萣區", "湖內區", "旗山區", "美濃區", "內門區", "杉林區", "甲仙區", "六龜區", "茂林區", "桃源區", "那瑪夏區"],
+                "基隆市": ["仁愛區", "信義區", "中正區", "中山區", "安樂區", "暖暖區", "七堵區"],
+                "新竹市": ["東區", "北區", "香山區"],
+                "嘉義市": ["東區", "西區"],
+                "新竹縣": ["竹北市", "竹東鎮", "新埔鎮", "關西鎮", "湖口鄉", "新豐鄉", "芎林鄉", "橫山鄉", "北埔鄉", "寶山鄉", "峨眉鄉", "尖石鄉", "五峰鄉"],
+                "苗栗縣": ["苗栗市", "頭份市", "竹南鎮", "後龍鎮", "通霄鎮", "苑裡鎮", "卓蘭鎮", "造橋鄉", "西湖鄉", "頭屋鄉", "公館鄉", "大湖鄉", "泰安鄉", "銅鑼鄉", "三義鄉", "南庄鄉", "獅潭鄉", "三灣鄉"],
+                "彰化縣": ["彰化市", "員林市", "和美鎮", "鹿港鎮", "溪湖鎮", "二林鎮", "田中鎮", "北斗鎮", "花壇鄉", "芬園鄉", "大村鄉", "永靖鄉", "伸港鄉", "線西鄉", "福興鄉", "秀水鄉", "埔心鄉", "埔鹽鄉", "大城鄉", "芳苑鄉", "竹塘鄉", "社頭鄉", "二水鄉", "田尾鄉", "埤頭鄉", "溪州鄉"],
+                "南投縣": ["南投市", "埔里鎮", "草屯鎮", "竹山鎮", "集集鎮", "名間鄉", "鹿谷鄉", "中寮鄉", "魚池鄉", "國姓鄉", "水里鄉", "信義鄉", "仁愛鄉"],
+                "雲林縣": ["斗六市", "斗南鎮", "虎尾鎮", "西螺鎮", "土庫鎮", "北港鎮", "古坑鄉", "大埤鄉", "莿桐鄉", "林內鄉", "二崙鄉", "崙背鄉", "麥寮鄉", "東勢鄉", "褒忠鄉", "臺西鄉", "元長鄉", "四湖鄉", "口湖鄉", "水林鄉"],
+                "嘉義縣": ["太保市", "朴子市", "布袋鎮", "大林鎮", "民雄鄉", "溪口鄉", "新港鄉", "六腳鄉", "東石鄉", "義竹鄉", "鹿草鄉", "水上鄉", "中埔鄉", "竹崎鄉", "梅山鄉", "番路鄉", "大埔鄉", "阿里山鄉"],
+                "屏東縣": ["屏東市", "潮州鎮", "東港鎮", "恆春鎮", "萬丹鄉", "長治鄉", "麟洛鄉", "九如鄉", "里港鄉", "鹽埔鄉", "高樹鄉", "萬巒鄉", "內埔鄉", "竹田鄉", "新埤鄉", "枋寮鄉", "新園鄉", "崁頂鄉", "林邊鄉", "南州鄉", "佳冬鄉", "琉球鄉", "車城鄉", "滿州鄉", "枋山鄉", "三地門鄉", "霧台鄉", "瑪家鄉", "泰武鄉", "來義鄉", "春日鄉", "獅子鄉", "牡丹鄉", "禮納里"],
+                "宜蘭縣": ["宜蘭市", "羅東鎮", "蘇澳鎮", "頭城鎮", "礁溪鄉", "壯圍鄉", "員山鄉", "冬山鄉", "五結鄉", "三星鄉", "大同鄉", "南澳鄉"],
+                "花蓮縣": ["花蓮市", "鳳林鎮", "玉里鎮", "新城鄉", "吉安鄉", "壽豐鄉", "光復鄉", "豐濱鄉", "瑞穗鄉", "富里鄉", "秀林鄉", "萬榮鄉", "卓溪鄉"],
+                "台東縣": ["台東市", "成功鎮", "關山鎮", "卑南鄉", "鹿野鄉", "池上鄉", "東河鄉", "長濱鄉", "太麻里鄉", "大武鄉", "綠島鄉", "海端鄉", "延平鄉", "金峰鄉", "達仁鄉", "蘭嶼鄉"],
+                "澎湖縣": ["馬公市", "湖西鄉", "白沙鄉", "西嶼鄉", "望安鄉", "七美鄉"],
+                "金門縣": ["金城鎮", "金湖鎮", "金沙鎮", "金寧鄉", "烈嶼鄉", "烏坵鄉"],
+                "連江縣": ["南竿鄉", "北竿鄉", "莒光鄉", "東引鄉"]
+            }
+            
             # 確保視窗大小合適
             screen_width = self.root.winfo_screenwidth()
             screen_height = self.root.winfo_screenheight()
@@ -93,6 +126,12 @@ class FarmDataApp:
             
             self.alert_system = PriceAlertSystem()
             self.visualizer = None  # 將在載入資料時初始化
+            
+            # 初始化天氣資料
+            self.update_weather_display()
+            
+            # 初始化資料記錄器
+            self.data_recorder = DataRecorder()
             
         except Exception as e:
             messagebox.showerror("初始化錯誤", f"程式初始化時發生錯誤：\n{str(e)}")
@@ -158,25 +197,91 @@ class FarmDataApp:
     
     def create_widgets(self):
         try:
-            # 主標題
+            # 主標題框架
             title_frame = ttk.Frame(self.root)
             title_frame.pack(fill=tk.X, pady=10)
             
-            title_label = ttk.Label(title_frame, text="農產品交易資料分析系統", style='Title.TLabel')
+            # 左側標題
+            title_left = ttk.Frame(title_frame)
+            title_left.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            
+            title_label = ttk.Label(title_left, 
+                                  text="農產品交易資料分析系統", 
+                                  style='Title.TLabel')
             title_label.pack()
             
-            subtitle_label = ttk.Label(title_frame, 
-                text="快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策", 
-                style='Subtitle.TLabel')
+            subtitle_label = ttk.Label(title_left, 
+                                     text="快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策", 
+                                     style='Subtitle.TLabel')
             subtitle_label.pack(pady=5)
             
-            # 版本資訊和更新按鈕
+            # 右側天氣預覽
+            title_right = ttk.Frame(title_frame)
+            title_right.pack(side=tk.RIGHT, padx=10)
+            
+            weather_frame = ttk.LabelFrame(title_right, 
+                                         text="天氣預覽", 
+                                         padding="5")
+            weather_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # 地點選擇框架
+            location_frame = ttk.Frame(weather_frame)
+            location_frame.pack(fill=tk.X, pady=2)
+            
+            # 縣市選擇
+            city_frame = ttk.Frame(location_frame)
+            city_frame.pack(fill=tk.X, pady=2)
+            ttk.Label(city_frame, text="縣市：").pack(side=tk.LEFT)
+            self.city_var = tk.StringVar(value="台北市")
+            city_combo = ttk.Combobox(city_frame, 
+                                    textvariable=self.city_var,
+                                    values=list(self.locations.keys()),
+                                    state="readonly",
+                                    width=10)
+            city_combo.pack(side=tk.LEFT, padx=2)
+            
+            # 區選擇
+            district_frame = ttk.Frame(location_frame)
+            district_frame.pack(fill=tk.X, pady=2)
+            ttk.Label(district_frame, text="區：").pack(side=tk.LEFT)
+            self.district_var = tk.StringVar(value="中正區")
+            self.district_combo = ttk.Combobox(district_frame, 
+                                             textvariable=self.district_var,
+                                             values=self.locations["台北市"],
+                                             state="readonly",
+                                             width=10)
+            self.district_combo.pack(side=tk.LEFT, padx=2)
+            
+            # 綁定縣市變更事件
+            def update_districts(event=None):
+                city = self.city_var.get()
+                if city in self.locations:
+                    self.district_combo['values'] = self.locations[city]
+                    self.district_combo.set(self.locations[city][0])
+                    self.update_weather_display()
+            
+            city_combo.bind("<<ComboboxSelected>>", update_districts)
+            self.district_combo.bind("<<ComboboxSelected>>", lambda e: self.update_weather_display())
+            
+            # 天氣資訊標籤
+            self.weather_label = ttk.Label(weather_frame, 
+                                         text="載入中...",
+                                         font=("微軟正黑體", 10))
+            self.weather_label.pack(pady=2)
+            
+            # 更新按鈕
+            ttk.Button(weather_frame, 
+                      text="更新天氣",
+                      command=self.update_weather_display,
+                      width=10).pack(pady=2)
+            
+            # 版本資訊框架
             version_frame = ttk.Frame(title_frame)
             version_frame.pack(pady=5)
             
             version_label = ttk.Label(version_frame, 
-                text=f"版本：v{CURRENT_VERSION}({CURRENT_BUILD})", 
-                style='Subtitle.TLabel')
+                                    text=f"版本：v{CURRENT_VERSION}({CURRENT_BUILD})", 
+                                    style='Subtitle.TLabel')
             version_label.pack(side=tk.LEFT, padx=5)
             
             ttk.Button(version_frame, 
@@ -186,7 +291,7 @@ class FarmDataApp:
                       text="更新歷史", 
                       command=self.show_update_history).pack(side=tk.LEFT, padx=5)
             
-            # 建立主框架
+            # 主框架
             main_frame = ttk.Frame(self.root, padding="10")
             main_frame.pack(fill=tk.BOTH, expand=True)
             
@@ -212,7 +317,6 @@ class FarmDataApp:
             # 更新 Canvas 滾動區域
             def _configure_canvas(event):
                 canvas.configure(scrollregion=canvas.bbox("all"))
-                # 更新 control_frame 的寬度以符合 canvas
                 canvas.itemconfig(canvas_frame, width=canvas.winfo_width())
             
             # 綁定事件
@@ -236,8 +340,10 @@ class FarmDataApp:
             
             ttk.Label(search_frame, text="📋 選擇作物：").pack(anchor=tk.W, pady=2)
             self.crop_var = tk.StringVar()
-            self.crop_combo = ttk.Combobox(search_frame, textvariable=self.crop_var, 
-                                         state="readonly", width=20)
+            self.crop_combo = ttk.Combobox(search_frame, 
+                                         textvariable=self.crop_var, 
+                                         state="readonly", 
+                                         width=20)
             self.crop_combo.pack(fill=tk.X, pady=2)
             
             # 分析方式選擇
@@ -247,18 +353,21 @@ class FarmDataApp:
             ttk.Label(analysis_frame, text="📊 計算方式：").pack(anchor=tk.W, pady=2)
             self.calc_method_var = tk.StringVar(value="加權平均")
             calc_methods = ["加權平均", "簡單平均", "分區統計"]
-            self.calc_method_combo = ttk.Combobox(analysis_frame, textvariable=self.calc_method_var, 
-                                                values=calc_methods, state="readonly")
+            self.calc_method_combo = ttk.Combobox(analysis_frame, 
+                                                textvariable=self.calc_method_var, 
+                                                values=calc_methods, 
+                                                state="readonly")
             self.calc_method_combo.pack(fill=tk.X, pady=2)
             
-            # 新增日期選擇區域
+            # 日期選擇區域
             ttk.Label(analysis_frame, text="📅 日期選擇：").pack(anchor=tk.W, pady=2)
             date_frame = ttk.Frame(analysis_frame)
             date_frame.pack(fill=tk.X, pady=2)
             
-            # 日期選擇按鈕
             self.date_var = tk.StringVar(value="全部日期")
-            self.date_button = ttk.Button(date_frame, textvariable=self.date_var, command=self.show_calendar)
+            self.date_button = ttk.Button(date_frame, 
+                                        textvariable=self.date_var, 
+                                        command=self.show_calendar)
             self.date_button.pack(fill=tk.X, pady=2)
             
             # 功能按鈕區
@@ -267,39 +376,78 @@ class FarmDataApp:
             
             # 基本功能
             ttk.Label(button_frame, text="基本功能：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
-            ttk.Button(button_frame, text="🔄 重新載入資料", command=self.reload_data).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="📊 查看分析結果", command=self.update_display).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="🔄 重新載入資料", 
+                      command=self.reload_data).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📊 查看分析結果", 
+                      command=self.update_display).pack(fill=tk.X, pady=2)
             
             # 匯出功能
             ttk.Label(button_frame, text="匯出功能：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
-            ttk.Button(button_frame, text="📑 匯出Excel", command=self.export_excel).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="📄 匯出CSV", command=self.export_csv).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📑 匯出Excel", 
+                      command=self.export_excel).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📄 匯出CSV", 
+                      command=self.export_csv).pack(fill=tk.X, pady=2)
             
             # 圖表分析
             ttk.Label(button_frame, text="圖表分析：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
-            ttk.Button(button_frame, text="📈 價格趨勢圖", command=self.show_price_trend).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="🥧 交易量分布", command=self.show_volume_distribution).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="📊 價格分布", command=self.show_price_distribution).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="📅 季節性分析", command=self.show_seasonal_analysis).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📈 價格趨勢圖", 
+                      command=self.show_price_trend).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="🥧 交易量分布", 
+                      command=self.show_volume_distribution).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📊 價格分布", 
+                      command=self.show_price_distribution).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📅 季節性分析", 
+                      command=self.show_seasonal_analysis).pack(fill=tk.X, pady=2)
             
             # 進階分析（需要 token）
             ttk.Label(button_frame, text="進階分析：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
-            ttk.Button(button_frame, text="🔍 相似作物分析", command=self.show_similar_crops).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="🎯 價格預測", command=self.show_price_prediction).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="⚠️ 價格預警設定", command=self.create_alert_window).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="📊 進階圖表分析", command=self.show_advanced_visualization).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="🔍 相似作物分析", 
+                      command=self.show_similar_crops).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="🎯 價格預測", 
+                      command=self.show_price_prediction).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="⚠️ 價格預警設定", 
+                      command=self.create_alert_window).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📊 進階圖表分析", 
+                      command=self.show_advanced_visualization).pack(fill=tk.X, pady=2)
             
             # Token 管理
             ttk.Label(button_frame, text="Token 管理：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
-            ttk.Button(button_frame, text="🔑 解鎖進階功能", command=self.verify_token).pack(fill=tk.X, pady=2)
-            ttk.Button(button_frame, text="📋 Token 管理", command=self.create_token_management_window).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="🔑 解鎖進階功能", 
+                      command=self.verify_token).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📋 Token 管理", 
+                      command=self.create_token_management_window).pack(fill=tk.X, pady=2)
+            
+            # 在按鈕區域添加圖表按鈕
+            ttk.Label(button_frame, text="資料圖表：", style='Subtitle.TLabel').pack(anchor=tk.W, pady=2)
+            ttk.Button(button_frame, 
+                      text="📊 天氣資料圖表", 
+                      command=self.show_weather_chart).pack(fill=tk.X, pady=2)
+            ttk.Button(button_frame, 
+                      text="📊 果菜資料圖表", 
+                      command=self.show_vegetable_chart).pack(fill=tk.X, pady=2)
             
             # 右側顯示區域
             display_frame = ttk.LabelFrame(main_frame, text="分析結果", padding="10")
             display_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
             
             # 文字顯示區域
-            self.text_area = scrolledtext.ScrolledText(display_frame, wrap=tk.WORD, font=("微軟正黑體", 11))
+            self.text_area = scrolledtext.ScrolledText(display_frame, 
+                                                     wrap=tk.WORD, 
+                                                     font=("微軟正黑體", 11))
             self.text_area.pack(fill=tk.BOTH, expand=True)
             
             # 綁定事件
@@ -307,8 +455,10 @@ class FarmDataApp:
             self.calc_method_combo.bind("<<ComboboxSelected>>", self.update_display)
             
             # 狀態列
-            status_bar = ttk.Label(self.root, textvariable=self.status_var, 
-                                 relief=tk.SUNKEN, padding=(5, 2))
+            status_bar = ttk.Label(self.root, 
+                                 textvariable=self.status_var, 
+                                 relief=tk.SUNKEN, 
+                                 padding=(5, 2))
             status_bar.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
             
         except Exception as e:
@@ -742,16 +892,23 @@ class FarmDataApp:
             # 獲取相似作物
             similar_crops = self.analyzer.get_similar_crops(crop_name)
             
+            if not similar_crops:
+                messagebox.showinfo("提示", "找不到足夠的資料進行相似作物分析")
+                return
+            
             # 顯示結果
+            self.text_area.config(state=tk.NORMAL)  # 允許編輯
             self.text_area.delete(1.0, tk.END)
             self.text_area.insert(tk.END, f"與 {crop_name} 價格變動模式最相似的作物：\n\n")
             
             for crop, correlation in similar_crops:
                 self.text_area.insert(tk.END, f"{crop}: 相關係數 = {correlation:.4f}\n")
             
+            self.text_area.config(state=tk.DISABLED)  # 禁止編輯
             self.status_var.set("已顯示相似作物分析")
             
         except Exception as e:
+            self.status_var.set(f"分析相似作物時發生錯誤：{str(e)}")
             messagebox.showerror("錯誤", f"分析相似作物時發生錯誤：{str(e)}")
     
     def show_price_prediction(self):
@@ -1530,6 +1687,103 @@ class FarmDataApp:
             
         except Exception as e:
             messagebox.showerror("錯誤", f"建立 Token 管理視窗時發生錯誤：{str(e)}")
+
+    def fetch_weather_data(self):
+        """從中央氣象局API獲取天氣資料"""
+        try:
+            current_time = time.time()
+            if current_time - self.last_weather_update < self.weather_update_interval:
+                return self.weather_data
+
+            url = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001"
+            params = {
+                "Authorization": "CWA-D06A74FF-C0D5-4FAB-9BA6-E3179F69AF55"
+            }
+            
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get("success") == "true" and "records" in data:
+                # 獲取所有測站資料
+                stations = data["records"]["Station"]
+                
+                # 遍歷所有測站
+                for station in stations:
+                    # 檢查測站的位置資訊
+                    geo_info = station.get("GeoInfo", {})
+                    county = geo_info.get("CountyName", "")
+                    town = geo_info.get("TownName", "")
+                    
+                    # 如果縣市和區都符合，就使用這個測站
+                    if county == self.city_var.get() and town == self.district_var.get():
+                        self.weather_data = station
+                        self.last_weather_update = current_time
+                        return self.weather_data
+                
+                self.status_var.set(f"找不到 {self.city_var.get()}{self.district_var.get()} 的天氣資料")
+                return None
+            else:
+                self.status_var.set("獲取天氣資料失敗")
+                return None
+                
+        except Exception as e:
+            self.status_var.set(f"獲取天氣資料時發生錯誤：{str(e)}")
+            return None
+
+    def update_weather_display(self):
+        """更新天氣顯示"""
+        try:
+            weather_data = self.fetch_weather_data()
+            if weather_data:
+                weather_element = weather_data["WeatherElement"]
+                temperature = weather_element["AirTemperature"]
+                humidity = weather_element["RelativeHumidity"]
+                weather = weather_element["Weather"]
+                
+                # 記錄天氣資料
+                self.data_recorder.record_weather(
+                    self.city_var.get(),
+                    self.district_var.get(),
+                    temperature,
+                    humidity,
+                    weather
+                )
+                
+                self.weather_label.config(text=f"🌡️ 溫度：{temperature}°C\n💧 濕度：{humidity}%\n☁️ 天氣：{weather}")
+                messagebox.showinfo("天氣更新", f"已成功更新 {self.city_var.get()}{self.district_var.get()} 的天氣資訊")
+            else:
+                self.weather_label.config(text="無法獲取天氣資料")
+                messagebox.showerror("天氣更新", f"無法獲取 {self.city_var.get()}{self.district_var.get()} 的天氣資料")
+                
+        except Exception as e:
+            self.weather_label.config(text="天氣資料更新失敗")
+            self.status_var.set(f"更新天氣顯示時發生錯誤：{str(e)}")
+            messagebox.showerror("天氣更新", f"更新天氣資料時發生錯誤：{str(e)}")
+
+    def show_weather_chart(self):
+        """顯示天氣資料圖表"""
+        try:
+            output_path = os.path.join(self.data_recorder.data_dir, "weather_chart.html")
+            if self.data_recorder.create_weather_chart(output_path):
+                webbrowser.open(f"file://{os.path.abspath(output_path)}")
+                self.status_var.set("已顯示天氣資料圖表")
+            else:
+                messagebox.showwarning("警告", "目前沒有足夠的天氣資料可以繪製圖表")
+        except Exception as e:
+            messagebox.showerror("錯誤", f"顯示天氣圖表時發生錯誤：{str(e)}")
+
+    def show_vegetable_chart(self):
+        """顯示果菜資料圖表"""
+        try:
+            output_path = os.path.join(self.data_recorder.data_dir, "vegetable_chart.html")
+            if self.data_recorder.create_vegetable_chart(output_path):
+                webbrowser.open(f"file://{os.path.abspath(output_path)}")
+                self.status_var.set("已顯示果菜資料圖表")
+            else:
+                messagebox.showwarning("警告", "目前沒有足夠的果菜資料可以繪製圖表")
+        except Exception as e:
+            messagebox.showerror("錯誤", f"顯示果菜圖表時發生錯誤：{str(e)}")
 
 def main():
     try:
