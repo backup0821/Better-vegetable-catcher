@@ -1,20 +1,27 @@
 {
-    "name": "果菜市場高級分析系統 - 網頁版",
-    "short_name": "果菜分析網站",
-    "start_url": "index.html",
+    "name": "農產品交易資料分析系統",
+    "short_name": "農產分析",
+    "description": "快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策",
+    "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#000000",
+    "orientation": "portrait",
     "icons": [
       {
         "src": "icon-192.png",
         "sizes": "192x192",
-        "type": "image/png"
+        "type": "image/png",
+        "purpose": "any maskable"
       },
       {
         "src": "icon-512.png",
         "sizes": "512x512",
-        "type": "image/png"
+        "type": "image/png",
+        "purpose": "any maskable"
       }
-    ]
-  }
+    ],
+    "categories": ["business", "productivity", "utilities"],
+    "lang": "zh-TW",
+    "dir": "ltr"
+}
