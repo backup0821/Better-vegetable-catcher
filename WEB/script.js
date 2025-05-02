@@ -346,6 +346,13 @@ cropSelect.addEventListener('change', (e) => {
     }
 });
 
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log("Service Worker 註冊成功！"))
+      .catch((e) => console.error("Service Worker 註冊失敗", e));
+  }
+
+  
 showPriceTrendBtn.addEventListener('click', showPriceTrend);
 showVolumeDistBtn.addEventListener('click', showVolumeDistribution);
 showPriceDistBtn.addEventListener('click', showPriceDistribution);
