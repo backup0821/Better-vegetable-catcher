@@ -105,41 +105,85 @@ function filterCrops() {
 // 顯示價格趨勢圖
 function showPriceTrend() {
     if (!selectedCrop) return;
-    
     const cropData = getCropData(selectedCrop);
     const dates = cropData.map(item => item.交易日期);
-    const prices = cropData.map(item => item.平均價);
-    
+    const prices = cropData.map(item => Number(item.平均價));
+    // 找最大/最小價及其日期
+    const maxPrice = Math.max(...prices);
+    const minPrice = Math.min(...prices);
+    const maxIdx = prices.indexOf(maxPrice);
+    const minIdx = prices.indexOf(minPrice);
+    const maxDate = dates[maxIdx];
+    const minDate = dates[minIdx];
     const trace = {
         x: dates,
         y: prices,
         type: 'scatter',
         mode: 'lines+markers',
         name: '價格',
-        line: { color: '#1a73e8' }
+        line: { color: '#1a73e8', width: 4 },
+        marker: { size: 10, color: '#1a73e8' }
     };
-    
     const layout = {
-        title: `${selectedCrop} 價格趨勢`,
-        xaxis: { title: '日期' },
-        yaxis: { title: '價格 (元/公斤)' }
+        title: {
+            text: `${selectedCrop} 價格趨勢`,
+            font: { size: 22, color: '#1a73e8', family: 'Microsoft JhengHei, Arial' }
+        },
+        xaxis: { 
+            title: '日期',
+            titlefont: { size: 18 },
+            tickfont: { size: 16 }
+        },
+        yaxis: { 
+            title: '價格 (元/公斤)',
+            titlefont: { size: 18 },
+            tickfont: { size: 16 }
+        },
+        margin: { t: 60, l: 60, r: 30, b: 60 },
+        legend: { font: { size: 16 } },
+        hoverlabel: { font: { size: 16 } },
+        autosize: true,
+        responsive: true,
+        annotations: [
+            {
+                x: maxDate,
+                y: maxPrice,
+                xref: 'x',
+                yref: 'y',
+                text: `最高 ${maxPrice}`,
+                showarrow: true,
+                arrowhead: 7,
+                ax: 0,
+                ay: -40,
+                font: { color: '#ea4335', size: 16 }
+            },
+            {
+                x: minDate,
+                y: minPrice,
+                xref: 'x',
+                yref: 'y',
+                text: `最低 ${minPrice}`,
+                showarrow: true,
+                arrowhead: 7,
+                ax: 0,
+                ay: 40,
+                font: { color: '#34a853', size: 16 }
+            }
+        ]
     };
-    
-    Plotly.newPlot(chartArea, [trace], layout);
+    Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
     showBasicStats(cropData);
 }
 
 // 顯示交易量分布
 function showVolumeDistribution() {
     if (!selectedCrop) return;
-    
     const cropData = getCropData(selectedCrop);
     const markets = [...new Set(cropData.map(item => item.市場名稱))];
     const volumes = markets.map(market => {
         const marketData = cropData.filter(item => item.市場名稱 === market);
         return marketData.reduce((sum, item) => sum + Number(item.交易量), 0);
     });
-    
     const trace = {
         x: markets,
         y: volumes,
@@ -147,45 +191,54 @@ function showVolumeDistribution() {
         name: '交易量',
         marker: { color: '#34a853' }
     };
-    
     const layout = {
-        title: `${selectedCrop} 各市場交易量分布`,
-        xaxis: { title: '市場' },
-        yaxis: { title: '交易量 (公斤)' }
+        title: {
+            text: `${selectedCrop} 各市場交易量分布`,
+            font: { size: 20, color: '#34a853', family: 'Microsoft JhengHei, Arial' }
+        },
+        xaxis: { title: '市場', titlefont: { size: 16 }, tickfont: { size: 15 } },
+        yaxis: { title: '交易量 (公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
+        margin: { t: 60, l: 60, r: 30, b: 60 },
+        legend: { font: { size: 15 } },
+        hoverlabel: { font: { size: 15 } },
+        autosize: true,
+        responsive: true
     };
-    
-    Plotly.newPlot(chartArea, [trace], layout);
+    Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
     showBasicStats(cropData);
 }
 
 // 顯示價格分布
 function showPriceDistribution() {
     if (!selectedCrop) return;
-    
     const cropData = getCropData(selectedCrop);
     const prices = cropData.map(item => Number(item.平均價));
-    
     const trace = {
         x: prices,
         type: 'histogram',
         name: '價格分布',
         marker: { color: '#ea4335' }
     };
-    
     const layout = {
-        title: `${selectedCrop} 價格分布`,
-        xaxis: { title: '價格 (元/公斤)' },
-        yaxis: { title: '次數' }
+        title: {
+            text: `${selectedCrop} 價格分布`,
+            font: { size: 20, color: '#ea4335', family: 'Microsoft JhengHei, Arial' }
+        },
+        xaxis: { title: '價格 (元/公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
+        yaxis: { title: '次數', titlefont: { size: 16 }, tickfont: { size: 15 } },
+        margin: { t: 60, l: 60, r: 30, b: 60 },
+        legend: { font: { size: 15 } },
+        hoverlabel: { font: { size: 15 } },
+        autosize: true,
+        responsive: true
     };
-    
-    Plotly.newPlot(chartArea, [trace], layout);
+    Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
     showBasicStats(cropData);
 }
 
 // 顯示季節性分析
 function showSeasonalAnalysis() {
     if (!selectedCrop) return;
-    
     const cropData = getCropData(selectedCrop);
     const months = Array.from({length: 12}, (_, i) => i + 1);
     const monthlyPrices = months.map(month => {
@@ -196,28 +249,36 @@ function showSeasonalAnalysis() {
         const prices = monthData.map(item => Number(item.平均價));
         return prices.length > 0 ? prices.reduce((a, b) => a + b) / prices.length : 0;
     });
-    
     const trace = {
         x: months,
         y: monthlyPrices,
         type: 'scatter',
         mode: 'lines+markers',
         name: '月均價',
-        line: { color: '#fbbc05' }
+        line: { color: '#fbbc05', width: 4 },
+        marker: { size: 10, color: '#fbbc05' }
     };
-    
     const layout = {
-        title: `${selectedCrop} 季節性分析`,
+        title: {
+            text: `${selectedCrop} 季節性分析`,
+            font: { size: 20, color: '#fbbc05', family: 'Microsoft JhengHei, Arial' }
+        },
         xaxis: { 
             title: '月份',
             tickmode: 'array',
             tickvals: months,
-            ticktext: months.map(m => `${m}月`)
+            ticktext: months.map(m => `${m}月`),
+            titlefont: { size: 16 },
+            tickfont: { size: 15 }
         },
-        yaxis: { title: '平均價格 (元/公斤)' }
+        yaxis: { title: '平均價格 (元/公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
+        margin: { t: 60, l: 60, r: 30, b: 60 },
+        legend: { font: { size: 15 } },
+        hoverlabel: { font: { size: 15 } },
+        autosize: true,
+        responsive: true
     };
-    
-    Plotly.newPlot(chartArea, [trace], layout);
+    Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
     showBasicStats(cropData);
 }
 
@@ -280,6 +341,45 @@ function showPricePrediction() {
     
     Plotly.newPlot(chartArea, [trace1, trace2], layout);
     showBasicStats(cropData);
+
+    const formulaHtml = `
+        <div class="prediction-formula" style="margin-top:18px;">
+            <b>預測公式：</b><br>
+            價格 = <span style="color:#ea4335;">${slope.toFixed(6)}</span> × 時間(毫秒) + <span style="color:#1a73e8;">${intercept.toFixed(2)}</span><br>
+            <span style="font-size:0.95em;color:#888;">（以日期毫秒數為自變數，進行線性回歸預測）</span>
+            <div style="margin-top:8px;color:#666;">
+                本預測僅根據過去價格趨勢做初步線性預測，僅供參考，實際價格可能受天氣、政策等多種因素影響。
+            </div>
+        </div>
+    `;
+    resultArea.innerHTML += formulaHtml;
+
+    let tableHtml = `
+        <div style="margin-top:18px;">
+            <b>未來30天預測價格：</b>
+            <table style="width:100%;margin-top:6px;border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#f8f9fa;">
+                        <th style="padding:4px 8px;border:1px solid #eee;">日期</th>
+                        <th style="padding:4px 8px;border:1px solid #eee;">預測價格 (元/公斤)</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    for (let i = 0; i < futureDates.length; i++) {
+        tableHtml += `
+            <tr>
+                <td style="padding:4px 8px;border:1px solid #eee;">${futureDates[i].toLocaleDateString('zh-TW')}</td>
+                <td style="padding:4px 8px;border:1px solid #eee;">${predictedPrices[i].toFixed(2)}</td>
+            </tr>
+        `;
+    }
+    tableHtml += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    resultArea.innerHTML += tableHtml;
 }
 
 // 匯出資料功能
