@@ -56,6 +56,7 @@ async function checkForUpdates() {
 
 // 從農產品交易行情站獲取資料
 async function fetchData() {
+    document.getElementById('loadingSpinner').style.display = 'flex';
     try {
         const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx');
         if (!response.ok) throw new Error('無法獲取資料');
@@ -72,6 +73,8 @@ async function fetchData() {
     } catch (error) {
         console.error('獲取資料時發生錯誤:', error);
         resultArea.innerHTML = '<p class="error">無法獲取資料，請稍後再試</p>';
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
     }
 }
 
@@ -343,14 +346,57 @@ function showBasicStats(data) {
         totalVolume: volumes.reduce((a, b) => a + b)
     };
     
-    resultArea.innerHTML = `
-        <h3>基本統計資訊</h3>
-        <p>平均價格：${stats.avgPrice.toFixed(2)} 元/公斤</p>
-        <p>最低價格：${stats.minPrice.toFixed(2)} 元/公斤</p>
-        <p>最高價格：${stats.maxPrice.toFixed(2)} 元/公斤</p>
-        <p>總交易量：${stats.totalVolume.toLocaleString()} 公斤</p>
-    `;
+    // 更新卡片內容
+    document.getElementById('avgPrice').textContent = stats.avgPrice.toFixed(2);
+    document.getElementById('minPrice').textContent = stats.minPrice.toFixed(2);
+    document.getElementById('maxPrice').textContent = stats.maxPrice.toFixed(2);
+    document.getElementById('totalVolume').textContent = stats.totalVolume.toLocaleString();
+
+    // 詳細資料表格
+    const tbody = document.getElementById('detailTableBody');
+    tbody.innerHTML = '';
+    data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.交易日期}</td>
+            <td>${item.市場名稱}</td>
+            <td>${item.平均價}</td>
+            <td>${item.交易量}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
+
+// 基本統計資訊卡片點擊事件
+function showMinPriceInfo() {
+    if (!selectedCrop) return;
+    const crop = getCropData(selectedCrop);
+    const min = Math.min(...crop.map(i => Number(i.平均價)));
+    const minItem = crop.find(i => Number(i.平均價) === min);
+    resultArea.innerHTML = `<p>最低價格：${min} 元/公斤<br>日期：${minItem.交易日期}<br>市場：${minItem.市場名稱}</p>`;
+}
+function showMaxPriceInfo() {
+    if (!selectedCrop) return;
+    const crop = getCropData(selectedCrop);
+    const max = Math.max(...crop.map(i => Number(i.平均價)));
+    const maxItem = crop.find(i => Number(i.平均價) === max);
+    resultArea.innerHTML = `<p>最高價格：${max} 元/公斤<br>日期：${maxItem.交易日期}<br>市場：${maxItem.市場名稱}</p>`;
+}
+function showMaxVolumeInfo() {
+    if (!selectedCrop) return;
+    const crop = getCropData(selectedCrop);
+    const max = Math.max(...crop.map(i => Number(i.交易量)));
+    const maxItem = crop.find(i => Number(i.交易量) === max);
+    resultArea.innerHTML = `<p>最大交易量：${max} 公斤<br>日期：${maxItem.交易日期}<br>市場：${maxItem.市場名稱}</p>`;
+}
+
+// 綁定卡片點擊事件
+setTimeout(() => {
+    document.getElementById('avgPriceCard').onclick = () => showPriceTrend();
+    document.getElementById('minPriceCard').onclick = () => showMinPriceInfo();
+    document.getElementById('maxPriceCard').onclick = () => showMaxPriceInfo();
+    document.getElementById('totalVolumeCard').onclick = () => showMaxVolumeInfo();
+}, 0);
 
 // 事件監聽器
 searchInput.addEventListener('input', filterCrops);

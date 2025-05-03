@@ -279,4 +279,55 @@ footer {
     color: #1a73e8;
     font-size: 1.05em;
     letter-spacing: 1px;
+}
+
+@media (max-width: 600px) {
+    .analysis-buttons button,
+    .export-buttons button {
+        font-size: 1.25em;
+        padding: 18px 0;
+        border-radius: 14px;
+        margin-bottom: 8px;
+    }
+    .analysis-buttons {
+        gap: 14px;
+    }
+    .stats-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+    .stat-card {
+        max-width: 100%;
+        min-width: 0;
+        padding: 18px 0 14px 0;
+        margin: 0;
+        font-size: 1.08em;
+    }
+    .stat-label, .stat-unit {
+        font-size: 1.1em;
+    }
+    .stat-value {
+        font-size: 2.1em;
+    }
+    .search-box input,
+    .crop-select select {
+        font-size: 1.2em;
+        padding: 18px 12px;
+        border-radius: 12px;
+    }
+    .detail-table th, .detail-table td {
+        font-size: 1.1em;
+        padding: 12px 4px;
+    }
+    .scroll-hint {
+        font-size: 1.2em;
+        padding: 10px 0;
+    }
+    .loading-text {
+        font-size: 1.2em;
+    }
+    .display-panel, .control-panel {
+        padding: 10px;
+    }
 } 
