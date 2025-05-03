@@ -188,4 +188,95 @@ footer {
 
 .export-buttons button:hover {
     background-color: #2d8a46;
+}
+
+/* 統計卡片區塊 */
+.stats-area {
+    margin: 30px 0 20px 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 24px 18px 18px 18px;
+}
+
+.stats-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.stat-card {
+    flex: 1 1 120px;
+    min-width: 120px;
+    max-width: 200px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(26,115,232,0.08);
+    padding: 18px 10px 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: box-shadow 0.2s, transform 0.2s;
+    border: 1.5px solid #e3eaf3;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 16px rgba(26,115,232,0.18);
+    transform: translateY(-3px) scale(1.03);
+    border-color: #b6d0f7;
+}
+
+.stat-icon {
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    color: #1a73e8;
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 1.08em;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 1.7em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.stat-unit {
+    color: #888;
+    font-size: 0.95em;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 18px;
+    margin-top: 8px;
+}
+
+.spinner {
+    width: 38px;
+    height: 38px;
+    border: 4px solid #e3eaf3;
+    border-top: 4px solid #1a73e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+}
+
+.loading-text {
+    color: #1a73e8;
+    font-size: 1.05em;
+    letter-spacing: 1px;
 } 

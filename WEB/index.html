@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>農產品交易資料分析系統 v1.0</title>
+    <title>農產品交易資料分析系統 v2.0.web</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="manifest" href="manifest.json">
@@ -23,7 +23,7 @@
             <h1>農產品交易資料分析系統</h1>
             <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
             <div class="version-info">
-                <p class="version">版本：<span id="versionNumber">v1.0</span></p>
+                <p class="version">版本：<span id="versionNumber">v2.0.web</span></p>
                 <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
             </div>
         </header>
@@ -40,6 +40,12 @@
                             <option value="">請選擇作物</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- 載入動畫區塊 -->
+                <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+                  <div class="spinner"></div>
+                  <div class="loading-text">資料載入中...</div>
                 </div>
 
                 <div class="analysis-section">
@@ -64,6 +70,54 @@
 
             <div class="display-panel">
                 <div id="chartArea" class="chart-area"></div>
+                <!-- 新增：往下滑指引 -->
+                <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
+                <!-- 新增：基本統計資訊卡片區塊 -->
+                <div id="statsArea" class="stats-area">
+                    <h3>基本統計資訊</h3>
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="font-size:2em;">📊</div>
+                            <div class="stat-label">平均價格</div>
+                            <div class="stat-value" id="avgPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="font-size:2em;">📉</div>
+                            <div class="stat-label">最低價格</div>
+                            <div class="stat-value" id="minPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="font-size:2em;">📈</div>
+                            <div class="stat-label">最高價格</div>
+                            <div class="stat-value" id="maxPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="font-size:2em;">⚖️</div>
+                            <div class="stat-label">總交易量</div>
+                            <div class="stat-value" id="totalVolume">--</div>
+                            <div class="stat-unit">公斤</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="detailTableArea" class="detail-table-area">
+                    <h3>詳細價格資料</h3>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>市場</th>
+                                <th>價格</th>
+                                <th>交易量</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody">
+                            <!-- 資料由 JS 動態產生 -->
+                        </tbody>
+                    </table>
+                </div>
                 <div id="resultArea" class="result-area">
                     <p>請選擇作物以查看分析結果</p>
                 </div>
@@ -73,6 +127,7 @@
         <footer>
             <p>資料來源：行政院農業委員會農產品交易行情站</p>
             <p>資料更新時間：<span id="dataUpdateTime">載入中...</span></p>
+            <p><a href="license.html" target="_blank">授權與開源說明</a></p>
         </footer>
     </div>
     <script src="script.js"></script>

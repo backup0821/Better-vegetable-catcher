@@ -1,5 +1,5 @@
 // 版本資訊
-const VERSION = 'v1.0';
+const VERSION = 'v2.0.web';
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
 // DOM 元素
@@ -27,9 +27,24 @@ async function checkForUpdates() {
         const data = await response.json();
         const latestVersion = data.tag_name;
         
-        if (latestVersion !== VERSION) {
-            const updateMessage = `發現新版本 ${latestVersion}！目前版本：${VERSION}`;
-            resultArea.innerHTML = `<p class="update-notice">${updateMessage}</p>`;
+        // 檢查版本是否包含 .web
+        if (latestVersion.includes('.web')) {
+            if (latestVersion !== VERSION) {
+                const updateMessage = `發現新版本 ${latestVersion}！目前版本：${VERSION}`;
+                resultArea.innerHTML = `<p class="update-notice">${updateMessage}</p>`;
+            }
+        } else {
+            // 如果不是 .web 版本，嘗試獲取下一個版本
+            const allReleasesResponse = await fetch('https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases');
+            if (!allReleasesResponse.ok) throw new Error('無法獲取版本列表');
+            const allReleases = await allReleasesResponse.json();
+            
+            // 尋找第一個帶有 .web 的版本
+            const webRelease = allReleases.find(release => release.tag_name.includes('.web'));
+            if (webRelease && webRelease.tag_name !== VERSION) {
+                const updateMessage = `發現新版本 ${webRelease.tag_name}！目前版本：${VERSION}`;
+                resultArea.innerHTML = `<p class="update-notice">${updateMessage}</p>`;
+            }
         }
         
         versionNumber.textContent = VERSION;
