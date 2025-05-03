@@ -56,7 +56,9 @@ async function checkForUpdates() {
 
 // 從農產品交易行情站獲取資料
 async function fetchData() {
-    document.getElementById('loadingSpinner').style.display = 'flex';
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    loadingSpinner.style.display = 'flex';
+    loadingSpinner.innerHTML = '<div class="spinner"></div><div class="loading-text">資料載入中...</div>';
     try {
         const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx');
         if (!response.ok) throw new Error('無法獲取資料');
@@ -74,7 +76,7 @@ async function fetchData() {
         console.error('獲取資料時發生錯誤:', error);
         resultArea.innerHTML = '<p class="error">無法獲取資料，請稍後再試</p>';
     } finally {
-        document.getElementById('loadingSpinner').style.display = 'none';
+        loadingSpinner.innerHTML = '<div class="loading-text">⬇️ 請下滑查看更多內容 ⬇️</div>';
     }
 }
 
@@ -285,78 +287,29 @@ function showSeasonalAnalysis() {
 // 進階分析功能
 function showPricePrediction() {
     if (!selectedCrop) return;
-    
     const cropData = getCropData(selectedCrop);
-    const dates = cropData.map(item => new Date(item.交易日期));
     const prices = cropData.map(item => Number(item.平均價));
-    
-    // 使用簡單的線性回歸進行預測
-    const xMean = dates.reduce((a, b) => a + b.getTime(), 0) / dates.length;
-    const yMean = prices.reduce((a, b) => a + b, 0) / prices.length;
-    
-    const numerator = dates.reduce((sum, date, i) => 
-        sum + (date.getTime() - xMean) * (prices[i] - yMean), 0);
-    const denominator = dates.reduce((sum, date) => 
-        sum + Math.pow(date.getTime() - xMean, 2), 0);
-    
-    const slope = numerator / denominator;
-    const intercept = yMean - slope * xMean;
-    
-    // 預測未來30天
-    const futureDates = Array.from({length: 30}, (_, i) => {
+    const last7 = prices.slice(-7);
+    const ma7 = last7.reduce((a, b) => a + b, 0) / last7.length;
+
+    // 預測未來7天
+    const futureDates = Array.from({length: 7}, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() + i);
         return date;
     });
-    
-    const predictedPrices = futureDates.map(date => 
-        slope * date.getTime() + intercept);
-    
-    const trace1 = {
-        x: dates,
-        y: prices,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: '歷史價格',
-        line: { color: '#1a73e8' }
-    };
-    
-    const trace2 = {
-        x: futureDates,
-        y: predictedPrices,
-        type: 'scatter',
-        mode: 'lines',
-        name: '預測價格',
-        line: { 
-            color: '#ea4335',
-            dash: 'dash'
-        }
-    };
-    
-    const layout = {
-        title: `${selectedCrop} 價格預測`,
-        xaxis: { title: '日期' },
-        yaxis: { title: '價格 (元/公斤)' }
-    };
-    
-    Plotly.newPlot(chartArea, [trace1, trace2], layout);
-    showBasicStats(cropData);
 
-    const formulaHtml = `
+    let html = `
         <div class="prediction-formula" style="margin-top:18px;">
-            <b>預測公式：</b><br>
-            價格 = <span style="color:#ea4335;">${slope.toFixed(6)}</span> × 時間(毫秒) + <span style="color:#1a73e8;">${intercept.toFixed(2)}</span><br>
-            <span style="font-size:0.95em;color:#888;">（以日期毫秒數為自變數，進行線性回歸預測）</span>
+            <b>預測方法：</b><br>
+            以最近7天平均價格作為未來7天預測價格<br>
+            <span style="color:#1a73e8;">預測價格 = ${ma7.toFixed(2)} 元/公斤</span>
             <div style="margin-top:8px;color:#666;">
-                本預測僅根據過去價格趨勢做初步線性預測，僅供參考，實際價格可能受天氣、政策等多種因素影響。
+                本預測僅供參考，實際價格可能受天氣、政策等多種因素影響。
             </div>
         </div>
-    `;
-    resultArea.innerHTML += formulaHtml;
-
-    let tableHtml = `
         <div style="margin-top:18px;">
-            <b>未來30天預測價格：</b>
+            <b>未來7天預測價格：</b>
             <table style="width:100%;margin-top:6px;border-collapse:collapse;">
                 <thead>
                     <tr style="background:#f8f9fa;">
@@ -367,19 +320,19 @@ function showPricePrediction() {
                 <tbody>
     `;
     for (let i = 0; i < futureDates.length; i++) {
-        tableHtml += `
+        html += `
             <tr>
                 <td style="padding:4px 8px;border:1px solid #eee;">${futureDates[i].toLocaleDateString('zh-TW')}</td>
-                <td style="padding:4px 8px;border:1px solid #eee;">${predictedPrices[i].toFixed(2)}</td>
+                <td style="padding:4px 8px;border:1px solid #eee;">${ma7.toFixed(2)}</td>
             </tr>
         `;
     }
-    tableHtml += `
+    html += `
                 </tbody>
             </table>
         </div>
     `;
-    resultArea.innerHTML += tableHtml;
+    resultArea.innerHTML = html;
 }
 
 // 匯出資料功能
