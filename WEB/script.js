@@ -3,6 +3,14 @@ const VERSION = 'v2.3.web.3';
 console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
+// 裝置識別碼
+let deviceId = localStorage.getItem('deviceId');
+if (!deviceId) {
+    deviceId = 'device_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('deviceId', deviceId);
+}
+console.log(`裝置識別碼：${deviceId}`);
+
 // DOM 元素
 const searchInput = document.getElementById('searchInput');
 const cropSelect = document.getElementById('cropSelect');
@@ -503,6 +511,15 @@ async function checkNotifications() {
         
         notifications.forEach(notification => {
             console.log('處理通知:', notification);
+            
+            // 檢查是否為特定裝置的通知
+            if (notification.targetDevices && notification.targetDevices.length > 0) {
+                if (!notification.targetDevices.includes(deviceId)) {
+                    console.log('此通知不是針對當前裝置的');
+                    return;
+                }
+            }
+            
             // 解析時間範圍
             const [startTime, endTime] = notification.time.split(' ~ ');
             const startDate = new Date(startTime);
@@ -873,6 +890,69 @@ document.addEventListener('DOMContentLoaded', () => {
     checkBrowserCompatibility();
     // 立即請求通知權限
     requestNotificationPermission();
+});
+
+// 裝置識別碼相關功能
+function showVerificationDialog() {
+    // 創建遮罩層
+    const overlay = document.createElement('div');
+    overlay.className = 'verification-overlay';
+    
+    // 創建對話框
+    const dialog = document.createElement('div');
+    dialog.className = 'verification-dialog';
+    dialog.innerHTML = `
+        <h3>設定裝置識別碼</h3>
+        <p>請輸入驗證代碼：</p>
+        <input type="password" id="verificationCode" placeholder="請輸入驗證代碼">
+        <p>請輸入裝置識別碼：</p>
+        <input type="text" id="newDeviceId" placeholder="請輸入裝置識別碼">
+        <div style="margin-top: 15px; text-align: right;">
+            <button class="cancel-btn" onclick="closeVerificationDialog()">取消</button>
+            <button onclick="verifyAndSetDeviceId()">確定</button>
+        </div>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+}
+
+function closeVerificationDialog() {
+    const overlay = document.querySelector('.verification-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function verifyAndSetDeviceId() {
+    const verificationCode = document.getElementById('verificationCode').value;
+    const newDeviceId = document.getElementById('newDeviceId').value;
+    
+    // 驗證代碼（這裡使用 'dev-test1' 作為範例，實際使用時應該使用更安全的驗證方式）
+    if (verificationCode !== 'dev-test1') {
+        alert('驗證代碼錯誤！');
+        return;
+    }
+    
+    if (!newDeviceId) {
+        alert('請輸入裝置識別碼！');
+        return;
+    }
+    
+    // 儲存新的裝置識別碼
+    localStorage.setItem('deviceId', newDeviceId);
+    deviceId = newDeviceId;
+    
+    alert('裝置識別碼已更新！');
+    closeVerificationDialog();
+}
+
+// 綁定裝置識別碼按鈕事件
+document.addEventListener('DOMContentLoaded', () => {
+    const deviceIdBtn = document.getElementById('deviceIdBtn');
+    if (deviceIdBtn) {
+        deviceIdBtn.addEventListener('click', showVerificationDialog);
+    }
 });
 
 // 初始化
