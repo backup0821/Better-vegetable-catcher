@@ -493,9 +493,9 @@ async function checkNotifications() {
             const notifyTime = new Date(notification.time);
             const timeDiff = Math.abs(now - notifyTime);
             
-            // 檢查是否在指定時間正負1分鐘內
+            // 檢查是否在指定時間範圍內
             if (timeDiff <= 60000) {
-                sendNotification(notification);
+                showPageNotification(notification);
             }
         });
     } catch (error) {
@@ -503,28 +503,98 @@ async function checkNotifications() {
     }
 }
 
-async function sendNotification(notification) {
-    // 檢查通知權限
-    if (Notification.permission !== 'granted') {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            console.log('通知權限被拒絕');
-            return;
-        }
+function showPageNotification(notification) {
+    // 移除現有的通知（如果有的話）
+    const existingNotification = document.getElementById('page-notification');
+    if (existingNotification) {
+        existingNotification.remove();
     }
 
-    // 發送通知
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification(notification.title, {
-                body: notification.public ? '公開通知' : '私人通知',
-                icon: './image/icon-192.png',
-                badge: './image/icon-192.png',
-                vibrate: [200, 100, 200],
-                tag: notification.id
-            });
-        });
-    }
+    // 創建遮罩層
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    `;
+
+    // 創建通知元素
+    const notificationElement = document.createElement('div');
+    notificationElement.id = 'page-notification';
+    notificationElement.style.cssText = `
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-width: 80%;
+        width: 400px;
+        text-align: center;
+        position: relative;
+        animation: fadeIn 0.3s ease-out;
+    `;
+
+    // 通知內容
+    const content = document.createElement('div');
+    content.style.cssText = `
+        margin-bottom: 20px;
+    `;
+    content.innerHTML = `
+        <div style="font-size: 2em; margin-bottom: 10px;">⚠️</div>
+        <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">${notification.title}</div>
+        <div style="color: #666;">${notification.public ? '公開通知' : '私人通知'}</div>
+    `;
+
+    // 確認按鈕
+    const confirmButton = document.createElement('button');
+    confirmButton.textContent = '確定';
+    confirmButton.style.cssText = `
+        padding: 10px 24px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    `;
+    confirmButton.onmouseover = () => {
+        confirmButton.style.backgroundColor = '#45a049';
+    };
+    confirmButton.onmouseout = () => {
+        confirmButton.style.backgroundColor = '#4CAF50';
+    };
+    confirmButton.onclick = () => {
+        overlay.remove();
+    };
+
+    // 組合元素
+    notificationElement.appendChild(content);
+    notificationElement.appendChild(confirmButton);
+    overlay.appendChild(notificationElement);
+    document.body.appendChild(overlay);
+
+    // 添加 CSS 動畫
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // 初始化通知檢查
@@ -538,6 +608,8 @@ function initNotificationCheck() {
 // 在頁面載入時初始化通知檢查
 document.addEventListener('DOMContentLoaded', () => {
     initNotificationCheck();
+    // 立即檢查通知
+    checkNotifications();
 });
 
 // 市場休市通知功能
@@ -630,15 +702,16 @@ async function handleTestNotification() {
                 }
             }
 
-            // 設置一分鐘後發送通知
+            // 設置10秒後發送通知
             testNotificationTimeout = setTimeout(() => {
+                // 發送 Service Worker 通知
                 registration.showNotification('測試通知', {
                     body: '這是一個測試通知，用於驗證通知功能是否正常運作。',
                     icon: './image/icon-192.png',
                     badge: './image/icon-192.png',
                     vibrate: [200, 100, 200],
                     tag: 'test-notification',
-                    requireInteraction: true, // 通知不會自動消失
+                    requireInteraction: true,
                     actions: [
                         {
                             action: 'open',
@@ -646,14 +719,21 @@ async function handleTestNotification() {
                         }
                     ]
                 }).then(() => {
-                    console.log('test push');
+                    console.log('Service Worker 通知已發送');
                 }).catch(error => {
-                    console.error('通知發送失敗:', error);
-                    alert('通知發送失敗，請檢查通知權限設定！');
+                    console.error('Service Worker 通知發送失敗:', error);
                 });
-            }, 60000);
 
-            alert('測試通知已設置，將在一分鐘後發送！\n請確保手機未進入省電模式。');
+                // 發送瀏覽器原生通知
+                new Notification('測試通知', {
+                    body: '這是一個瀏覽器原生通知測試',
+                    icon: './image/icon-192.png',
+                    vibrate: [200, 100, 200],
+                    requireInteraction: true
+                });
+            }, 10000);
+
+            alert('測試通知已設置，將在10秒後發送！\n請確保手機未進入省電模式。');
         } catch (error) {
             console.error('測試通知設置失敗:', error);
             alert('測試通知設置失敗，請確保：\n1. 已授予通知權限\n2. 未開啟省電模式\n3. 允許背景執行');

@@ -129,12 +129,22 @@ async function checkBackgroundNotifications() {
             const timeDiff = Math.abs(now - notifyTime);
             
             if (timeDiff <= 60000) {
+                // 發送 Service Worker 通知
                 self.registration.showNotification(notification.title, {
                     body: notification.public ? '公開通知' : '私人通知',
                     icon: './image/icon-192.png',
                     badge: './image/icon-192.png',
                     vibrate: [200, 100, 200],
-                    tag: notification.id
+                    tag: notification.id,
+                    requireInteraction: true
+                });
+
+                // 發送瀏覽器原生通知
+                new Notification(notification.title, {
+                    body: notification.public ? '公開通知' : '私人通知',
+                    icon: './image/icon-192.png',
+                    vibrate: [200, 100, 200],
+                    requireInteraction: true
                 });
             }
         });
