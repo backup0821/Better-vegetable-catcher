@@ -514,65 +514,26 @@ function showPageNotification(notification) {
 
     // 創建遮罩層
     const overlay = document.createElement('div');
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    `;
+    overlay.className = 'notification-overlay';
 
     // 創建通知元素
     const notificationElement = document.createElement('div');
     notificationElement.id = 'page-notification';
-    notificationElement.style.cssText = `
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        max-width: 80%;
-        width: 400px;
-        text-align: center;
-        position: relative;
-        animation: fadeIn 0.3s ease-out;
-    `;
+    notificationElement.className = 'notification-window';
 
     // 通知內容
     const content = document.createElement('div');
-    content.style.cssText = `
-        margin-bottom: 20px;
-    `;
+    content.className = 'notification-content';
     content.innerHTML = `
-        <div style="font-size: 2em; margin-bottom: 10px;">⚠️</div>
-        <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">${notification.title}</div>
-        <div style="color: #666;">${notification.public ? '公開通知' : '私人通知'}</div>
-        <div style="color: #666; margin-top: 10px; font-size: 0.9em;">通知時間：${notification.time}</div>
+        <div class="notification-icon">⚠️</div>
+        <div class="notification-title">${notification.title}</div>
+        <div class="notification-time">通知時間：${notification.time}</div>
     `;
 
     // 確認按鈕
     const confirmButton = document.createElement('button');
+    confirmButton.className = 'notification-button';
     confirmButton.textContent = '確定';
-    confirmButton.style.cssText = `
-        padding: 10px 24px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.3s;
-    `;
-    confirmButton.onmouseover = () => {
-        confirmButton.style.backgroundColor = '#45a049';
-    };
-    confirmButton.onmouseout = () => {
-        confirmButton.style.backgroundColor = '#4CAF50';
-    };
     confirmButton.onclick = () => {
         overlay.remove();
     };
@@ -582,22 +543,6 @@ function showPageNotification(notification) {
     notificationElement.appendChild(confirmButton);
     overlay.appendChild(notificationElement);
     document.body.appendChild(overlay);
-
-    // 添加 CSS 動畫
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-    `;
-    document.head.appendChild(style);
 }
 
 // 初始化通知檢查
