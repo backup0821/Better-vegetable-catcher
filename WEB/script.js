@@ -878,6 +878,18 @@ async function requestBackgroundSync() {
             const registration = await navigator.serviceWorker.ready;
             await registration.sync.register('check-notifications');
             console.log('背景同步已註冊');
+            
+            // 請求定期同步權限
+            if ('periodicSync' in registration) {
+                try {
+                    await registration.periodicSync.register('check-notifications-periodic', {
+                        minInterval: 5 * 60 * 1000 // 每5分鐘檢查一次
+                    });
+                    console.log('定期同步已註冊');
+                } catch (error) {
+                    console.error('定期同步註冊失敗:', error);
+                }
+            }
         } catch (error) {
             console.error('背景同步註冊失敗:', error);
         }
@@ -896,6 +908,9 @@ async function requestNotificationPermission() {
                 await requestBackgroundSync();
                 // 移除權限提示（如果存在）
                 removePermissionPrompt();
+                
+                // 立即執行一次通知檢查
+                await checkNotifications();
             } else if (permission === 'denied') {
                 // 如果權限被拒絕，顯示提示
                 showPermissionPrompt();
@@ -1371,6 +1386,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const registration = await navigator.serviceWorker.register('service-worker.js');
             console.log('Service Worker 註冊成功:', registration);
+            
+            // 監聽 Service Worker 更新
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // 顯示更新通知
+                        showUpdateNotification(VERSION);
+                    }
+                });
+            });
         } catch (error) {
             console.error('Service Worker 註冊失敗:', error);
         }

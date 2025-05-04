@@ -9,8 +9,8 @@ const urlsToCache = [
   './icon-512.png'
 ];
 
-// 背景通知檢查間隔（每小時檢查一次）
-const BACKGROUND_CHECK_INTERVAL = 60 * 60 * 1000;
+// 背景通知檢查間隔（每5分鐘檢查一次）
+const BACKGROUND_CHECK_INTERVAL = 5 * 60 * 1000;
 
 // 推送通知的 VAPID 公鑰
 const VAPID_PUBLIC_KEY = 'BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE';
@@ -138,61 +138,71 @@ self.addEventListener('periodicsync', (event) => {
 // 背景通知檢查函數
 async function checkBackgroundNotifications() {
   try {
-    // 檢查市場休市通知
-    const marketRestResponse = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
-    const marketRestData = await marketRestResponse.json();
+    console.log('開始背景通知檢查...');
     
-    const now = new Date();
-    const currentYearMonth = now.getFullYear().toString().slice(-2) + 
-                            (now.getMonth() + 1).toString().padStart(2, '0');
-    const currentDay = now.getDate().toString().padStart(2, '0');
-
-    marketRestData.forEach(market => {
-      if (market.YearMonth === currentYearMonth) {
-        const restDays = market.ClosedDate.split('、');
-        if (restDays.includes(currentDay)) {
-          self.registration.showNotification('市場休市通知', {
-            body: `${market.MarketName} ${market.MarketType}市場今日休市`,
-            icon: './icon-192.png',
-            badge: './icon-192.png',
-            vibrate: [200, 100, 200],
-            tag: `market-rest-${market.MarketNo}-${market.MarketType}`
-          });
-        }
+    // 檢查市場休市通知
+    try {
+      const marketRestResponse = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
+      if (!marketRestResponse.ok) {
+        throw new Error(`市場休市 API 請求失敗: ${marketRestResponse.status}`);
       }
-    });
+      const marketRestData = await marketRestResponse.json();
+      
+      const now = new Date();
+      const currentYearMonth = now.getFullYear().toString().slice(-2) + 
+                              (now.getMonth() + 1).toString().padStart(2, '0');
+      const currentDay = now.getDate().toString().padStart(2, '0');
+
+      marketRestData.forEach(market => {
+        if (market.YearMonth === currentYearMonth) {
+          const restDays = market.ClosedDate.split('、');
+          if (restDays.includes(currentDay)) {
+            self.registration.showNotification('市場休市通知', {
+              body: `${market.MarketName} ${market.MarketType}市場今日休市`,
+              icon: './icon-192.png',
+              badge: './icon-192.png',
+              vibrate: [200, 100, 200],
+              tag: `market-rest-${market.MarketNo}-${market.MarketType}`,
+              requireInteraction: true
+            });
+          }
+        }
+      });
+    } catch (error) {
+      console.error('市場休市通知檢查失敗:', error);
+    }
 
     // 檢查一般通知
     let allNotifications = [];
     
     // 從本地檔案讀取通知
     try {
-        const localResponse = await fetch('./notfiy.json', {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        if (localResponse.ok) {
-            const localNotifications = await localResponse.json();
-            allNotifications = allNotifications.concat(localNotifications);
+      const localResponse = await fetch('./notfiy.json', {
+        headers: {
+          'Accept': 'application/json'
         }
+      });
+      if (localResponse.ok) {
+        const localNotifications = await localResponse.json();
+        allNotifications = allNotifications.concat(localNotifications);
+      }
     } catch (error) {
-        console.error('讀取本地通知檔案失敗:', error);
+      console.error('讀取本地通知檔案失敗:', error);
     }
     
     // 從 API 讀取通知
     try {
-        const apiResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json', {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        if (apiResponse.ok) {
-            const apiNotifications = await apiResponse.json();
-            allNotifications = allNotifications.concat(apiNotifications);
+      const apiResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json', {
+        headers: {
+          'Accept': 'application/json'
         }
+      });
+      if (apiResponse.ok) {
+        const apiNotifications = await apiResponse.json();
+        allNotifications = allNotifications.concat(apiNotifications);
+      }
     } catch (error) {
-        console.error('讀取 API 通知失敗:', error);
+      console.error('讀取 API 通知失敗:', error);
     }
     
     allNotifications.forEach(notification => {
@@ -260,8 +270,16 @@ async function checkBackgroundNotifications() {
 // 註冊定期同步
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    self.registration.periodicSync.register('check-notifications-periodic', {
-      minInterval: BACKGROUND_CHECK_INTERVAL
-    })
+    Promise.all([
+      // 註冊定期同步
+      self.registration.periodicSync.register('check-notifications-periodic', {
+        minInterval: BACKGROUND_CHECK_INTERVAL
+      }),
+      // 立即執行一次檢查
+      checkBackgroundNotifications()
+    ])
   );
 });
+
+// 設置定期檢查
+setInterval(checkBackgroundNotifications, BACKGROUND_CHECK_INTERVAL);
