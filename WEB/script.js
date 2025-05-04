@@ -638,6 +638,10 @@ async function handleTestNotification() {
                     badge: './image/icon-192.png',
                     vibrate: [200, 100, 200],
                     tag: 'test-notification'
+                }).then(() => {
+                    console.log('test push');
+                }).catch(error => {
+                    console.error('通知發送失敗:', error);
                 });
             }, 60000);
 
