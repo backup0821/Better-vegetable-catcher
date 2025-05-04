@@ -505,19 +505,17 @@ async function checkNotifications() {
         const now = new Date();
         console.log('當前時間:', now);
         
-        // 檢查是否有任何通知需要顯示
-        let hasNewNotification = false;
-        let newNotification = null;
+        // 收集所有需要顯示的通知
+        let notificationsToShow = [];
         
         notifications.forEach(notification => {
             console.log('處理通知:', notification);
             
             // 檢查是否為特定裝置的通知
-            if (notification.targetDevices && notification.targetDevices.length > 0) {
-                if (!notification.targetDevices.includes(deviceId)) {
-                    console.log('此通知不是針對當前裝置的');
-                    return;
-                }
+            const isTargetedDevice = notification.targetDevices && notification.targetDevices.length > 0;
+            if (isTargetedDevice && !notification.targetDevices.includes(deviceId)) {
+                console.log('此通知不是針對當前裝置的');
+                return;
             }
             
             // 解析時間範圍
@@ -534,15 +532,17 @@ async function checkNotifications() {
             // 檢查當前時間是否在通知時間範圍內
             if (now >= startDate && now <= endDate) {
                 console.log('符合時間範圍，準備顯示通知');
-                hasNewNotification = true;
-                newNotification = notification;
+                notificationsToShow.push({
+                    ...notification,
+                    isTargetedDevice
+                });
             }
         });
         
-        // 只有在有新通知時才顯示
-        if (hasNewNotification && newNotification) {
-            console.log('顯示新通知');
-            showPageNotification(newNotification);
+        // 顯示所有符合條件的通知
+        if (notificationsToShow.length > 0) {
+            console.log('顯示通知');
+            showPageNotifications(notificationsToShow);
         } else {
             console.log('目前沒有需要顯示的通知');
         }
@@ -551,7 +551,7 @@ async function checkNotifications() {
     }
 }
 
-function showPageNotification(notification) {
+function showPageNotifications(notifications) {
     // 移除現有的通知（如果有的話）
     const existingNotification = document.getElementById('page-notification');
     const existingOverlay = document.querySelector('.notification-overlay');
@@ -566,26 +566,48 @@ function showPageNotification(notification) {
     const overlay = document.createElement('div');
     overlay.className = 'notification-overlay';
 
-    // 創建通知元素
-    const notificationElement = document.createElement('div');
-    notificationElement.id = 'page-notification';
-    notificationElement.className = 'notification-window';
+    // 創建通知容器
+    const notificationContainer = document.createElement('div');
+    notificationContainer.id = 'page-notification';
+    notificationContainer.className = 'notification-window';
 
-    // 通知內容
-    const content = document.createElement('div');
-    content.className = 'notification-content';
-    content.innerHTML = `
-        <div class="notification-icon">⚠️</div>
-        <div class="notification-title">${notification.title}</div>
-        <div class="notification-time">通知時間：${notification.time}</div>
-    `;
+    // 通知標題
+    const title = document.createElement('div');
+    title.className = 'notification-title';
+    title.textContent = '系統通知';
+    notificationContainer.appendChild(title);
+
+    // 通知列表
+    const notificationList = document.createElement('div');
+    notificationList.className = 'notification-list';
+
+    notifications.forEach((notification, index) => {
+        const notificationItem = document.createElement('div');
+        notificationItem.className = 'notification-item';
+        
+        // 如果是針對特定裝置的通知，添加標記
+        if (notification.isTargetedDevice) {
+            notificationItem.classList.add('targeted-device');
+        }
+
+        notificationItem.innerHTML = `
+            <div class="notification-icon">⚠️</div>
+            <div class="notification-content">
+                <div class="notification-title">${notification.title}</div>
+                <div class="notification-time">通知時間：${notification.time}</div>
+                ${notification.isTargetedDevice ? '<div class="device-tag">🔒 特定裝置通知</div>' : ''}
+            </div>
+        `;
+        notificationList.appendChild(notificationItem);
+    });
+
+    notificationContainer.appendChild(notificationList);
 
     // 確認按鈕
     const confirmButton = document.createElement('button');
     confirmButton.className = 'notification-button';
     confirmButton.textContent = '確定';
     confirmButton.onclick = () => {
-        // 確保移除遮罩層和通知元素
         const currentOverlay = document.querySelector('.notification-overlay');
         const currentNotification = document.getElementById('page-notification');
         if (currentOverlay) {
@@ -596,10 +618,8 @@ function showPageNotification(notification) {
         }
     };
 
-    // 組合元素
-    notificationElement.appendChild(content);
-    notificationElement.appendChild(confirmButton);
-    overlay.appendChild(notificationElement);
+    notificationContainer.appendChild(confirmButton);
+    overlay.appendChild(notificationContainer);
     document.body.appendChild(overlay);
 }
 
