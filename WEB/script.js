@@ -1500,6 +1500,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Service Worker 註冊失敗:', error);
         }
     }
+
+    // 在頁面載入時初始化
+    initMarketRestCheck();
 });
 
 // 初始化
@@ -1521,4 +1524,142 @@ self.addEventListener('pushsubscriptionchange', (event) => {
             })
         });
     }
+});
+
+// 在頁面載入時初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 創建休市檢查按鈕
+    const checkRestButton = document.createElement('button');
+    checkRestButton.id = 'checkRestBtn';
+    checkRestButton.textContent = '休市檢查';
+    checkRestButton.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        z-index: 1000;
+    `;
+    document.body.appendChild(checkRestButton);
+
+    // 綁定按鈕點擊事件
+    checkRestButton.addEventListener('click', async () => {
+        try {
+            // 顯示載入中狀態
+            checkRestButton.textContent = '檢查中...';
+            checkRestButton.disabled = true;
+
+            // 檢查市場休市資料
+            const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
+            if (!response.ok) {
+                throw new Error('無法獲取市場休市資料');
+            }
+            const marketRestData = await response.json();
+            
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            // 檢查今天和明天的日期
+            const datesToCheck = [now, tomorrow];
+            
+            // 收集所有需要顯示的通知
+            let notificationsToShow = [];
+            
+            // 檢查所有市場的休市日
+            marketRestData.forEach(market => {
+                const restDays = market.ClosedDate.split('、');
+                const yearMonth = now.getFullYear().toString().slice(-2) + 
+                                (now.getMonth() + 1).toString().padStart(2, '0');
+                
+                if (market.YearMonth === yearMonth) {
+                    // 檢查今天和明天是否休市
+                    datesToCheck.forEach(date => {
+                        const day = date.getDate().toString().padStart(2, '0');
+                        if (restDays.includes(day)) {
+                            const isTomorrow = date.getDate() === tomorrow.getDate();
+                            const notification = {
+                                title: '市場休市通知',
+                                messenge: `${market.MarketName} ${market.MarketType}市場${isTomorrow ? '明天' : '今天'}休市`,
+                                time: `${now.toISOString()} ~ ${now.toISOString()}`,
+                                public: true,
+                                targetDevices: ['everyone'],
+                                isMarketRest: true,
+                                marketInfo: market
+                            };
+                            notificationsToShow.push(notification);
+                        }
+                    });
+
+                    // 顯示本月所有休市日
+                    const restDates = restDays.map(day => {
+                        const restDate = new Date(now);
+                        restDate.setDate(parseInt(day));
+                        return restDate;
+                    }).filter(date => date >= now);
+
+                    if (restDates.length > 0) {
+                        const restDatesText = restDates.map(date => 
+                            `${date.getMonth() + 1}月${date.getDate()}日`
+                        ).join('、');
+
+                        const allRestNotification = {
+                            title: '本月休市日通知',
+                            messenge: `${market.MarketName} ${market.MarketType}市場本月休市日：${restDatesText}`,
+                            time: `${now.toISOString()} ~ ${now.toISOString()}`,
+                            public: true,
+                            targetDevices: ['everyone'],
+                            isMarketRest: true,
+                            marketInfo: market
+                        };
+                        notificationsToShow.push(allRestNotification);
+                    }
+                }
+            });
+
+            // 添加週一休市提醒
+            const mondayReminder = {
+                title: '週一休市提醒',
+                messenge: '提醒：週一為果菜市場通常休市日，請注意交易時間安排',
+                time: `${now.toISOString()} ~ ${now.toISOString()}`,
+                public: true,
+                targetDevices: ['everyone'],
+                isMarketRest: true
+            };
+            notificationsToShow.push(mondayReminder);
+
+            // 顯示通知
+            if (notificationsToShow.length > 0) {
+                showPageNotifications(notificationsToShow);
+            } else {
+                showPageNotifications([{
+                    title: '休市檢查結果',
+                    messenge: '目前沒有休市或即將休市的市場',
+                    time: `${now.toISOString()} ~ ${now.toISOString()}`,
+                    public: true,
+                    targetDevices: ['everyone'],
+                    isMarketRest: false
+                }]);
+            }
+        } catch (error) {
+            console.error('休市檢查失敗:', error);
+            showPageNotifications([{
+                title: '休市檢查失敗',
+                messenge: '無法獲取市場休市資料，請稍後再試',
+                time: `${new Date().toISOString()} ~ ${new Date().toISOString()}`,
+                public: true,
+                targetDevices: ['everyone'],
+                isMarketRest: false
+            }]);
+        } finally {
+            // 恢復按鈕狀態
+            checkRestButton.textContent = '休市檢查';
+            checkRestButton.disabled = false;
+        }
+    });
 }); 
