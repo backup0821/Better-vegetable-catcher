@@ -1,5 +1,5 @@
 // 版本資訊
-const VERSION = 'v2.3.web';
+const VERSION = 'v2.3.web.1';
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
 // DOM 元素
@@ -485,19 +485,36 @@ document.getElementById('exportCSV').addEventListener('click', () => exportData(
 // 通知相關功能
 async function checkNotifications() {
     try {
+        console.log('開始檢查通知...');
         const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const notifications = await response.json();
+        console.log('獲取到的通知資料:', notifications);
+        
         const now = new Date();
+        console.log('當前時間:', now);
         
         notifications.forEach(notification => {
+            console.log('處理通知:', notification);
             // 解析時間範圍
             const [startTime, endTime] = notification.time.split(' ~ ');
             const startDate = new Date(startTime);
             const endDate = new Date(endTime);
             
+            console.log('通知時間範圍:', {
+                start: startDate,
+                end: endDate,
+                current: now
+            });
+            
             // 檢查當前時間是否在通知時間範圍內
             if (now >= startDate && now <= endDate) {
+                console.log('符合時間範圍，顯示通知');
                 showPageNotification(notification);
+            } else {
+                console.log('不在時間範圍內');
             }
         });
     } catch (error) {
@@ -547,6 +564,7 @@ function showPageNotification(notification) {
 
 // 初始化通知檢查
 function initNotificationCheck() {
+    console.log('初始化通知檢查');
     // 每分鐘檢查一次
     notificationCheckInterval = setInterval(checkNotifications, 60000);
     // 立即執行一次檢查
@@ -555,6 +573,7 @@ function initNotificationCheck() {
 
 // 在頁面載入時初始化通知檢查
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('頁面載入完成，開始初始化通知檢查');
     initNotificationCheck();
     // 立即檢查通知
     checkNotifications();
