@@ -9,6 +9,9 @@ const urlsToCache = [
   './icon-512.png'
 ];
 
+// 背景通知檢查間隔（每小時檢查一次）
+const BACKGROUND_CHECK_INTERVAL = 60 * 60 * 1000;
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -72,6 +75,79 @@ self.addEventListener('notificationclick', (event) => {
             if (clients.openWindow) {
                 return clients.openWindow('/');
             }
+        })
+    );
+});
+
+// 背景同步事件處理
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'check-notifications') {
+        event.waitUntil(checkBackgroundNotifications());
+    }
+});
+
+// 定期檢查通知
+self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'check-notifications-periodic') {
+        event.waitUntil(checkBackgroundNotifications());
+    }
+});
+
+// 背景通知檢查函數
+async function checkBackgroundNotifications() {
+    try {
+        // 檢查市場休市通知
+        const marketRestResponse = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
+        const marketRestData = await marketRestResponse.json();
+        
+        const now = new Date();
+        const currentYearMonth = now.getFullYear().toString().slice(-2) + 
+                                (now.getMonth() + 1).toString().padStart(2, '0');
+        const currentDay = now.getDate().toString().padStart(2, '0');
+
+        marketRestData.forEach(market => {
+            if (market.YearMonth === currentYearMonth) {
+                const restDays = market.ClosedDate.split('、');
+                if (restDays.includes(currentDay)) {
+                    self.registration.showNotification('市場休市通知', {
+                        body: `${market.MarketName} ${market.MarketType}市場今日休市`,
+                        icon: './image/icon-192.png',
+                        badge: './image/icon-192.png',
+                        vibrate: [200, 100, 200],
+                        tag: `market-rest-${market.MarketNo}-${market.MarketType}`
+                    });
+                }
+            }
+        });
+
+        // 檢查一般通知
+        const notificationResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json');
+        const notifications = await notificationResponse.json();
+        
+        notifications.forEach(notification => {
+            const notifyTime = new Date(notification.time);
+            const timeDiff = Math.abs(now - notifyTime);
+            
+            if (timeDiff <= 60000) {
+                self.registration.showNotification(notification.title, {
+                    body: notification.public ? '公開通知' : '私人通知',
+                    icon: './image/icon-192.png',
+                    badge: './image/icon-192.png',
+                    vibrate: [200, 100, 200],
+                    tag: notification.id
+                });
+            }
+        });
+    } catch (error) {
+        console.error('背景通知檢查失敗:', error);
+    }
+}
+
+// 註冊定期同步
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        self.registration.periodicSync.register('check-notifications-periodic', {
+            minInterval: BACKGROUND_CHECK_INTERVAL
         })
     );
 });
