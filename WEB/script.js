@@ -1,5 +1,6 @@
 // 版本資訊
-const VERSION = 'v2.3.web.2';
+const VERSION = 'v2.3.web.3';
+console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
 // DOM 元素
@@ -496,6 +497,10 @@ async function checkNotifications() {
         const now = new Date();
         console.log('當前時間:', now);
         
+        // 檢查是否有任何通知需要顯示
+        let hasNewNotification = false;
+        let newNotification = null;
+        
         notifications.forEach(notification => {
             console.log('處理通知:', notification);
             // 解析時間範圍
@@ -511,12 +516,19 @@ async function checkNotifications() {
             
             // 檢查當前時間是否在通知時間範圍內
             if (now >= startDate && now <= endDate) {
-                console.log('符合時間範圍，顯示通知');
-                showPageNotification(notification);
-            } else {
-                console.log('不在時間範圍內');
+                console.log('符合時間範圍，準備顯示通知');
+                hasNewNotification = true;
+                newNotification = notification;
             }
         });
+        
+        // 只有在有新通知時才顯示
+        if (hasNewNotification && newNotification) {
+            console.log('顯示新通知');
+            showPageNotification(newNotification);
+        } else {
+            console.log('目前沒有需要顯示的通知');
+        }
     } catch (error) {
         console.error('獲取通知失敗:', error);
     }
@@ -525,8 +537,12 @@ async function checkNotifications() {
 function showPageNotification(notification) {
     // 移除現有的通知（如果有的話）
     const existingNotification = document.getElementById('page-notification');
+    const existingOverlay = document.querySelector('.notification-overlay');
     if (existingNotification) {
         existingNotification.remove();
+    }
+    if (existingOverlay) {
+        existingOverlay.remove();
     }
 
     // 創建遮罩層
@@ -553,11 +569,13 @@ function showPageNotification(notification) {
     confirmButton.textContent = '確定';
     confirmButton.onclick = () => {
         // 確保移除遮罩層和通知元素
-        if (overlay && overlay.parentNode) {
-            overlay.parentNode.removeChild(overlay);
+        const currentOverlay = document.querySelector('.notification-overlay');
+        const currentNotification = document.getElementById('page-notification');
+        if (currentOverlay) {
+            currentOverlay.remove();
         }
-        if (notificationElement && notificationElement.parentNode) {
-            notificationElement.parentNode.removeChild(notificationElement);
+        if (currentNotification) {
+            currentNotification.remove();
         }
     };
 
@@ -571,8 +589,8 @@ function showPageNotification(notification) {
 // 初始化通知檢查
 function initNotificationCheck() {
     console.log('初始化通知檢查');
-    // 每分鐘檢查一次
-    notificationCheckInterval = setInterval(checkNotifications, 60000);
+    // 每5分鐘檢查一次
+    notificationCheckInterval = setInterval(checkNotifications, 5 * 60 * 1000);
     // 立即執行一次檢查
     checkNotifications();
 }
