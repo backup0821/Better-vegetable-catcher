@@ -614,6 +614,8 @@ async function handleTestNotification() {
         return;
     }
 
+    console.log('it test now');
+
     // 請求背景執行權限
     if ('serviceWorker' in navigator) {
         try {
