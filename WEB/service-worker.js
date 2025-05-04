@@ -66,75 +66,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// 處理推送通知
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
-
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: './icon-192.png',
-    badge: './icon-192.png',
-    vibrate: [200, 100, 200],
-    data: {
-      url: data.url || '/'
-    },
-    actions: [
-      {
-        action: 'open',
-        title: '開啟應用程式'
-      }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
-
-// 處理通知點擊
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.action === 'open') {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  }
-});
-
-// 處理訂閱變更
-self.addEventListener('pushsubscriptionchange', (event) => {
-  const subscription = event.newSubscription || event.oldSubscription;
-  if (subscription) {
-    event.waitUntil(
-      fetch('/api/push-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          subscription: subscription.toJSON()
-        })
-      })
-    );
-  }
-});
-
-// 背景同步事件處理
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'check-notifications') {
-    event.waitUntil(checkBackgroundNotifications());
-  }
-});
-
-// 定期檢查通知
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'check-notifications-periodic') {
-    event.waitUntil(checkBackgroundNotifications());
-  }
-});
-
 // 背景通知檢查函數
 async function checkBackgroundNotifications() {
   try {
@@ -182,20 +113,6 @@ async function checkBackgroundNotifications() {
                 marketInfo: market
               };
               notificationsToShow.push(notification);
-              
-              // 發送 PWA 通知
-              self.registration.showNotification(notification.title, {
-                body: notification.messenge,
-                icon: './icon-192.png',
-                badge: './icon-192.png',
-                vibrate: [200, 100, 200],
-                tag: `market-rest-${market.MarketNo}-${market.MarketType}-${isTomorrow ? 'tomorrow' : 'today'}`,
-                requireInteraction: true,
-                data: {
-                  isMarketRest: true,
-                  marketInfo: market
-                }
-              });
             } else {
               // 尋找下次休市日
               const futureRestDays = restDays.filter(d => parseInt(d) > parseInt(day));
@@ -227,20 +144,6 @@ async function checkBackgroundNotifications() {
           marketInfo: nextRestMarket
         };
         notificationsToShow.push(nextRestNotification);
-        
-        // 發送 PWA 通知
-        self.registration.showNotification(nextRestNotification.title, {
-          body: nextRestNotification.messenge,
-          icon: './icon-192.png',
-          badge: './icon-192.png',
-          vibrate: [200, 100, 200],
-          tag: `next-market-rest-${nextRestMarket.MarketNo}-${nextRestMarket.MarketType}`,
-          requireInteraction: true,
-          data: {
-            isMarketRest: true,
-            marketInfo: nextRestMarket
-          }
-        });
       }
 
       // 發送網頁通知
@@ -264,97 +167,6 @@ async function checkBackgroundNotifications() {
     } catch (error) {
       console.error('市場休市通知檢查失敗:', error);
     }
-
-    // 檢查一般通知
-    let allNotifications = [];
-    
-    // 從本地檔案讀取通知
-    try {
-      const localResponse = await fetch('./notfiy.json', {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      if (localResponse.ok) {
-        const localNotifications = await localResponse.json();
-        allNotifications = allNotifications.concat(localNotifications);
-      }
-    } catch (error) {
-      console.error('讀取本地通知檔案失敗:', error);
-    }
-    
-    // 從 API 讀取通知
-    try {
-      const apiResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json', {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      if (apiResponse.ok) {
-        const apiNotifications = await apiResponse.json();
-        allNotifications = allNotifications.concat(apiNotifications);
-      }
-    } catch (error) {
-      console.error('讀取 API 通知失敗:', error);
-    }
-    
-    allNotifications.forEach(notification => {
-      // 只處理公開通知
-      if (!notification.public) {
-        return;
-      }
-      
-      // 檢查是否為特定裝置的通知
-      const isTargetedDevice = notification.targetDevices && notification.targetDevices.length > 0;
-      const isForEveryone = notification.targetDevices && notification.targetDevices.includes('everyone');
-      
-      if (isTargetedDevice && !isForEveryone && !notification.targetDevices.includes(deviceId)) {
-        return;
-      }
-      
-      // 解析時間範圍
-      const [startTime, endTime] = notification.time.split(' ~ ');
-      const startDate = new Date(startTime);
-      const endDate = new Date(endTime);
-      
-      // 檢查通知是否過期
-      if (now > endDate) {
-        return;
-      }
-      
-      // 檢查當前時間是否在通知時間範圍內
-      if (now >= startDate && now <= endDate) {
-        // 計算剩餘時間
-        const timeLeft = endDate - now;
-        const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-        const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        
-        let timeLeftText = '';
-        if (daysLeft > 0) {
-          timeLeftText = `剩餘 ${daysLeft} 天`;
-        } else if (hoursLeft > 0) {
-          timeLeftText = `剩餘 ${hoursLeft} 小時`;
-        } else {
-          timeLeftText = '即將過期';
-        }
-        
-        // 發送 Service Worker 通知
-        self.registration.showNotification(notification.title, {
-          body: `${notification.messenge}\n${timeLeftText}`,
-          icon: './icon-192.png',
-          badge: './icon-192.png',
-          vibrate: [200, 100, 200],
-          tag: notification.id,
-          requireInteraction: true,
-          data: {
-            isPublic: true,
-            isTargetedDevice: isTargetedDevice && !isForEveryone,
-            message: notification.messenge,
-            timeLeft: timeLeftText
-          }
-        });
-      }
-    });
   } catch (error) {
     console.error('背景通知檢查失敗:', error);
   }
