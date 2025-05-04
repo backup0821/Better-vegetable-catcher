@@ -125,26 +125,59 @@ async function checkBackgroundNotifications() {
         const notifications = await notificationResponse.json();
         
         notifications.forEach(notification => {
-            const notifyTime = new Date(notification.time);
-            const timeDiff = Math.abs(now - notifyTime);
+            // 只處理公開通知
+            if (!notification.public) {
+                return;
+            }
             
-            if (timeDiff <= 60000) {
+            // 檢查是否為特定裝置的通知
+            const isTargetedDevice = notification.targetDevices && notification.targetDevices.length > 0;
+            const isForEveryone = notification.targetDevices && notification.targetDevices.includes('everyone');
+            
+            if (isTargetedDevice && !isForEveryone && !notification.targetDevices.includes(deviceId)) {
+                return;
+            }
+            
+            // 解析時間範圍
+            const [startTime, endTime] = notification.time.split(' ~ ');
+            const startDate = new Date(startTime);
+            const endDate = new Date(endTime);
+            
+            // 檢查通知是否過期
+            if (now > endDate) {
+                return;
+            }
+            
+            // 檢查當前時間是否在通知時間範圍內
+            if (now >= startDate && now <= endDate) {
+                // 計算剩餘時間
+                const timeLeft = endDate - now;
+                const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                
+                let timeLeftText = '';
+                if (daysLeft > 0) {
+                    timeLeftText = `剩餘 ${daysLeft} 天`;
+                } else if (hoursLeft > 0) {
+                    timeLeftText = `剩餘 ${hoursLeft} 小時`;
+                } else {
+                    timeLeftText = '即將過期';
+                }
+                
                 // 發送 Service Worker 通知
                 self.registration.showNotification(notification.title, {
-                    body: notification.public ? '公開通知' : '私人通知',
+                    body: `${notification.messenge}\n${timeLeftText}`,
                     icon: './image/icon-192.png',
                     badge: './image/icon-192.png',
                     vibrate: [200, 100, 200],
                     tag: notification.id,
-                    requireInteraction: true
-                });
-
-                // 發送瀏覽器原生通知
-                new Notification(notification.title, {
-                    body: notification.public ? '公開通知' : '私人通知',
-                    icon: './image/icon-192.png',
-                    vibrate: [200, 100, 200],
-                    requireInteraction: true
+                    requireInteraction: true,
+                    data: {
+                        isPublic: true,
+                        isTargetedDevice: isTargetedDevice && !isForEveryone,
+                        message: notification.messenge,
+                        timeLeft: timeLeftText
+                    }
                 });
             }
         });

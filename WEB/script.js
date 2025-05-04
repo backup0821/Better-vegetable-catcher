@@ -511,9 +511,17 @@ async function checkNotifications() {
         notifications.forEach(notification => {
             console.log('處理通知:', notification);
             
+            // 只處理公開通知
+            if (!notification.public) {
+                console.log('此通知不是公開通知');
+                return;
+            }
+            
             // 檢查是否為特定裝置的通知
             const isTargetedDevice = notification.targetDevices && notification.targetDevices.length > 0;
-            if (isTargetedDevice && !notification.targetDevices.includes(deviceId)) {
+            const isForEveryone = notification.targetDevices && notification.targetDevices.includes('everyone');
+            
+            if (isTargetedDevice && !isForEveryone && !notification.targetDevices.includes(deviceId)) {
                 console.log('此通知不是針對當前裝置的');
                 return;
             }
@@ -529,12 +537,20 @@ async function checkNotifications() {
                 current: now
             });
             
+            // 檢查通知是否過期
+            if (now > endDate) {
+                console.log('此通知已過期');
+                return;
+            }
+            
             // 檢查當前時間是否在通知時間範圍內
             if (now >= startDate && now <= endDate) {
                 console.log('符合時間範圍，準備顯示通知');
                 notificationsToShow.push({
                     ...notification,
-                    isTargetedDevice
+                    isTargetedDevice: isTargetedDevice && !isForEveryone,
+                    isPublic: true,
+                    isExpired: false
                 });
             }
         });
@@ -590,12 +606,31 @@ function showPageNotifications(notifications) {
             notificationItem.classList.add('targeted-device');
         }
 
+        // 計算剩餘時間
+        const [startTime, endTime] = notification.time.split(' ~ ');
+        const endDate = new Date(endTime);
+        const now = new Date();
+        const timeLeft = endDate - now;
+        const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+        const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        
+        let timeLeftText = '';
+        if (daysLeft > 0) {
+            timeLeftText = `剩餘 ${daysLeft} 天`;
+        } else if (hoursLeft > 0) {
+            timeLeftText = `剩餘 ${hoursLeft} 小時`;
+        } else {
+            timeLeftText = '即將過期';
+        }
+
         notificationItem.innerHTML = `
-            <div class="notification-icon">⚠️</div>
+            <div class="notification-icon">📢</div>
             <div class="notification-content">
                 <div class="notification-title">${notification.title}</div>
+                <div class="notification-message">${notification.messenge}</div>
                 <div class="notification-time">通知時間：${notification.time}</div>
-                ${notification.isTargetedDevice ? '<div class="device-tag">🔒 特定裝置通知</div>' : ''}
+                <div class="notification-time-left">${timeLeftText}</div>
+                ${notification.isTargetedDevice ? '<div class="device-tag">🔒 特定裝置通知</div>' : '<div class="public-tag">📢 公開通知</div>'}
             </div>
         `;
         notificationList.appendChild(notificationItem);
