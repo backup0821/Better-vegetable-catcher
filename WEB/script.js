@@ -1,5 +1,5 @@
 // 版本資訊
-const VERSION = 'v2.0.web';
+const VERSION = 'v2.1.web';
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
 // DOM 元素
@@ -18,6 +18,9 @@ const dataUpdateTime = document.getElementById('dataUpdateTime');
 // 資料相關變數
 let cropData = [];
 let selectedCrop = '';
+
+// 通知相關功能
+let notificationCheckInterval;
 
 // 檢查版本更新
 async function checkForUpdates() {
@@ -471,6 +474,64 @@ showSeasonalBtn.addEventListener('click', showSeasonalAnalysis);
 document.getElementById('showPricePrediction').addEventListener('click', showPricePrediction);
 document.getElementById('exportExcel').addEventListener('click', () => exportData('excel'));
 document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
+
+// 通知相關功能
+async function checkNotifications() {
+    try {
+        const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json');
+        const notifications = await response.json();
+        const now = new Date();
+        
+        notifications.forEach(notification => {
+            const notifyTime = new Date(notification.time);
+            const timeDiff = Math.abs(now - notifyTime);
+            
+            // 檢查是否在指定時間正負1分鐘內
+            if (timeDiff <= 60000) {
+                sendNotification(notification);
+            }
+        });
+    } catch (error) {
+        console.error('獲取通知失敗:', error);
+    }
+}
+
+async function sendNotification(notification) {
+    // 檢查通知權限
+    if (Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            console.log('通知權限被拒絕');
+            return;
+        }
+    }
+
+    // 發送通知
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(notification.title, {
+                body: notification.public ? '公開通知' : '私人通知',
+                icon: './image/icon-192.png',
+                badge: './image/icon-192.png',
+                vibrate: [200, 100, 200],
+                tag: notification.id
+            });
+        });
+    }
+}
+
+// 初始化通知檢查
+function initNotificationCheck() {
+    // 每分鐘檢查一次
+    notificationCheckInterval = setInterval(checkNotifications, 60000);
+    // 立即執行一次檢查
+    checkNotifications();
+}
+
+// 在頁面載入時初始化通知檢查
+document.addEventListener('DOMContentLoaded', () => {
+    initNotificationCheck();
+});
 
 // 初始化
 fetchData(); 

@@ -56,3 +56,22 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
+// 處理通知點擊事件
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    
+    // 點擊通知時聚焦到應用程式
+    event.waitUntil(
+        clients.matchAll({ type: 'window' }).then((clientList) => {
+            for (const client of clientList) {
+                if (client.url === '/' && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow('/');
+            }
+        })
+    );
+});
