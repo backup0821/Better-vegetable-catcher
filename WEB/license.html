@@ -3,45 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>授權與開源說明 | 農產品交易資料分析系統</title>
+    <title>授權與開源說明 - 農產品交易資料分析系統</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .license-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .license-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .license-section h2 {
+            color: #1a73e8;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .license-section p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .license-section ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .license-section li {
+            margin-bottom: 8px;
+        }
+        
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .back-button:hover {
+            background-color: #1557b0;
+        }
+        
+        .version-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #1a73e8;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>授權與開源說明</h1>
-            <a href="index.html">← 回主頁</a>
-        </header>
-        <main>
-            <section>
-                <h2>本專案授權</h2>
-                <p>本專案「高級版果菜市場資料抓取器」採用 <strong>MIT 授權</strong>，<span style="color:red;">禁止用於商業用途</span>。<br>如需商業合作，請聯繫作者「鹿中創客」。</p>
-            </section>
-            <section>
-                <h2>開源套件與資源</h2>
-                <ul>
-                    <li><strong>Plotly.js</strong>：互動式圖表繪製（<a href="https://github.com/plotly/plotly.js" target="_blank">GitHub</a>，MIT License）</li>
-                    <li><strong>Service Worker</strong>：PWA 離線快取技術（<a href="https://developer.mozilla.org/zh-TW/docs/Web/API/Service_Worker_API" target="_blank">MDN</a>）</li>
-                    <li><strong>Google Fonts</strong>：網頁字型服務（SIL Open Font License）</li>
-                    <li><strong>Icons</strong>：部分圖示來自 Emoji 與自繪 SVG</li>
-                </ul>
-            </section>
-            <section>
-                <h2>資料來源</h2>
-                <ul>
-                    <li>行政院農業委員會農產品交易行情站<br>
-                        <a href="https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx" target="_blank">https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx</a>
-                    </li>
-                </ul>
-            </section>
-            <section>
-                <h2>作者資訊</h2>
-                <p>作者：鹿中創客<br>聯絡方式請見 <a href="https://github.com/backup0821/Better-vegetable-catcher" target="_blank">GitHub 專案頁面</a></p>
-            </section>
-        </main>
-        <footer>
-            <p>© 2024 高級版果菜市場資料抓取器 | 僅供學術與個人用途</p>
-        </footer>
+    <div class="license-container">
+        <div class="license-section">
+            <h2>系統功能說明 <span class="version-badge">v2.3.web</span></h2>
+            <p>本系統提供以下主要功能：</p>
+            <ul>
+                <li>農產品價格趨勢分析</li>
+                <li>交易量分布統計</li>
+                <li>價格分布分析</li>
+                <li>季節性分析</li>
+                <li>價格預測功能</li>
+                <li>資料匯出（Excel/CSV）</li>
+                <li>即時通知系統</li>
+                <li>裝置識別碼管理</li>
+            </ul>
+        </div>
+
+        <div class="license-section">
+            <h2>資料來源</h2>
+            <p>本系統使用的農產品交易資料來自：</p>
+            <ul>
+                <li>行政院農業委員會農產品交易行情站</li>
+                <li>資料更新頻率：每日</li>
+                <li>資料使用授權：開放資料授權條款</li>
+            </ul>
+        </div>
+
+        <div class="license-section">
+            <h2>開源授權</h2>
+            <p>本系統採用 MIT 授權條款：</p>
+            <ul>
+                <li>允許商業使用</li>
+                <li>允許修改</li>
+                <li>允許分發</li>
+                <li>允許私人使用</li>
+                <li>不承擔責任</li>
+                <li>不提供擔保</li>
+            </ul>
+            <p>完整授權條款請參考：<a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a></p>
+            
+            <h3>使用的開源套件與資源</h3>
+            <ul>
+                <li>
+                    <strong>Plotly.js</strong>
+                    <ul>
+                        <li>用途：互動式圖表繪製</li>
+                        <li>授權：MIT License</li>
+                        <li>來源：<a href="https://github.com/plotly/plotly.js" target="_blank">GitHub</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Service Worker API</strong>
+                    <ul>
+                        <li>用途：PWA 離線快取與通知功能</li>
+                        <li>授權：開放標準</li>
+                        <li>來源：<a href="https://developer.mozilla.org/zh-TW/docs/Web/API/Service_Worker_API" target="_blank">MDN Web Docs</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Web Push API</strong>
+                    <ul>
+                        <li>用途：瀏覽器推送通知</li>
+                        <li>授權：開放標準</li>
+                        <li>來源：<a href="https://developer.mozilla.org/zh-TW/docs/Web/API/Push_API" target="_blank">MDN Web Docs</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>IndexedDB API</strong>
+                    <ul>
+                        <li>用途：本地資料儲存</li>
+                        <li>授權：開放標準</li>
+                        <li>來源：<a href="https://developer.mozilla.org/zh-TW/docs/Web/API/IndexedDB_API" target="_blank">MDN Web Docs</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Fetch API</strong>
+                    <ul>
+                        <li>用途：網路請求處理</li>
+                        <li>授權：開放標準</li>
+                        <li>來源：<a href="https://developer.mozilla.org/zh-TW/docs/Web/API/Fetch_API" target="_blank">MDN Web Docs</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Web App Manifest</strong>
+                    <ul>
+                        <li>用途：PWA 應用程式設定</li>
+                        <li>授權：開放標準</li>
+                        <li>來源：<a href="https://developer.mozilla.org/zh-TW/docs/Web/Manifest" target="_blank">MDN Web Docs</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Emoji</strong>
+                    <ul>
+                        <li>用途：UI 圖示</li>
+                        <li>授權：Unicode License</li>
+                        <li>來源：<a href="https://unicode.org/emoji/" target="_blank">Unicode Consortium</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Microsoft JhengHei 字型</strong>
+                    <ul>
+                        <li>用途：中文字型</li>
+                        <li>授權：微軟授權</li>
+                        <li>來源：Microsoft Windows</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="license-section">
+            <h2>隱私權政策</h2>
+            <p>本系統重視使用者隱私：</p>
+            <ul>
+                <li>所有資料處理均在本地進行</li>
+                <li>不會收集個人身份資訊</li>
+                <li>裝置識別碼僅用於通知系統</li>
+                <li>可隨時重設裝置識別碼</li>
+            </ul>
+        </div>
+
+        <div class="license-section">
+            <h2>技術支援</h2>
+            <p>如有任何問題或建議，請透過以下方式聯繫：</p>
+            <ul>
+                <li>GitHub Issues：<a href="https://github.com/backup0821/Better-vegetable-catcher/issues" target="_blank">回報問題</a></li>
+                <li>電子郵件：makerbackup0821@gmail.com</li>
+            </ul>
+        </div>
+
+        <a href="index.html" class="back-button">返回主頁</a>
     </div>
 </body>
 </html> 

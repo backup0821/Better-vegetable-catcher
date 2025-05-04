@@ -51,6 +51,26 @@ header h1 {
     color: #666;
 }
 
+.check-update-btn {
+    margin-top: 10px;
+    padding: 6px 12px;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s;
+}
+
+.check-update-btn:hover {
+    background-color: #1557b0;
+}
+
+.check-update-btn:active {
+    background-color: #0d47a1;
+}
+
 .update-notice {
     background-color: #fff3cd;
     color: #856404;
@@ -428,4 +448,34 @@ footer {
         opacity: 1;
         transform: scale(1);
     }
+}
+
+/* 裝置識別碼按鈕樣式 */
+.device-id-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.device-id-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.device-id-btn:hover {
+    background-color: #45a049;
+}
+
+.device-id-btn.reset-btn {
+    background-color: #f44336;
+}
+
+.device-id-btn.reset-btn:hover {
+    background-color: #da190b;
 } 

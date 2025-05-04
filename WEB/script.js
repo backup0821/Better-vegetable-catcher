@@ -38,6 +38,19 @@ let marketRestCheckInterval;
 // 測試通知功能
 let testNotificationTimeout;
 
+// 認證代碼列表
+const VERIFICATION_CODES = [
+    'dev-test1',
+    'admin',
+    'GUEST',
+    'dev',
+    'tester'
+];
+
+// 推送通知相關功能
+let pushSubscription = null;
+const VAPID_PUBLIC_KEY = 'BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE';
+
 // 檢查版本更新
 async function checkForUpdates() {
     try {
@@ -46,24 +59,9 @@ async function checkForUpdates() {
         const data = await response.json();
         const latestVersion = data.tag_name;
         
-        // 檢查版本是否包含 .web
-        if (latestVersion.includes('.web')) {
-            if (latestVersion !== VERSION) {
-                const updateMessage = `發現新版本 ${latestVersion}！目前版本：${VERSION}`;
-                resultArea.innerHTML = `<p class="update-notice">${updateMessage}</p>`;
-            }
-        } else {
-            // 如果不是 .web 版本，嘗試獲取下一個版本
-            const allReleasesResponse = await fetch('https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases');
-            if (!allReleasesResponse.ok) throw new Error('無法獲取版本列表');
-            const allReleases = await allReleasesResponse.json();
-            
-            // 尋找第一個帶有 .web 的版本
-            const webRelease = allReleases.find(release => release.tag_name.includes('.web'));
-            if (webRelease && webRelease.tag_name !== VERSION) {
-                const updateMessage = `發現新版本 ${webRelease.tag_name}！目前版本：${VERSION}`;
-                resultArea.innerHTML = `<p class="update-notice">${updateMessage}</p>`;
-            }
+        if (latestVersion !== VERSION) {
+            // 顯示更新通知
+            showUpdateNotification(latestVersion);
         }
         
         versionNumber.textContent = VERSION;
@@ -72,6 +70,44 @@ async function checkForUpdates() {
         console.error('檢查更新時發生錯誤:', error);
     }
 }
+
+// 顯示更新通知
+function showUpdateNotification(latestVersion) {
+    // 檢查是否已經顯示過更新通知
+    const lastUpdateNotification = localStorage.getItem('lastUpdateNotification');
+    if (lastUpdateNotification === latestVersion) {
+        return;
+    }
+
+    // 創建更新通知
+    const notification = {
+        id: 'update-notification',
+        title: '系統更新通知',
+        messenge: `發現新版本 ${latestVersion}！\n目前版本：${VERSION}\n請更新以獲得最新功能。`,
+        time: `${new Date().toISOString()} ~ ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()}`,
+        public: true,
+        targetDevices: ['everyone']
+    };
+
+    // 顯示通知
+    showPageNotifications([notification]);
+    
+    // 記錄已顯示的更新通知版本
+    localStorage.setItem('lastUpdateNotification', latestVersion);
+}
+
+// 初始化更新檢查
+function initUpdateCheck() {
+    // 每小時檢查一次更新
+    setInterval(checkForUpdates, 60 * 60 * 1000);
+    // 立即執行一次檢查
+    checkForUpdates();
+}
+
+// 在頁面載入時初始化更新檢查
+document.addEventListener('DOMContentLoaded', () => {
+    initUpdateCheck();
+});
 
 // 從農產品交易行情站獲取資料
 async function fetchData() {
@@ -738,7 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 測試通知功能
 async function handleTestNotification() {
     const code = prompt('請輸入驗證代碼：');
-    if (code !== 'dev-test1') {
+    if (!VERIFICATION_CODES.includes(code)) {
         alert('驗證代碼錯誤！');
         return;
     }
@@ -983,8 +1019,8 @@ function verifyAndSetDeviceId() {
     const verificationCode = document.getElementById('verificationCode').value;
     const newDeviceId = document.getElementById('newDeviceId').value;
     
-    // 驗證代碼（這裡使用 'dev-test1' 作為範例，實際使用時應該使用更安全的驗證方式）
-    if (verificationCode !== 'dev-test1') {
+    // 驗證代碼
+    if (!VERIFICATION_CODES.includes(verificationCode)) {
         alert('驗證代碼錯誤！');
         return;
     }
@@ -1010,5 +1046,327 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// 重設裝置識別碼
+function resetDeviceId() {
+    if (confirm('確定要重設裝置識別碼嗎？此操作將無法復原。')) {
+        // 生成新的隨機裝置識別碼
+        const newDeviceId = 'device_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('deviceId', newDeviceId);
+        deviceId = newDeviceId;
+        alert('裝置識別碼已重設！\n新的識別碼：' + newDeviceId);
+    }
+}
+
+// 綁定重設裝置識別碼按鈕事件
+document.addEventListener('DOMContentLoaded', () => {
+    const resetDeviceIdBtn = document.getElementById('resetDeviceIdBtn');
+    if (resetDeviceIdBtn) {
+        resetDeviceIdBtn.addEventListener('click', resetDeviceId);
+    }
+});
+
+// 綁定檢查更新按鈕事件
+document.addEventListener('DOMContentLoaded', () => {
+    const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+    if (checkUpdateBtn) {
+        checkUpdateBtn.addEventListener('click', async () => {
+            // 顯示載入中狀態
+            checkUpdateBtn.textContent = '檢查中...';
+            checkUpdateBtn.disabled = true;
+            
+            try {
+                await checkForUpdates();
+                // 更新按鈕狀態
+                checkUpdateBtn.textContent = '已檢查';
+                setTimeout(() => {
+                    checkUpdateBtn.textContent = '檢查更新';
+                    checkUpdateBtn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('檢查更新失敗:', error);
+                checkUpdateBtn.textContent = '檢查失敗';
+                setTimeout(() => {
+                    checkUpdateBtn.textContent = '檢查更新';
+                    checkUpdateBtn.disabled = false;
+                }, 2000);
+            }
+        });
+    }
+});
+
+// 更新通知功能
+async function checkUpdateNotifications() {
+    try {
+        const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/updates.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const updates = await response.json();
+        
+        const now = new Date();
+        let updatesToShow = [];
+        
+        updates.forEach(update => {
+            // 檢查是否為公開通知
+            if (!update.public) {
+                return;
+            }
+            
+            // 檢查是否為特定裝置的通知
+            const isTargetedDevice = update.targetDevices && update.targetDevices.length > 0;
+            const isForEveryone = update.targetDevices && update.targetDevices.includes('everyone');
+            
+            if (isTargetedDevice && !isForEveryone && !update.targetDevices.includes(deviceId)) {
+                return;
+            }
+            
+            // 解析時間範圍
+            const [startTime, endTime] = update.time.split(' ~ ');
+            const startDate = new Date(startTime);
+            const endDate = new Date(endTime);
+            
+            // 檢查通知是否過期
+            if (now > endDate) {
+                return;
+            }
+            
+            // 檢查當前時間是否在通知時間範圍內
+            if (now >= startDate && now <= endDate) {
+                updatesToShow.push({
+                    ...update,
+                    isTargetedDevice: isTargetedDevice && !isForEveryone,
+                    isPublic: true,
+                    isExpired: false
+                });
+            }
+        });
+        
+        // 顯示所有符合條件的更新通知
+        if (updatesToShow.length > 0) {
+            showPageNotifications(updatesToShow);
+        }
+    } catch (error) {
+        console.error('獲取更新通知失敗:', error);
+    }
+}
+
+// 初始化更新通知檢查
+function initUpdateNotificationCheck() {
+    // 每小時檢查一次更新通知
+    setInterval(checkUpdateNotifications, 60 * 60 * 1000);
+    // 立即執行一次檢查
+    checkUpdateNotifications();
+}
+
+// 綁定檢查更新通知按鈕事件
+document.addEventListener('DOMContentLoaded', () => {
+    const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+    if (checkUpdateBtn) {
+        checkUpdateBtn.addEventListener('click', async () => {
+            // 顯示載入中狀態
+            checkUpdateBtn.textContent = '檢查中...';
+            checkUpdateBtn.disabled = true;
+            
+            try {
+                await checkUpdateNotifications();
+                // 更新按鈕狀態
+                checkUpdateBtn.textContent = '已檢查';
+                setTimeout(() => {
+                    checkUpdateBtn.textContent = '檢查更新通知';
+                    checkUpdateBtn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('檢查更新通知失敗:', error);
+                checkUpdateBtn.textContent = '檢查失敗';
+                setTimeout(() => {
+                    checkUpdateBtn.textContent = '檢查更新通知';
+                    checkUpdateBtn.disabled = false;
+                }, 2000);
+            }
+        });
+    }
+    
+    // 初始化更新通知檢查
+    initUpdateNotificationCheck();
+});
+
+// 初始化推送通知
+async function initPushNotifications() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            
+            // 檢查是否已經訂閱
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+                pushSubscription = subscription;
+                console.log('已訂閱推送通知:', subscription);
+                return;
+            }
+            
+            // 請求通知權限
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                console.log('通知權限被拒絕');
+                return;
+            }
+            
+            // 訂閱推送通知
+            pushSubscription = await subscribePush();
+            if (pushSubscription) {
+                console.log('成功訂閱推送通知:', pushSubscription);
+                // 將訂閱資訊發送到伺服器
+                await sendSubscriptionToServer(pushSubscription);
+            }
+        } catch (error) {
+            console.error('初始化推送通知失敗:', error);
+        }
+    } else {
+        console.log('瀏覽器不支援推送通知');
+    }
+}
+
+// 訂閱推送通知
+async function subscribePush() {
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        return subscription;
+    } catch (error) {
+        console.error('訂閱推送通知失敗:', error);
+        return null;
+    }
+}
+
+// 取消訂閱推送通知
+async function unsubscribePush() {
+    if (pushSubscription) {
+        try {
+            await pushSubscription.unsubscribe();
+            pushSubscription = null;
+            console.log('已取消訂閱推送通知');
+            // 通知伺服器取消訂閱
+            await sendUnsubscriptionToServer();
+        } catch (error) {
+            console.error('取消訂閱推送通知失敗:', error);
+        }
+    }
+}
+
+// 將訂閱資訊發送到伺服器
+async function sendSubscriptionToServer(subscription) {
+    try {
+        const response = await fetch('/api/push-subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                subscription: subscription.toJSON(),
+                deviceId: deviceId
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('發送訂閱資訊失敗');
+        }
+        
+        console.log('訂閱資訊已發送到伺服器');
+    } catch (error) {
+        console.error('發送訂閱資訊失敗:', error);
+    }
+}
+
+// 通知伺服器取消訂閱
+async function sendUnsubscriptionToServer() {
+    try {
+        const response = await fetch('/api/push-subscription', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                deviceId: deviceId
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('通知伺服器取消訂閱失敗');
+        }
+        
+        console.log('已通知伺服器取消訂閱');
+    } catch (error) {
+        console.error('通知伺服器取消訂閱失敗:', error);
+    }
+}
+
+// 將 Base64 字串轉換為 Uint8Array
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// 在頁面載入時初始化推送通知
+document.addEventListener('DOMContentLoaded', async () => {
+    // 初始化裝置識別碼
+    initDeviceId();
+    
+    // 檢查瀏覽器相容性
+    checkBrowserCompatibility();
+    
+    // 請求通知權限
+    await requestNotificationPermission();
+    
+    // 初始化通知檢查
+    initNotificationCheck();
+    
+    // 檢查更新通知
+    checkUpdateNotifications();
+    
+    // 初始化推送通知
+    await initPushNotifications();
+    
+    // 註冊 Service Worker
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('service-worker.js');
+            console.log('Service Worker 註冊成功:', registration);
+        } catch (error) {
+            console.error('Service Worker 註冊失敗:', error);
+        }
+    }
+});
+
 // 初始化
-fetchData(); 
+fetchData();
+
+// 在 service-worker.js 中
+self.addEventListener('pushsubscriptionchange', (event) => {
+    const subscription = event.newSubscription || event.oldSubscription;
+    if (subscription) {
+        // 將訂閱資訊發送到伺服器
+        fetch('/save-subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                endpoint: subscription.endpoint,
+                keys: subscription.toJSON().keys
+            })
+        });
+    }
+}); 
