@@ -625,7 +625,7 @@ async function handleTestNotification() {
             if (Notification.permission !== 'granted') {
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
-                    alert('需要通知權限才能進行測試！');
+                    alert('需要通知權限才能進行測試！\n請在瀏覽器設定中允許通知權限。');
                     return;
                 }
             }
@@ -637,21 +637,29 @@ async function handleTestNotification() {
                     icon: './image/icon-192.png',
                     badge: './image/icon-192.png',
                     vibrate: [200, 100, 200],
-                    tag: 'test-notification'
+                    tag: 'test-notification',
+                    requireInteraction: true, // 通知不會自動消失
+                    actions: [
+                        {
+                            action: 'open',
+                            title: '開啟應用程式'
+                        }
+                    ]
                 }).then(() => {
                     console.log('test push');
                 }).catch(error => {
                     console.error('通知發送失敗:', error);
+                    alert('通知發送失敗，請檢查通知權限設定！');
                 });
             }, 60000);
 
-            alert('測試通知已設置，將在一分鐘後發送！');
+            alert('測試通知已設置，將在一分鐘後發送！\n請確保手機未進入省電模式。');
         } catch (error) {
             console.error('測試通知設置失敗:', error);
-            alert('測試通知設置失敗，請確保已授予必要權限！');
+            alert('測試通知設置失敗，請確保：\n1. 已授予通知權限\n2. 未開啟省電模式\n3. 允許背景執行');
         }
     } else {
-        alert('您的瀏覽器不支援 Service Worker！');
+        alert('您的瀏覽器不支援 Service Worker！\n請使用最新版本的 Chrome 或 Safari。');
     }
 }
 
@@ -710,38 +718,37 @@ function showPermissionPrompt() {
     permissionPrompt.id = 'permission-prompt';
     permissionPrompt.style.cssText = `
         position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 0;
+        left: 0;
+        right: 0;
         background-color: #fff3cd;
         color: #856404;
         padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
         z-index: 1000;
         text-align: center;
-        max-width: 90%;
     `;
     permissionPrompt.innerHTML = `
-        <p>⚠️ 通知權限被拒絕</p>
-        <p>請允許通知權限以接收重要訊息</p>
-        <div style="margin-top: 10px;">
+        <p style="margin-bottom: 10px;">⚠️ 通知權限被拒絕</p>
+        <p style="margin-bottom: 10px;">請允許通知權限以接收重要訊息</p>
+        <div style="display: flex; justify-content: center; gap: 10px;">
             <button onclick="requestNotificationPermission()" style="
-                padding: 5px 10px;
+                padding: 8px 16px;
                 background-color: #856404;
                 color: white;
                 border: none;
-                border-radius: 3px;
+                border-radius: 5px;
                 cursor: pointer;
-                margin-right: 10px;
+                font-size: 16px;
             ">重新請求權限</button>
             <button onclick="removePermissionPrompt()" style="
-                padding: 5px 10px;
+                padding: 8px 16px;
                 background-color: #6c757d;
                 color: white;
                 border: none;
-                border-radius: 3px;
+                border-radius: 5px;
                 cursor: pointer;
+                font-size: 16px;
             ">稍後再說</button>
         </div>
     `;
