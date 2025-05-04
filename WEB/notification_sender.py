@@ -109,26 +109,31 @@ class NotificationSender:
         
         # 建立通知資料
         notification = {
+            "id": f"notification_{int(datetime.now().timestamp())}",
             "title": title,
-            "body": content,
+            "messenge": content,
             "time": f"{start_time.isoformat()} ~ {end_time.isoformat()}",
             "public": self.notification_type.get() == "public",
             "targetDevices": ["everyone"] if self.notification_type.get() == "public" else [self.device_id_entry.get().strip()]
         }
         
         try:
-            # 發送通知到 API
-            response = requests.post(
-                'https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json',
-                json=notification
-            )
+            # 讀取現有的通知
+            try:
+                with open('notfiy.json', 'r', encoding='utf-8') as f:
+                    notifications = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                notifications = []
             
-            if response.status_code == 200:
-                self.status_label.config(text="通知發送成功！")
-                messagebox.showinfo("成功", "通知已成功發送")
-            else:
-                self.status_label.config(text="通知發送失敗！")
-                messagebox.showerror("錯誤", f"發送通知失敗: {response.status_code}")
+            # 添加新通知
+            notifications.append(notification)
+            
+            # 寫入檔案
+            with open('notfiy.json', 'w', encoding='utf-8') as f:
+                json.dump(notifications, f, ensure_ascii=False, indent=2)
+            
+            self.status_label.config(text="通知發送成功！")
+            messagebox.showinfo("成功", "通知已成功發送")
                 
         except Exception as e:
             self.status_label.config(text=f"發生錯誤: {str(e)}")

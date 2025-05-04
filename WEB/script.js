@@ -531,12 +531,39 @@ document.getElementById('exportCSV').addEventListener('click', () => exportData(
 async function checkNotifications() {
     try {
         console.log('開始檢查通知...');
-        const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        let allNotifications = [];
+        
+        // 從本地檔案讀取通知
+        try {
+            const localResponse = await fetch('./notfiy.json', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            if (localResponse.ok) {
+                const localNotifications = await localResponse.json();
+                console.log('從本地檔案獲取到的通知:', localNotifications);
+                allNotifications = allNotifications.concat(localNotifications);
+            }
+        } catch (error) {
+            console.error('讀取本地通知檔案失敗:', error);
         }
-        const notifications = await response.json();
-        console.log('獲取到的通知資料:', notifications);
+        
+        // 從 API 讀取通知
+        try {
+            const apiResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            if (apiResponse.ok) {
+                const apiNotifications = await apiResponse.json();
+                console.log('從 API 獲取到的通知:', apiNotifications);
+                allNotifications = allNotifications.concat(apiNotifications);
+            }
+        } catch (error) {
+            console.error('讀取 API 通知失敗:', error);
+        }
         
         const now = new Date();
         console.log('當前時間:', now);
@@ -544,7 +571,7 @@ async function checkNotifications() {
         // 收集所有需要顯示的通知
         let notificationsToShow = [];
         
-        notifications.forEach(notification => {
+        allNotifications.forEach(notification => {
             console.log('處理通知:', notification);
             
             // 只處理公開通知

@@ -163,10 +163,39 @@ async function checkBackgroundNotifications() {
     });
 
     // 檢查一般通知
-    const notificationResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json');
-    const notifications = await notificationResponse.json();
+    let allNotifications = [];
     
-    notifications.forEach(notification => {
+    // 從本地檔案讀取通知
+    try {
+        const localResponse = await fetch('./notfiy.json', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        if (localResponse.ok) {
+            const localNotifications = await localResponse.json();
+            allNotifications = allNotifications.concat(localNotifications);
+        }
+    } catch (error) {
+        console.error('讀取本地通知檔案失敗:', error);
+    }
+    
+    // 從 API 讀取通知
+    try {
+        const apiResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        if (apiResponse.ok) {
+            const apiNotifications = await apiResponse.json();
+            allNotifications = allNotifications.concat(apiNotifications);
+        }
+    } catch (error) {
+        console.error('讀取 API 通知失敗:', error);
+    }
+    
+    allNotifications.forEach(notification => {
       // 只處理公開通知
       if (!notification.public) {
         return;
