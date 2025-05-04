@@ -1243,6 +1243,8 @@ async function initPushNotifications() {
             if (subscription) {
                 pushSubscription = subscription;
                 console.log('已訂閱推送通知:', subscription);
+                // 儲存訂閱資訊
+                await saveSubscription(subscription);
                 return;
             }
             
@@ -1257,14 +1259,42 @@ async function initPushNotifications() {
             pushSubscription = await subscribePush();
             if (pushSubscription) {
                 console.log('成功訂閱推送通知:', pushSubscription);
-                // 將訂閱資訊發送到伺服器
-                await sendSubscriptionToServer(pushSubscription);
+                // 儲存訂閱資訊
+                await saveSubscription(pushSubscription);
             }
         } catch (error) {
             console.error('初始化推送通知失敗:', error);
         }
     } else {
         console.log('瀏覽器不支援推送通知');
+    }
+}
+
+// 儲存訂閱資訊
+async function saveSubscription(subscription) {
+    try {
+        // 將訂閱資訊儲存到本地檔案
+        const subscriptionData = {
+            deviceId: deviceId,
+            subscription: subscription.toJSON()
+        };
+        
+        // 儲存到本地檔案
+        const response = await fetch('/save-subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(subscriptionData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('儲存訂閱資訊失敗');
+        }
+        
+        console.log('訂閱資訊已儲存');
+    } catch (error) {
+        console.error('儲存訂閱資訊失敗:', error);
     }
 }
 
@@ -1295,30 +1325,6 @@ async function unsubscribePush() {
         } catch (error) {
             console.error('取消訂閱推送通知失敗:', error);
         }
-    }
-}
-
-// 將訂閱資訊發送到伺服器
-async function sendSubscriptionToServer(subscription) {
-    try {
-        const response = await fetch('/api/push-subscription', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                subscription: subscription.toJSON(),
-                deviceId: deviceId
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('發送訂閱資訊失敗');
-        }
-        
-        console.log('訂閱資訊已發送到伺服器');
-    } catch (error) {
-        console.error('發送訂閱資訊失敗:', error);
     }
 }
 

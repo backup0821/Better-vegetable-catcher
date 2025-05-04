@@ -8,5 +8,15 @@
     "targetDevices": [
       "DEV--001-test"
     ]
+  },
+  {
+    "id": "notification_1746365847",
+    "title": "通知測試",
+    "messenge": "系統測試",
+    "time": "2025-05-04T21:37:27.181055 ~ 2025-05-04T22:37:27.181055",
+    "public": true,
+    "targetDevices": [
+      "everyone"
+    ]
   }
 ]
