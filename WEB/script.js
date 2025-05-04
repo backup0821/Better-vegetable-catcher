@@ -1,5 +1,5 @@
 // 版本資訊
-const VERSION = 'v2.1.web';
+const VERSION = 'v2.2.web';
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
 // DOM 元素
@@ -21,6 +21,13 @@ let selectedCrop = '';
 
 // 通知相關功能
 let notificationCheckInterval;
+
+// 市場休市通知功能
+let marketRestData = [];
+let marketRestCheckInterval;
+
+// 測試通知功能
+let testNotificationTimeout;
 
 // 檢查版本更新
 async function checkForUpdates() {
@@ -531,6 +538,263 @@ function initNotificationCheck() {
 // 在頁面載入時初始化通知檢查
 document.addEventListener('DOMContentLoaded', () => {
     initNotificationCheck();
+});
+
+// 市場休市通知功能
+async function fetchMarketRestData() {
+    try {
+        const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
+        if (!response.ok) throw new Error('無法獲取市場休市資料');
+        marketRestData = await response.json();
+    } catch (error) {
+        console.error('獲取市場休市資料失敗:', error);
+    }
+}
+
+async function checkMarketRest() {
+    const now = new Date();
+    const currentYearMonth = now.getFullYear().toString().slice(-2) + 
+                            (now.getMonth() + 1).toString().padStart(2, '0');
+    const currentDay = now.getDate().toString().padStart(2, '0');
+
+    marketRestData.forEach(market => {
+        if (market.YearMonth === currentYearMonth) {
+            const restDays = market.ClosedDate.split('、');
+            if (restDays.includes(currentDay)) {
+                sendMarketRestNotification(market);
+            }
+        }
+    });
+}
+
+async function sendMarketRestNotification(market) {
+    if (Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            console.log('通知權限被拒絕');
+            return;
+        }
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification('市場休市通知', {
+                body: `${market.MarketName} ${market.MarketType}市場今日休市`,
+                icon: './image/icon-192.png',
+                badge: './image/icon-192.png',
+                vibrate: [200, 100, 200],
+                tag: `market-rest-${market.MarketNo}-${market.MarketType}`
+            });
+        });
+    }
+}
+
+// 初始化市場休市檢查
+async function initMarketRestCheck() {
+    await fetchMarketRestData();
+    // 每天檢查一次
+    marketRestCheckInterval = setInterval(async () => {
+        await fetchMarketRestData();
+        checkMarketRest();
+    }, 24 * 60 * 60 * 1000);
+    // 立即執行一次檢查
+    checkMarketRest();
+}
+
+// 在頁面載入時初始化市場休市檢查
+document.addEventListener('DOMContentLoaded', () => {
+    initMarketRestCheck();
+});
+
+// 測試通知功能
+async function handleTestNotification() {
+    const code = prompt('請輸入驗證代碼：');
+    if (code !== 'dev-test1') {
+        alert('驗證代碼錯誤！');
+        return;
+    }
+
+    // 請求背景執行權限
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            
+            // 檢查通知權限
+            if (Notification.permission !== 'granted') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    alert('需要通知權限才能進行測試！');
+                    return;
+                }
+            }
+
+            // 設置一分鐘後發送通知
+            testNotificationTimeout = setTimeout(() => {
+                registration.showNotification('測試通知', {
+                    body: '這是一個測試通知，用於驗證通知功能是否正常運作。',
+                    icon: './image/icon-192.png',
+                    badge: './image/icon-192.png',
+                    vibrate: [200, 100, 200],
+                    tag: 'test-notification'
+                });
+            }, 60000);
+
+            alert('測試通知已設置，將在一分鐘後發送！');
+        } catch (error) {
+            console.error('測試通知設置失敗:', error);
+            alert('測試通知設置失敗，請確保已授予必要權限！');
+        }
+    } else {
+        alert('您的瀏覽器不支援 Service Worker！');
+    }
+}
+
+// 綁定測試通知按鈕事件
+document.addEventListener('DOMContentLoaded', () => {
+    const testNotificationBtn = document.getElementById('testNotificationBtn');
+    if (testNotificationBtn) {
+        testNotificationBtn.addEventListener('click', handleTestNotification);
+    }
+});
+
+// 請求背景同步權限
+async function requestBackgroundSync() {
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.sync.register('check-notifications');
+            console.log('背景同步已註冊');
+        } catch (error) {
+            console.error('背景同步註冊失敗:', error);
+        }
+    }
+}
+
+// 請求通知權限
+async function requestNotificationPermission() {
+    if ('Notification' in window) {
+        try {
+            const permission = await Notification.requestPermission();
+            console.log('通知權限狀態:', permission);
+            
+            if (permission === 'granted') {
+                // 如果通知權限被授予，請求背景同步權限
+                await requestBackgroundSync();
+                // 移除權限提示（如果存在）
+                removePermissionPrompt();
+            } else if (permission === 'denied') {
+                // 如果權限被拒絕，顯示提示
+                showPermissionPrompt();
+            }
+        } catch (error) {
+            console.error('請求通知權限失敗:', error);
+            showPermissionPrompt();
+        }
+    }
+}
+
+// 顯示權限提示
+function showPermissionPrompt() {
+    // 檢查是否已經顯示過提示
+    if (document.getElementById('permission-prompt')) {
+        return;
+    }
+
+    const permissionPrompt = document.createElement('div');
+    permissionPrompt.id = 'permission-prompt';
+    permissionPrompt.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 1000;
+        text-align: center;
+        max-width: 90%;
+    `;
+    permissionPrompt.innerHTML = `
+        <p>⚠️ 通知權限被拒絕</p>
+        <p>請允許通知權限以接收重要訊息</p>
+        <div style="margin-top: 10px;">
+            <button onclick="requestNotificationPermission()" style="
+                padding: 5px 10px;
+                background-color: #856404;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+                margin-right: 10px;
+            ">重新請求權限</button>
+            <button onclick="removePermissionPrompt()" style="
+                padding: 5px 10px;
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+            ">稍後再說</button>
+        </div>
+    `;
+    document.body.appendChild(permissionPrompt);
+}
+
+// 移除權限提示
+function removePermissionPrompt() {
+    const prompt = document.getElementById('permission-prompt');
+    if (prompt) {
+        prompt.remove();
+    }
+}
+
+// 檢查瀏覽器相容性
+function checkBrowserCompatibility() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isChromeIOS = /CriOS/.test(navigator.userAgent);
+    const supportsServiceWorker = 'serviceWorker' in navigator;
+    
+    if (isIOS && isChromeIOS) {
+        // 在 iOS 的 Chrome 上顯示提示
+        const compatibilityAlert = document.createElement('div');
+        compatibilityAlert.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+            max-width: 90%;
+        `;
+        compatibilityAlert.innerHTML = `
+            <p>⚠️ 通知功能在 iOS 版 Chrome 上可能無法正常運作</p>
+            <p>建議使用 Safari 瀏覽器以獲得完整功能</p>
+            <button onclick="this.parentElement.remove()" style="
+                margin-top: 10px;
+                padding: 5px 10px;
+                background-color: #856404;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+            ">我知道了</button>
+        `;
+        document.body.appendChild(compatibilityAlert);
+    }
+}
+
+// 在頁面載入時檢查相容性
+document.addEventListener('DOMContentLoaded', () => {
+    checkBrowserCompatibility();
+    // 立即請求通知權限
+    requestNotificationPermission();
 });
 
 // 初始化
