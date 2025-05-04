@@ -1,0 +1,28 @@
+/* 市場休市橫幅 */
+.market-rest-banner {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 12px;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.banner-icon {
+    font-size: 1.2em;
+}
+
+.banner-text {
+    font-weight: bold;
+} 

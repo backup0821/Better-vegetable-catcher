@@ -1,5 +1,5 @@
 // 版本資訊
-const VERSION = 'v2.3.web.1';
+const VERSION = 'v2.3.web.2';
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
 // DOM 元素
@@ -552,7 +552,13 @@ function showPageNotification(notification) {
     confirmButton.className = 'notification-button';
     confirmButton.textContent = '確定';
     confirmButton.onclick = () => {
-        overlay.remove();
+        // 確保移除遮罩層和通知元素
+        if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+        if (notificationElement && notificationElement.parentNode) {
+            notificationElement.parentNode.removeChild(notificationElement);
+        }
     };
 
     // 組合元素
@@ -590,6 +596,18 @@ async function fetchMarketRestData() {
     }
 }
 
+function showMarketRestBanner(market) {
+    const banner = document.createElement('div');
+    banner.className = 'market-rest-banner';
+    banner.innerHTML = `
+        <div class="banner-content">
+            <span class="banner-icon">⚠️</span>
+            <span class="banner-text">${market.MarketName} ${market.MarketType}市場今日休市</span>
+        </div>
+    `;
+    document.body.insertBefore(banner, document.body.firstChild);
+}
+
 async function checkMarketRest() {
     const now = new Date();
     const currentYearMonth = now.getFullYear().toString().slice(-2) + 
@@ -600,32 +618,14 @@ async function checkMarketRest() {
         if (market.YearMonth === currentYearMonth) {
             const restDays = market.ClosedDate.split('、');
             if (restDays.includes(currentDay)) {
-                sendMarketRestNotification(market);
+                showMarketRestBanner(market);
+                showPageNotification({
+                    title: '市場休市通知',
+                    time: `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`
+                });
             }
         }
     });
-}
-
-async function sendMarketRestNotification(market) {
-    if (Notification.permission !== 'granted') {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            console.log('通知權限被拒絕');
-            return;
-        }
-    }
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification('市場休市通知', {
-                body: `${market.MarketName} ${market.MarketType}市場今日休市`,
-                icon: './image/icon-192.png',
-                badge: './image/icon-192.png',
-                vibrate: [200, 100, 200],
-                tag: `market-rest-${market.MarketNo}-${market.MarketType}`
-            });
-        });
-    }
 }
 
 // 初始化市場休市檢查
