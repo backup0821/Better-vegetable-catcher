@@ -630,7 +630,26 @@ async function checkNotifications() {
     }
 }
 
+// 監聽 Service Worker 訊息
+if ('serviceWorker' in navigator) {
+    // 通知 Service Worker 客戶端已準備就緒
+    navigator.serviceWorker.ready.then(registration => {
+        registration.active.postMessage({ type: 'client-ready' });
+    });
+
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        console.log('收到 Service Worker 訊息:', event.data);
+        if (event.data.type === 'showNotifications') {
+            console.log('準備顯示通知:', event.data.notifications);
+            showPageNotifications(event.data.notifications);
+        }
+    });
+}
+
+// 顯示網頁通知
 function showPageNotifications(notifications) {
+    console.log('開始顯示通知:', notifications);
+    
     // 移除現有的通知（如果有的話）
     const existingNotification = document.getElementById('page-notification');
     const existingOverlay = document.querySelector('.notification-overlay');
@@ -644,29 +663,66 @@ function showPageNotifications(notifications) {
     // 創建遮罩層
     const overlay = document.createElement('div');
     overlay.className = 'notification-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    `;
 
     // 創建通知容器
     const notificationContainer = document.createElement('div');
     notificationContainer.id = 'page-notification';
     notificationContainer.className = 'notification-window';
+    notificationContainer.style.cssText = `
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    `;
 
     // 通知標題
     const title = document.createElement('div');
     title.className = 'notification-title';
     title.textContent = '系統通知';
+    title.style.cssText = `
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+    `;
     notificationContainer.appendChild(title);
 
     // 通知列表
     const notificationList = document.createElement('div');
     notificationList.className = 'notification-list';
+    notificationList.style.cssText = `
+        margin-bottom: 20px;
+    `;
 
     notifications.forEach((notification, index) => {
         const notificationItem = document.createElement('div');
         notificationItem.className = 'notification-item';
+        notificationItem.style.cssText = `
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: ${notification.isMarketRest ? '#fff3cd' : '#f8f9fa'};
+            border: 1px solid ${notification.isMarketRest ? '#ffeeba' : '#e9ecef'};
+        `;
         
-        // 如果是針對特定裝置的通知，添加標記
-        if (notification.isTargetedDevice) {
-            notificationItem.classList.add('targeted-device');
+        // 如果是市場休市通知，添加特殊樣式
+        if (notification.isMarketRest) {
+            notificationItem.classList.add('market-rest-notification');
         }
 
         // 計算剩餘時間
@@ -687,14 +743,30 @@ function showPageNotifications(notifications) {
         }
 
         notificationItem.innerHTML = `
-            <div class="notification-icon">📢</div>
-            <div class="notification-content">
-                <div class="notification-title">${notification.title}</div>
-                <div class="notification-message">${notification.messenge}</div>
-                <div class="notification-time">通知時間：${notification.time}</div>
-                <div class="notification-time-left">${timeLeftText}</div>
-                ${notification.isTargetedDevice ? '<div class="device-tag">🔒 特定裝置通知</div>' : '<div class="public-tag">📢 公開通知</div>'}
+            <div class="notification-icon" style="font-size: 24px; margin-right: 10px; float: left;">
+                ${notification.isMarketRest ? '🏪' : '📢'}
             </div>
+            <div class="notification-content" style="margin-left: 40px;">
+                <div class="notification-title" style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                    ${notification.title}
+                </div>
+                <div class="notification-message" style="margin-bottom: 5px;">
+                    ${notification.messenge}
+                </div>
+                <div class="notification-time" style="color: #666; font-size: 14px; margin-bottom: 5px;">
+                    通知時間：${new Date(startTime).toLocaleString('zh-TW')}
+                </div>
+                <div class="notification-time-left" style="color: #666; font-size: 14px;">
+                    ${timeLeftText}
+                </div>
+                <div class="notification-tag" style="margin-top: 5px;">
+                    ${notification.isMarketRest ? 
+                        '<span style="background-color: #ffeeba; padding: 2px 8px; border-radius: 3px; font-size: 12px;">🏪 市場休市通知</span>' : 
+                        '<span style="background-color: #e9ecef; padding: 2px 8px; border-radius: 3px; font-size: 12px;">📢 公開通知</span>'
+                    }
+                </div>
+            </div>
+            <div style="clear: both;"></div>
         `;
         notificationList.appendChild(notificationItem);
     });
@@ -705,6 +777,16 @@ function showPageNotifications(notifications) {
     const confirmButton = document.createElement('button');
     confirmButton.className = 'notification-button';
     confirmButton.textContent = '確定';
+    confirmButton.style.cssText = `
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 10px;
+    `;
     confirmButton.onclick = () => {
         const currentOverlay = document.querySelector('.notification-overlay');
         const currentNotification = document.getElementById('page-notification');
@@ -719,6 +801,8 @@ function showPageNotifications(notifications) {
     notificationContainer.appendChild(confirmButton);
     overlay.appendChild(notificationContainer);
     document.body.appendChild(overlay);
+    
+    console.log('通知已顯示');
 }
 
 // 初始化通知檢查

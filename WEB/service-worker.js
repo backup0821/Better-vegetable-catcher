@@ -159,6 +159,9 @@ async function checkBackgroundNotifications() {
       let nextRestDay = null;
       let nextRestMarket = null;
       
+      // 收集所有需要顯示的通知
+      let notificationsToShow = [];
+      
       datesToCheck.forEach(date => {
         const yearMonth = date.getFullYear().toString().slice(-2) + 
                          (date.getMonth() + 1).toString().padStart(2, '0');
@@ -169,13 +172,29 @@ async function checkBackgroundNotifications() {
             const restDays = market.ClosedDate.split('、');
             if (restDays.includes(day)) {
               const isTomorrow = date.getDate() === tomorrow.getDate();
-              self.registration.showNotification('市場休市通知', {
-                body: `${market.MarketName} ${market.MarketType}市場${isTomorrow ? '明天' : '今天'}休市`,
+              const notification = {
+                title: '市場休市通知',
+                messenge: `${market.MarketName} ${market.MarketType}市場${isTomorrow ? '明天' : '今天'}休市`,
+                time: `${now.toISOString()} ~ ${now.toISOString()}`,
+                public: true,
+                targetDevices: ['everyone'],
+                isMarketRest: true,
+                marketInfo: market
+              };
+              notificationsToShow.push(notification);
+              
+              // 發送 PWA 通知
+              self.registration.showNotification(notification.title, {
+                body: notification.messenge,
                 icon: './icon-192.png',
                 badge: './icon-192.png',
                 vibrate: [200, 100, 200],
                 tag: `market-rest-${market.MarketNo}-${market.MarketType}-${isTomorrow ? 'tomorrow' : 'today'}`,
-                requireInteraction: true
+                requireInteraction: true,
+                data: {
+                  isMarketRest: true,
+                  marketInfo: market
+                }
               });
             } else {
               // 尋找下次休市日
@@ -198,14 +217,49 @@ async function checkBackgroundNotifications() {
       // 如果有找到下次休市日，發送通知
       if (nextRestDay && nextRestMarket) {
         const daysUntilRest = Math.ceil((nextRestDay - now) / (1000 * 60 * 60 * 24));
-        self.registration.showNotification('下次休市日通知', {
-          body: `${nextRestMarket.MarketName} ${nextRestMarket.MarketType}市場將於${daysUntilRest}天後（${nextRestDay.getMonth() + 1}月${nextRestDay.getDate()}日）休市`,
+        const nextRestNotification = {
+          title: '下次休市日通知',
+          messenge: `${nextRestMarket.MarketName} ${nextRestMarket.MarketType}市場將於${daysUntilRest}天後（${nextRestDay.getMonth() + 1}月${nextRestDay.getDate()}日）休市`,
+          time: `${now.toISOString()} ~ ${now.toISOString()}`,
+          public: true,
+          targetDevices: ['everyone'],
+          isMarketRest: true,
+          marketInfo: nextRestMarket
+        };
+        notificationsToShow.push(nextRestNotification);
+        
+        // 發送 PWA 通知
+        self.registration.showNotification(nextRestNotification.title, {
+          body: nextRestNotification.messenge,
           icon: './icon-192.png',
           badge: './icon-192.png',
           vibrate: [200, 100, 200],
           tag: `next-market-rest-${nextRestMarket.MarketNo}-${nextRestMarket.MarketType}`,
-          requireInteraction: true
+          requireInteraction: true,
+          data: {
+            isMarketRest: true,
+            marketInfo: nextRestMarket
+          }
         });
+      }
+
+      // 發送網頁通知
+      if (notificationsToShow.length > 0) {
+        // 通知所有客戶端顯示通知
+        const clients = await self.clients.matchAll({ type: 'window' });
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'showNotifications',
+            notifications: notificationsToShow
+          });
+        });
+        
+        // 如果沒有找到任何客戶端，嘗試在下次有客戶端時發送
+        if (clients.length === 0) {
+          // 儲存待發送的通知
+          const pendingNotifications = await caches.open('notifications-cache');
+          await pendingNotifications.put('pending', new Response(JSON.stringify(notificationsToShow)));
+        }
       }
     } catch (error) {
       console.error('市場休市通知檢查失敗:', error);
@@ -315,9 +369,42 @@ self.addEventListener('activate', (event) => {
         minInterval: BACKGROUND_CHECK_INTERVAL
       }),
       // 立即執行一次檢查
-      checkBackgroundNotifications()
+      checkBackgroundNotifications(),
+      // 檢查是否有待發送的通知
+      checkPendingNotifications()
     ])
   );
+});
+
+// 檢查待發送的通知
+async function checkPendingNotifications() {
+  try {
+    const pendingNotifications = await caches.open('notifications-cache');
+    const response = await pendingNotifications.match('pending');
+    if (response) {
+      const notifications = await response.json();
+      const clients = await self.clients.matchAll({ type: 'window' });
+      if (clients.length > 0) {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'showNotifications',
+            notifications: notifications
+          });
+        });
+        // 清除已發送的通知
+        await pendingNotifications.delete('pending');
+      }
+    }
+  } catch (error) {
+    console.error('檢查待發送通知失敗:', error);
+  }
+}
+
+// 監聽客戶端連接事件
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'client-ready') {
+    checkPendingNotifications();
+  }
 });
 
 // 設置定期檢查
