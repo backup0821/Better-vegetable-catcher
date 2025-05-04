@@ -155,6 +155,10 @@ async function checkBackgroundNotifications() {
       // 檢查今天和明天的日期
       const datesToCheck = [now, tomorrow];
       
+      // 用於儲存下次休市日
+      let nextRestDay = null;
+      let nextRestMarket = null;
+      
       datesToCheck.forEach(date => {
         const yearMonth = date.getFullYear().toString().slice(-2) + 
                          (date.getMonth() + 1).toString().padStart(2, '0');
@@ -173,10 +177,36 @@ async function checkBackgroundNotifications() {
                 tag: `market-rest-${market.MarketNo}-${market.MarketType}-${isTomorrow ? 'tomorrow' : 'today'}`,
                 requireInteraction: true
               });
+            } else {
+              // 尋找下次休市日
+              const futureRestDays = restDays.filter(d => parseInt(d) > parseInt(day));
+              if (futureRestDays.length > 0) {
+                const nextDay = Math.min(...futureRestDays.map(d => parseInt(d)));
+                const nextRestDate = new Date(date);
+                nextRestDate.setDate(nextDay);
+                
+                if (!nextRestDay || nextRestDate < nextRestDay) {
+                  nextRestDay = nextRestDate;
+                  nextRestMarket = market;
+                }
+              }
             }
           }
         });
       });
+
+      // 如果有找到下次休市日，發送通知
+      if (nextRestDay && nextRestMarket) {
+        const daysUntilRest = Math.ceil((nextRestDay - now) / (1000 * 60 * 60 * 24));
+        self.registration.showNotification('下次休市日通知', {
+          body: `${nextRestMarket.MarketName} ${nextRestMarket.MarketType}市場將於${daysUntilRest}天後（${nextRestDay.getMonth() + 1}月${nextRestDay.getDate()}日）休市`,
+          icon: './icon-192.png',
+          badge: './icon-192.png',
+          vibrate: [200, 100, 200],
+          tag: `next-market-rest-${nextRestMarket.MarketNo}-${nextRestMarket.MarketType}`,
+          requireInteraction: true
+        });
+      }
     } catch (error) {
       console.error('市場休市通知檢查失敗:', error);
     }
