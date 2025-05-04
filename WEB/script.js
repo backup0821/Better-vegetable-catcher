@@ -490,11 +490,13 @@ async function checkNotifications() {
         const now = new Date();
         
         notifications.forEach(notification => {
-            const notifyTime = new Date(notification.time);
-            const timeDiff = Math.abs(now - notifyTime);
+            // 解析時間範圍
+            const [startTime, endTime] = notification.time.split(' ~ ');
+            const startDate = new Date(startTime);
+            const endDate = new Date(endTime);
             
-            // 檢查是否在指定時間範圍內
-            if (timeDiff <= 60000) {
+            // 檢查當前時間是否在通知時間範圍內
+            if (now >= startDate && now <= endDate) {
                 showPageNotification(notification);
             }
         });
@@ -549,6 +551,7 @@ function showPageNotification(notification) {
         <div style="font-size: 2em; margin-bottom: 10px;">⚠️</div>
         <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">${notification.title}</div>
         <div style="color: #666;">${notification.public ? '公開通知' : '私人通知'}</div>
+        <div style="color: #666; margin-top: 10px; font-size: 0.9em;">通知時間：${notification.time}</div>
     `;
 
     // 確認按鈕
