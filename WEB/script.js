@@ -1,5 +1,5 @@
 // 版本資訊
-const VERSION = 'v2.3.web.4';
+const VERSION = 'v2.4.web.0';
 console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 
