@@ -806,7 +806,7 @@ async function handleTestNotification() {
         return;
     }
 
-    console.log('it test now');
+    console.log('開始測試通知...');
 
     // 請求背景執行權限
     if ('serviceWorker' in navigator) {
@@ -822,38 +822,47 @@ async function handleTestNotification() {
                 }
             }
 
-            // 設置10秒後發送通知
-            testNotificationTimeout = setTimeout(() => {
-                // 發送 Service Worker 通知
-                registration.showNotification('測試通知', {
-                    body: '這是一個測試通知，用於驗證通知功能是否正常運作。',
-                    icon: './image/icon-192.png',
-                    badge: './image/icon-192.png',
-                    vibrate: [200, 100, 200],
-                    tag: 'test-notification',
-                    requireInteraction: true,
-                    actions: [
-                        {
-                            action: 'open',
-                            title: '開啟應用程式'
-                        }
-                    ]
-                }).then(() => {
-                    console.log('Service Worker 通知已發送');
-                }).catch(error => {
-                    console.error('Service Worker 通知發送失敗:', error);
-                });
+            // 模擬今天的休市通知
+            registration.showNotification('市場休市通知', {
+                body: '台北第一果菜批發市場 今天休市',
+                icon: './icon-192.png',
+                badge: './icon-192.png',
+                vibrate: [200, 100, 200],
+                tag: 'test-market-rest-today',
+                requireInteraction: true,
+                actions: [
+                    {
+                        action: 'open',
+                        title: '開啟應用程式'
+                    }
+                ]
+            }).then(() => {
+                console.log('今天休市通知已發送');
+            }).catch(error => {
+                console.error('今天休市通知發送失敗:', error);
+            });
 
-                // 發送瀏覽器原生通知
-                new Notification('測試通知', {
-                    body: '這是一個瀏覽器原生通知測試',
-                    icon: './image/icon-192.png',
-                    vibrate: [200, 100, 200],
-                    requireInteraction: true
-                });
-            }, 10000);
+            // 模擬明天的休市通知
+            registration.showNotification('市場休市通知', {
+                body: '台北第一果菜批發市場 明天休市',
+                icon: './icon-192.png',
+                badge: './icon-192.png',
+                vibrate: [200, 100, 200],
+                tag: 'test-market-rest-tomorrow',
+                requireInteraction: true,
+                actions: [
+                    {
+                        action: 'open',
+                        title: '開啟應用程式'
+                    }
+                ]
+            }).then(() => {
+                console.log('明天休市通知已發送');
+            }).catch(error => {
+                console.error('明天休市通知發送失敗:', error);
+            });
 
-            alert('測試通知已設置，將在10秒後發送！\n請確保手機未進入省電模式。');
+            alert('測試通知已發送！\n您應該會收到兩個通知：\n1. 今天休市通知\n2. 明天休市通知\n\n請確保：\n1. 已授予通知權限\n2. 未開啟省電模式\n3. 允許背景執行');
         } catch (error) {
             console.error('測試通知設置失敗:', error);
             alert('測試通知設置失敗，請確保：\n1. 已授予通知權限\n2. 未開啟省電模式\n3. 允許背景執行');

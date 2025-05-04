@@ -149,24 +149,33 @@ async function checkBackgroundNotifications() {
       const marketRestData = await marketRestResponse.json();
       
       const now = new Date();
-      const currentYearMonth = now.getFullYear().toString().slice(-2) + 
-                              (now.getMonth() + 1).toString().padStart(2, '0');
-      const currentDay = now.getDate().toString().padStart(2, '0');
-
-      marketRestData.forEach(market => {
-        if (market.YearMonth === currentYearMonth) {
-          const restDays = market.ClosedDate.split('、');
-          if (restDays.includes(currentDay)) {
-            self.registration.showNotification('市場休市通知', {
-              body: `${market.MarketName} ${market.MarketType}市場今日休市`,
-              icon: './icon-192.png',
-              badge: './icon-192.png',
-              vibrate: [200, 100, 200],
-              tag: `market-rest-${market.MarketNo}-${market.MarketType}`,
-              requireInteraction: true
-            });
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      // 檢查今天和明天的日期
+      const datesToCheck = [now, tomorrow];
+      
+      datesToCheck.forEach(date => {
+        const yearMonth = date.getFullYear().toString().slice(-2) + 
+                         (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        
+        marketRestData.forEach(market => {
+          if (market.YearMonth === yearMonth) {
+            const restDays = market.ClosedDate.split('、');
+            if (restDays.includes(day)) {
+              const isTomorrow = date.getDate() === tomorrow.getDate();
+              self.registration.showNotification('市場休市通知', {
+                body: `${market.MarketName} ${market.MarketType}市場${isTomorrow ? '明天' : '今天'}休市`,
+                icon: './icon-192.png',
+                badge: './icon-192.png',
+                vibrate: [200, 100, 200],
+                tag: `market-rest-${market.MarketNo}-${market.MarketType}-${isTomorrow ? 'tomorrow' : 'today'}`,
+                requireInteraction: true
+              });
+            }
           }
-        }
+        });
       });
     } catch (error) {
       console.error('市場休市通知檢查失敗:', error);
