@@ -15,6 +15,23 @@ const BACKGROUND_CHECK_INTERVAL = 5 * 60 * 1000;
 // 推送通知的 VAPID 公鑰
 const VAPID_PUBLIC_KEY = 'BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE';
 
+// Firebase Cloud Messaging 設定
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+
+// 初始化 Firebase
+firebase.initializeApp({
+  apiKey: "AIzaSyBu7K1CL3UC2Gtd36Snj7bxJoMLD43-J9o",
+  authDomain: "pwa-notice.firebaseapp.com",
+  projectId: "pwa-notice",
+  storageBucket: "pwa-notice.firebasestorage.app",
+  messagingSenderId: "347013597846",
+  appId: "1:347013597846:web:4c20ebcbdc5c7da68010b7",
+  measurementId: "G-3B9FBQ2WZ6"
+});
+
+const messaging = firebase.messaging();
+
 // 安裝 Service Worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -63,6 +80,42 @@ self.addEventListener('fetch', (event) => {
             return response;
           });
       })
+  );
+});
+
+// 處理背景訊息
+messaging.onBackgroundMessage((payload) => {
+  console.log('收到背景訊息:', payload);
+  
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/WEB/image/png/icon-192.png',
+    badge: '/WEB/image/png/icon-192.png',
+    data: payload.data
+  };
+
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// 處理通知點擊事件
+self.addEventListener('notificationclick', (event) => {
+  console.log('通知被點擊:', event);
+  
+  event.notification.close();
+  
+  // 開啟或聚焦到應用程式
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });
 

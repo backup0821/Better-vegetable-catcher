@@ -1,6 +1,12 @@
 # VAPID 金鑰檔案
 VAPID.txt
 
+# Firebase 相關
+serviceAccountKey.json
+config.json
+firebase-debug.log
+.firebase/
+
 # Python
 __pycache__/
 *.py[cod]

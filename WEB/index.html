@@ -16,6 +16,12 @@
     <link rel="icon" type="image/png" href="/Better-vegetable-catcher/image/png/icon-192.png">
     <link rel="icon" type="image/x-icon" href="/Better-vegetable-catcher/image/png/favicon.ico">
     <meta name="mobile-web-app-capable" content="yes">
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
+    </script>
 </head>
 <body>
     <div class="container">
@@ -143,64 +149,140 @@
         </div>
     </div>
     <script src="script.js"></script>
-</body>
-<script>
-    // 註冊 Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(registration => {
-                    console.log('✅ Service Worker 已註冊：', registration.scope);
-                })
-                .catch(error => {
-                    console.error('❌ Service Worker 註冊失敗：', error);
-                });
-        });
-    }
+    <script>
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
 
-    // 處理安裝提示
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // 防止 Chrome 自動顯示安裝提示
-        e.preventDefault();
-        // 儲存事件以便稍後使用
-        deferredPrompt = e;
-        // 顯示自訂安裝按鈕
-        showInstallPromotion();
-    });
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBu7K1CL3UC2Gtd36Snj7bxJoMLD43-J9o",
+            authDomain: "pwa-notice.firebaseapp.com",
+            projectId: "pwa-notice",
+            storageBucket: "pwa-notice.firebasestorage.app",
+            messagingSenderId: "347013597846",
+            appId: "1:347013597846:web:4c20ebcbdc5c7da68010b7",
+            measurementId: "G-3B9FBQ2WZ6"
+        };
 
-    function showInstallPromotion() {
-        // 檢查是否已經安裝
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            return;
-        }
-        
-        // 創建並顯示安裝按鈕
-        const installButton = document.createElement('button');
-        installButton.textContent = '安裝應用程式';
-        installButton.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 1000;
-        `;
-        
-        installButton.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`使用者選擇：${outcome}`);
-                deferredPrompt = null;
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const messaging = getMessaging(app);
+
+        // 請求通知權限
+        async function requestNotificationPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    console.log('通知權限已授予');
+                    // 獲取 FCM token
+                    const token = await getToken(messaging, {
+                        vapidKey: 'BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE'
+                    });
+                    console.log('FCM Token:', token);
+                    // 將 token 發送到您的後端伺服器
+                    await sendTokenToServer(token);
+                } else {
+                    console.log('通知權限被拒絕');
+                }
+            } catch (error) {
+                console.error('獲取通知權限時發生錯誤:', error);
             }
+        }
+
+        // 發送 token 到後端伺服器
+        async function sendTokenToServer(token) {
+            try {
+                const response = await fetch('/api/save-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token })
+                });
+                if (!response.ok) {
+                    throw new Error('發送 token 失敗');
+                }
+                console.log('Token 已成功發送到伺服器');
+            } catch (error) {
+                console.error('發送 token 到伺服器時發生錯誤:', error);
+            }
+        }
+
+        // 監聽前台訊息
+        onMessage(messaging, (payload) => {
+            console.log('收到前台訊息:', payload);
+            const { title, body } = payload.notification;
+            new Notification(title, {
+                body,
+                icon: '/WEB/image/png/icon-192.png'
+            });
         });
-        
-        document.body.appendChild(installButton);
-    }
-</script>
+
+        // 在頁面載入時請求通知權限
+        window.addEventListener('load', () => {
+            requestNotificationPermission();
+        });
+
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker 已註冊：', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker 註冊失敗：', error);
+                    });
+            });
+        }
+
+        // 處理安裝提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // 防止 Chrome 自動顯示安裝提示
+            e.preventDefault();
+            // 儲存事件以便稍後使用
+            deferredPrompt = e;
+            // 顯示自訂安裝按鈕
+            showInstallPromotion();
+        });
+
+        function showInstallPromotion() {
+            // 檢查是否已經安裝
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return;
+            }
+            
+            // 創建並顯示安裝按鈕
+            const installButton = document.createElement('button');
+            installButton.textContent = '安裝應用程式';
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 1000;
+            `;
+            
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`使用者選擇：${outcome}`);
+                    deferredPrompt = null;
+                }
+            });
+            
+            document.body.appendChild(installButton);
+        }
+    </script>
+</body>
 </html> 
