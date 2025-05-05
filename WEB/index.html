@@ -1,27 +1,161 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>農產品交易資料分析系統 v2.3.web.1</title>
-
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策" />
-    <link rel="apple-touch-icon" href="/Better-vegetable-catcher/image/png/icon-192.png" />
-    <link rel="icon" type="image/png" href="/Better-vegetable-catcher/image/png/icon-192.png" />
-    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="農產分析">
+    <link rel="apple-touch-icon" href="/Better-vegetable-catcher/image/png/icon-192.png">
+    <link rel="icon" type="image/png" href="/Better-vegetable-catcher/image/png/icon-192.png">
+    <link rel="icon" type="image/x-icon" href="/Better-vegetable-catcher/image/png/favicon.ico">
+    <meta name="mobile-web-app-capable" content="yes">
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
+    </script>
 </head>
 <body>
-    <!-- 原本內容...省略，保持不變 -->
+    <div class="container">
+        <header>
+            <h1>農產品交易資料分析系統</h1>
+            <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
+            <div class="version-info">
+                <p class="version">版本：<span id="versionNumber">v2.3.web</span></p>
+                <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
+                <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
+            </div>
+        </header>
 
-    <!-- ✅ 最重要的 SDK 匯入、初始化與通知邏輯都集中放在這裡 -->
-    <script type="module">
+        <main>
+            <div class="control-panel">
+                <div class="search-section">
+                    <h2>作物選擇</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
+                    </div>
+                    <div class="crop-select">
+                        <select id="cropSelect">
+                            <option value="">請選擇作物</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 載入動畫區塊 -->
+                <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+                  <div class="spinner"></div>
+                  <div class="loading-text">資料載入中...</div>
+                </div>
+
+                <div class="analysis-section">
+                    <h2>分析功能</h2>
+                    <div class="analysis-buttons">
+                        <button id="showPriceTrend">📈 價格趨勢</button>
+                        <button id="showVolumeDist">📊 交易量分布</button>
+                        <button id="showPriceDist">📉 價格分布</button>
+                        <button id="showSeasonal">📅 季節性分析</button>
+                        <button id="showPricePrediction">🔮 價格預測</button>
+                    </div>
+                </div>
+
+                <div class="export-section">
+                    <h2>資料匯出</h2>
+                    <div class="export-buttons">
+                        <button id="exportExcel">📥 匯出 Excel</button>
+                        <button id="exportCSV">📥 匯出 CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="display-panel">
+                <div id="chartArea" class="chart-area"></div>
+                <!-- 新增：往下滑指引 -->
+                <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
+                <!-- 新增：基本統計資訊卡片區塊 -->
+                <div id="statsArea" class="stats-area">
+                    <h3>基本統計資訊</h3>
+                    <div class="stats-cards">
+                        <div class="stat-card" id="avgPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📊</div>
+                            <div class="stat-label">平均價格</div>
+                            <div class="stat-value" id="avgPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="minPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📉</div>
+                            <div class="stat-label">最低價格</div>
+                            <div class="stat-value" id="minPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="maxPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📈</div>
+                            <div class="stat-label">最高價格</div>
+                            <div class="stat-value" id="maxPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="totalVolumeCard">
+                            <div class="stat-icon" style="font-size:2em;">⚖️</div>
+                            <div class="stat-label">總交易量</div>
+                            <div class="stat-value" id="totalVolume">--</div>
+                            <div class="stat-unit">公斤</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="detailTableArea" class="detail-table-area">
+                    <h3>詳細價格資料</h3>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>市場</th>
+                                <th>價格</th>
+                                <th>交易量</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody">
+                            <!-- 資料由 JS 動態產生 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="resultArea" class="result-area">
+                    <p>請選擇作物以查看分析結果</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>資料來源：行政院農業委員會農產品交易行情站</p>
+            <p>資料更新時間：<span id="dataUpdateTime">載入中...</span></p>
+            <p><a href="license.html" target="_blank">授權與開源說明</a></p>
+            <div class="test-notification-section">
+                <button id="testNotificationBtn" class="test-notification-btn">🔔 測試通知</button>
+            </div>
+        </footer>
+
+        <div class="footer">
+            <p>© 2024 果菜市場總整理</p>
+            <div class="device-id-buttons">
+                <button id="deviceIdBtn" class="device-id-btn">裝置識別碼</button>
+                <button id="resetDeviceIdBtn" class="device-id-btn reset-btn">重設識別碼</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js";
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
 
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBu7K1CL3UC2Gtd36Snj7bxJoMLD43-J9o",
             authDomain: "pwa-notice.firebaseapp.com",
@@ -32,58 +166,123 @@
             measurementId: "G-3B9FBQ2WZ6"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const messaging = getMessaging(app);
 
-        // 🔔 啟動通知權限請求
-        async function requestPermission() {
+        // 請求通知權限
+        async function requestNotificationPermission() {
             try {
                 const permission = await Notification.requestPermission();
-                if (permission === "granted") {
-                    console.log("✅ 通知權限已授予！");
+                if (permission === 'granted') {
+                    console.log('通知權限已授予');
+                    // 獲取 FCM token
                     const token = await getToken(messaging, {
-                        vapidKey: "BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE",
+                        vapidKey: 'BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE'
                     });
-                    console.log("🔑 FCM Token：", token);
-
-                    // 💾 傳到後端（可略過）
-                    await fetch('/api/save-token', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ token })
-                    });
+                    console.log('FCM Token:', token);
+                    // 將 token 發送到您的後端伺服器
+                    await sendTokenToServer(token);
                 } else {
-                    console.log("🚫 通知權限被拒絕");
+                    console.log('通知權限被拒絕');
                 }
-            } catch (err) {
-                console.error("💥 通知初始化失敗：", err);
+            } catch (error) {
+                console.error('獲取通知權限時發生錯誤:', error);
             }
         }
 
-        // 💬 收前台訊息
+        // 發送 token 到後端伺服器
+        async function sendTokenToServer(token) {
+            try {
+                const response = await fetch('/api/save-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token })
+                });
+                if (!response.ok) {
+                    throw new Error('發送 token 失敗');
+                }
+                console.log('Token 已成功發送到伺服器');
+            } catch (error) {
+                console.error('發送 token 到伺服器時發生錯誤:', error);
+            }
+        }
+
+        // 監聽前台訊息
         onMessage(messaging, (payload) => {
-            console.log("📩 收到訊息：", payload);
+            console.log('收到前台訊息:', payload);
             const { title, body } = payload.notification;
             new Notification(title, {
                 body,
-                icon: '/Better-vegetable-catcher/image/png/icon-192.png'
+                icon: '/WEB/image/png/icon-192.png'
             });
         });
 
-        // ✅ 初始化：在網頁載入後執行
+        // 在頁面載入時請求通知權限
         window.addEventListener('load', () => {
-            requestPermission();
-            // 🔧 註冊 Service Worker
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/firebase-messaging-sw.js')
-                    .then((reg) => {
-                        console.log("🛠️ Service Worker 註冊成功！", reg.scope);
-                    })
-                    .catch((err) => {
-                        console.error("💥 Service Worker 註冊失敗！", err);
-                    });
-            }
+            requestNotificationPermission();
         });
+
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker 已註冊：', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker 註冊失敗：', error);
+                    });
+            });
+        }
+
+        // 處理安裝提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // 防止 Chrome 自動顯示安裝提示
+            e.preventDefault();
+            // 儲存事件以便稍後使用
+            deferredPrompt = e;
+            // 顯示自訂安裝按鈕
+            showInstallPromotion();
+        });
+
+        function showInstallPromotion() {
+            // 檢查是否已經安裝
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return;
+            }
+            
+            // 創建並顯示安裝按鈕
+            const installButton = document.createElement('button');
+            installButton.textContent = '安裝應用程式';
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 1000;
+            `;
+            
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`使用者選擇：${outcome}`);
+                    deferredPrompt = null;
+                }
+            });
+            
+            document.body.appendChild(installButton);
+        }
     </script>
 </body>
-</html>
+</html> 
