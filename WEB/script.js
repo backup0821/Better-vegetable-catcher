@@ -2105,6 +2105,7 @@ let isDevModeActive = false;
 document.addEventListener('DOMContentLoaded', () => {
     initDevMode();
     initDevModeFeatures();
+    console.log('開發者模式初始化完成');
 });
 
 // 開發者模式觸發邏輯
@@ -2123,6 +2124,7 @@ function initDevMode() {
     document.addEventListener('click', (e) => {
         if (e.clientX < 50 && e.clientY < 50) {
             devModeClickCount.topLeft++;
+            console.log('左上角點擊次數：', devModeClickCount.topLeft);
             checkDevModeTrigger();
         }
     });
@@ -2131,6 +2133,7 @@ function initDevMode() {
     document.addEventListener('click', (e) => {
         if (e.clientX > window.innerWidth - 50 && e.clientY < 50) {
             devModeClickCount.topRight++;
+            console.log('右上角點擊次數：', devModeClickCount.topRight);
             checkDevModeTrigger();
         }
     });
@@ -2148,6 +2151,7 @@ function checkDevModeTrigger() {
     if (searchInput && searchInput.value.toLowerCase() === 'dev' && 
         devModeClickCount.topLeft >= 5 && 
         devModeClickCount.topRight >= 5) {
+        console.log('觸發開發者模式');
         activateDevMode();
     }
 }
@@ -2161,71 +2165,97 @@ function activateDevMode() {
     if (devModePanel) {
         devModePanel.style.display = 'block';
         devModePanel.classList.add('active');
+        console.log('開發者模式已啟動');
+        
+        // 初始化所有功能按鈕
+        initAllFeatures();
     }
 }
 
-// 關閉開發者模式
-function deactivateDevMode() {
-    isDevModeActive = false;
-    const devModePanel = document.getElementById('devModePanel');
-    if (devModePanel) {
-        devModePanel.style.display = 'none';
-        devModePanel.classList.remove('active');
-    }
-}
-
-// 初始化開發者模式功能
-function initDevModeFeatures() {
-    // 關閉按鈕
-    const closeButton = document.getElementById('closeDevMode');
-    if (closeButton) {
-        closeButton.addEventListener('click', deactivateDevMode);
-    }
-
-    // 資料庫操作工具
+// 初始化所有功能
+function initAllFeatures() {
+    // 資料庫操作
     const viewDatabaseBtn = document.getElementById('viewDatabase');
     if (viewDatabaseBtn) {
-        viewDatabaseBtn.addEventListener('click', viewDatabase);
+        viewDatabaseBtn.addEventListener('click', () => {
+            console.log('點擊查看資料庫');
+            viewDatabase();
+        });
     }
 
     // 開發者設定
     const switchEnvironmentBtn = document.getElementById('switchEnvironment');
     if (switchEnvironmentBtn) {
-        switchEnvironmentBtn.addEventListener('click', showEnvironmentSettings);
+        switchEnvironmentBtn.addEventListener('click', () => {
+            console.log('點擊環境設定');
+            showEnvironmentSettings();
+        });
     }
 
     const adjustParametersBtn = document.getElementById('adjustParameters');
     if (adjustParametersBtn) {
-        adjustParametersBtn.addEventListener('click', showParameterSettings);
+        adjustParametersBtn.addEventListener('click', () => {
+            console.log('點擊參數調整');
+            showParameterSettings();
+        });
     }
 
     const customThemeBtn = document.getElementById('customTheme');
     if (customThemeBtn) {
-        customThemeBtn.addEventListener('click', showThemeSettings);
+        customThemeBtn.addEventListener('click', () => {
+            console.log('點擊主題設定');
+            showThemeSettings();
+        });
     }
 
     const featureToggleBtn = document.getElementById('featureToggle');
     if (featureToggleBtn) {
-        featureToggleBtn.addEventListener('click', showFeatureSettings);
+        featureToggleBtn.addEventListener('click', () => {
+            console.log('點擊功能開關');
+            showFeatureSettings();
+        });
     }
 
-    // 新增功能按鈕
-    const newFeatures = [
-        { id: 'systemDiagnostics', text: '系統診斷', handler: showSystemDiagnostics },
-        { id: 'advancedAnalysis', text: '進階分析', handler: showAdvancedAnalysis },
-        { id: 'performanceTools', text: '效能優化', handler: showPerformanceTools },
-        { id: 'testTools', text: '測試工具', handler: showTestTools },
-        { id: 'securityTools', text: '安全性工具', handler: showSecurityTools }
-    ];
+    // 進階工具
+    const systemDiagnosticsBtn = document.getElementById('systemDiagnostics');
+    if (systemDiagnosticsBtn) {
+        systemDiagnosticsBtn.addEventListener('click', () => {
+            console.log('點擊系統診斷');
+            showSystemDiagnostics();
+        });
+    }
 
-    const devModeContent = document.querySelector('.dev-mode-content');
-    newFeatures.forEach(feature => {
-        const button = document.createElement('button');
-        button.id = feature.id;
-        button.textContent = feature.text;
-        button.addEventListener('click', feature.handler);
-        devModeContent.appendChild(button);
-    });
+    const advancedAnalysisBtn = document.getElementById('advancedAnalysis');
+    if (advancedAnalysisBtn) {
+        advancedAnalysisBtn.addEventListener('click', () => {
+            console.log('點擊進階分析');
+            showAdvancedAnalysis();
+        });
+    }
+
+    const performanceToolsBtn = document.getElementById('performanceTools');
+    if (performanceToolsBtn) {
+        performanceToolsBtn.addEventListener('click', () => {
+            console.log('點擊效能優化');
+            showPerformanceTools();
+        });
+    }
+
+    const testToolsBtn = document.getElementById('testTools');
+    if (testToolsBtn) {
+        testToolsBtn.addEventListener('click', () => {
+            console.log('點擊測試工具');
+            showTestTools();
+        });
+    }
+
+    const securityToolsBtn = document.getElementById('securityTools');
+    if (securityToolsBtn) {
+        securityToolsBtn.addEventListener('click', () => {
+            console.log('點擊安全性工具');
+            showSecurityTools();
+        });
+    }
 }
 
 // 資料庫操作相關功能
@@ -3334,6 +3364,31 @@ function showSecurityTools() {
     document.getElementById('closeSecurity').addEventListener('click', () => {
         dialog.remove();
     });
+}
+
+// ... existing code ... 
+
+// 關閉開發者模式
+function deactivateDevMode() {
+    isDevModeActive = false;
+    const devModePanel = document.getElementById('devModePanel');
+    if (devModePanel) {
+        devModePanel.style.display = 'none';
+        devModePanel.classList.remove('active');
+        console.log('開發者模式已關閉');
+    }
+}
+
+// 初始化開發者模式功能
+function initDevModeFeatures() {
+    // 關閉按鈕
+    const closeButton = document.getElementById('closeDevMode');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            console.log('點擊關閉開發者模式');
+            deactivateDevMode();
+        });
+    }
 }
 
 // ... existing code ... 
