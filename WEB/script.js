@@ -121,6 +121,19 @@ async function fetchData() {
         cropData = data;
         updateCropList();
         
+        // 更新市場列表
+        const marketSelect = document.getElementById('marketSelect');
+        if (marketSelect) {
+            const markets = [...new Set(cropData.map(item => item.市場名稱))].sort();
+            marketSelect.innerHTML = '<option value="all">全部市場</option>';
+            markets.forEach(market => {
+                const option = document.createElement('option');
+                option.value = market;
+                option.textContent = market;
+                marketSelect.appendChild(option);
+            });
+        }
+        
         // 更新資料時間
         const now = new Date();
         dataUpdateTime.textContent = now.toLocaleString('zh-TW');
@@ -163,24 +176,32 @@ function filterCrops() {
 function showPriceTrend() {
     if (!selectedCrop) return;
     const cropData = getCropData(selectedCrop);
-    const dates = cropData.map(item => item.交易日期);
-    const prices = cropData.map(item => Number(item.平均價));
+    
+    // 按市場分組資料
+    const markets = [...new Set(cropData.map(item => item.市場名稱))];
+    const traces = markets.map(market => {
+        const marketData = cropData.filter(item => item.市場名稱 === market);
+        const dates = marketData.map(item => item.交易日期);
+        const prices = marketData.map(item => Number(item.平均價));
+        
+        return {
+            x: dates,
+            y: prices,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: market,
+            line: { width: 2 },
+            marker: { size: 8 }
+        };
+    });
+
     // 找最大/最小價及其日期
-    const maxPrice = Math.max(...prices);
-    const minPrice = Math.min(...prices);
-    const maxIdx = prices.indexOf(maxPrice);
-    const minIdx = prices.indexOf(minPrice);
-    const maxDate = dates[maxIdx];
-    const minDate = dates[minIdx];
-    const trace = {
-        x: dates,
-        y: prices,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: '價格',
-        line: { color: '#1a73e8', width: 4 },
-        marker: { size: 10, color: '#1a73e8' }
-    };
+    const allPrices = cropData.map(item => Number(item.平均價));
+    const maxPrice = Math.max(...allPrices);
+    const minPrice = Math.min(...allPrices);
+    const maxItem = cropData.find(item => Number(item.平均價) === maxPrice);
+    const minItem = cropData.find(item => Number(item.平均價) === minPrice);
+
     const layout = {
         title: {
             text: `${selectedCrop} 價格趨勢`,
@@ -203,7 +224,7 @@ function showPriceTrend() {
         responsive: true,
         annotations: [
             {
-                x: maxDate,
+                x: maxItem.交易日期,
                 y: maxPrice,
                 xref: 'x',
                 yref: 'y',
@@ -215,7 +236,7 @@ function showPriceTrend() {
                 font: { color: '#ea4335', size: 16 }
             },
             {
-                x: minDate,
+                x: minItem.交易日期,
                 y: minPrice,
                 xref: 'x',
                 yref: 'y',
@@ -228,7 +249,7 @@ function showPriceTrend() {
             }
         ]
     };
-    Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+    Plotly.newPlot(chartArea, traces, layout, {responsive: true});
     showBasicStats(cropData);
 }
 
@@ -439,7 +460,14 @@ function convertToExcel(data) {
 
 // 獲取特定作物的資料
 function getCropData(cropName) {
-    return cropData.filter(item => item.作物名稱 === cropName);
+    const selectedMarket = marketSelect.value;
+    let filteredData = cropData.filter(item => item.作物名稱 === cropName);
+    
+    if (selectedMarket !== 'all') {
+        filteredData = filteredData.filter(item => item.市場名稱 === selectedMarket);
+    }
+    
+    return filteredData;
 }
 
 // 顯示基本統計資訊
@@ -1528,138 +1556,539 @@ self.addEventListener('pushsubscriptionchange', (event) => {
 
 // 在頁面載入時初始化
 document.addEventListener('DOMContentLoaded', () => {
-    // 創建休市檢查按鈕
-    const checkRestButton = document.createElement('button');
-    checkRestButton.id = 'checkRestBtn';
-    checkRestButton.textContent = '休市檢查';
-    checkRestButton.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        z-index: 1000;
+    // 創建市場選擇下拉選單
+    const marketSelectContainer = document.createElement('div');
+    marketSelectContainer.className = 'market-select-container';
+    marketSelectContainer.style.cssText = `
+        margin-bottom: 15px;
     `;
-    document.body.appendChild(checkRestButton);
 
-    // 綁定按鈕點擊事件
-    checkRestButton.addEventListener('click', async () => {
-        try {
-            // 顯示載入中狀態
-            checkRestButton.textContent = '檢查中...';
-            checkRestButton.disabled = true;
+    const marketSelectLabel = document.createElement('label');
+    marketSelectLabel.textContent = '選擇市場：';
+    marketSelectLabel.style.cssText = `
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    `;
 
-            // 檢查市場休市資料
-            const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
-            if (!response.ok) {
-                throw new Error('無法獲取市場休市資料');
-            }
-            const marketRestData = await response.json();
-            
-            const now = new Date();
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            
-            // 檢查今天和明天的日期
-            const datesToCheck = [now, tomorrow];
-            
-            // 收集所有需要顯示的通知
-            let notificationsToShow = [];
-            
-            // 檢查所有市場的休市日
-            marketRestData.forEach(market => {
-                const restDays = market.ClosedDate.split('、');
-                const yearMonth = now.getFullYear().toString().slice(-2) + 
-                                (now.getMonth() + 1).toString().padStart(2, '0');
-                
-                if (market.YearMonth === yearMonth) {
-                    // 檢查今天和明天是否休市
-                    datesToCheck.forEach(date => {
-                        const day = date.getDate().toString().padStart(2, '0');
-                        if (restDays.includes(day)) {
-                            const isTomorrow = date.getDate() === tomorrow.getDate();
-                            const notification = {
-                                title: '市場休市通知',
-                                messenge: `${market.MarketName} ${market.MarketType}市場${isTomorrow ? '明天' : '今天'}休市`,
-                                time: `${now.toISOString()} ~ ${now.toISOString()}`,
-                                public: true,
-                                targetDevices: ['everyone'],
-                                isMarketRest: true,
-                                marketInfo: market
-                            };
-                            notificationsToShow.push(notification);
-                        }
-                    });
+    const marketSelect = document.createElement('select');
+    marketSelect.id = 'marketSelect';
+    marketSelect.style.cssText = `
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        background-color: white;
+    `;
 
-                    // 顯示本月所有休市日
-                    const restDates = restDays.map(day => {
-                        const restDate = new Date(now);
-                        restDate.setDate(parseInt(day));
-                        return restDate;
-                    }).filter(date => date >= now);
+    // 將市場選擇元素添加到控制面板
+    const controlPanel = document.querySelector('.control-panel');
+    const searchSection = controlPanel.querySelector('.search-section');
+    marketSelectContainer.appendChild(marketSelectLabel);
+    marketSelectContainer.appendChild(marketSelect);
+    controlPanel.insertBefore(marketSelectContainer, searchSection);
 
-                    if (restDates.length > 0) {
-                        const restDatesText = restDates.map(date => 
-                            `${date.getMonth() + 1}月${date.getDate()}日`
-                        ).join('、');
+    // 更新市場列表
+    function updateMarketList() {
+        const markets = [...new Set(cropData.map(item => item.市場名稱))].sort();
+        marketSelect.innerHTML = '<option value="all">全部市場</option>';
+        markets.forEach(market => {
+            const option = document.createElement('option');
+            option.value = market;
+            option.textContent = market;
+            marketSelect.appendChild(option);
+        });
+    }
 
-                        const allRestNotification = {
-                            title: '本月休市日通知',
-                            messenge: `${market.MarketName} ${market.MarketType}市場本月休市日：${restDatesText}`,
-                            time: `${now.toISOString()} ~ ${now.toISOString()}`,
-                            public: true,
-                            targetDevices: ['everyone'],
-                            isMarketRest: true,
-                            marketInfo: market
-                        };
-                        notificationsToShow.push(allRestNotification);
-                    }
-                }
-            });
-
-            // 添加週一休市提醒
-            const mondayReminder = {
-                title: '週一休市提醒',
-                messenge: '提醒：週一為果菜市場通常休市日，請注意交易時間安排',
-                time: `${now.toISOString()} ~ ${now.toISOString()}`,
-                public: true,
-                targetDevices: ['everyone'],
-                isMarketRest: true
-            };
-            notificationsToShow.push(mondayReminder);
-
-            // 顯示通知
-            if (notificationsToShow.length > 0) {
-                showPageNotifications(notificationsToShow);
-            } else {
-                showPageNotifications([{
-                    title: '休市檢查結果',
-                    messenge: '目前沒有休市或即將休市的市場',
-                    time: `${now.toISOString()} ~ ${now.toISOString()}`,
-                    public: true,
-                    targetDevices: ['everyone'],
-                    isMarketRest: false
-                }]);
-            }
-        } catch (error) {
-            console.error('休市檢查失敗:', error);
-            showPageNotifications([{
-                title: '休市檢查失敗',
-                messenge: '無法獲取市場休市資料，請稍後再試',
-                time: `${new Date().toISOString()} ~ ${new Date().toISOString()}`,
-                public: true,
-                targetDevices: ['everyone'],
-                isMarketRest: false
-            }]);
-        } finally {
-            // 恢復按鈕狀態
-            checkRestButton.textContent = '休市檢查';
-            checkRestButton.disabled = false;
+    // 當市場選擇改變時更新圖表
+    marketSelect.addEventListener('change', () => {
+        if (selectedCrop) {
+            showPriceTrend();
         }
     });
+
+    // 修改價格趨勢圖函數
+    const originalShowPriceTrend = showPriceTrend;
+    showPriceTrend = function() {
+        if (!selectedCrop) return;
+        const cropData = getCropData(selectedCrop);
+        
+        // 如果選擇了特定市場，只顯示該市場的資料
+        if (marketSelect.value !== 'all') {
+            const marketData = cropData.filter(item => item.市場名稱 === marketSelect.value);
+            const dates = marketData.map(item => item.交易日期);
+            const prices = marketData.map(item => Number(item.平均價));
+            
+            const trace = {
+                x: dates,
+                y: prices,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: marketSelect.value,
+                line: { width: 2 },
+                marker: { size: 8 }
+            };
+
+            const maxPrice = Math.max(...prices);
+            const minPrice = Math.min(...prices);
+            const maxItem = marketData.find(item => Number(item.平均價) === maxPrice);
+            const minItem = marketData.find(item => Number(item.平均價) === minPrice);
+
+            const layout = {
+                title: {
+                    text: `${selectedCrop} - ${marketSelect.value} 價格趨勢`,
+                    font: { size: 22, color: '#1a73e8', family: 'Microsoft JhengHei, Arial' }
+                },
+                xaxis: { 
+                    title: '日期',
+                    titlefont: { size: 18 },
+                    tickfont: { size: 16 }
+                },
+                yaxis: { 
+                    title: '價格 (元/公斤)',
+                    titlefont: { size: 18 },
+                    tickfont: { size: 16 }
+                },
+                margin: { t: 60, l: 60, r: 30, b: 60 },
+                legend: { font: { size: 16 } },
+                hoverlabel: { font: { size: 16 } },
+                autosize: true,
+                responsive: true,
+                annotations: [
+                    {
+                        x: maxItem.交易日期,
+                        y: maxPrice,
+                        xref: 'x',
+                        yref: 'y',
+                        text: `最高 ${maxPrice}`,
+                        showarrow: true,
+                        arrowhead: 7,
+                        ax: 0,
+                        ay: -40,
+                        font: { color: '#ea4335', size: 16 }
+                    },
+                    {
+                        x: minItem.交易日期,
+                        y: minPrice,
+                        xref: 'x',
+                        yref: 'y',
+                        text: `最低 ${minPrice}`,
+                        showarrow: true,
+                        arrowhead: 7,
+                        ax: 0,
+                        ay: 40,
+                        font: { color: '#34a853', size: 16 }
+                    }
+                ]
+            };
+            Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+            showBasicStats(marketData);
+        } else {
+            // 如果選擇全部市場，使用原有的多市場顯示邏輯
+            originalShowPriceTrend();
+        }
+    };
+
+    // 修改其他分析函數
+    const originalShowVolumeDistribution = showVolumeDistribution;
+    showVolumeDistribution = function() {
+        if (!selectedCrop) return;
+        const cropData = getCropData(selectedCrop);
+        const markets = [...new Set(cropData.map(item => item.市場名稱))];
+        const volumes = markets.map(market => {
+            const marketData = cropData.filter(item => item.市場名稱 === market);
+            return marketData.reduce((sum, item) => sum + Number(item.交易量), 0);
+        });
+        const trace = {
+            x: markets,
+            y: volumes,
+            type: 'bar',
+            name: '交易量',
+            marker: { color: '#34a853' }
+        };
+        const layout = {
+            title: {
+                text: `${selectedCrop} 各市場交易量分布`,
+                font: { size: 20, color: '#34a853', family: 'Microsoft JhengHei, Arial' }
+            },
+            xaxis: { title: '市場', titlefont: { size: 16 }, tickfont: { size: 15 } },
+            yaxis: { title: '交易量 (公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
+            margin: { t: 60, l: 60, r: 30, b: 60 },
+            legend: { font: { size: 15 } },
+            hoverlabel: { font: { size: 15 } },
+            autosize: true,
+            responsive: true
+        };
+        Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+        showBasicStats(cropData);
+    };
+
+    // 修改價格分布函數
+    const originalShowPriceDistribution = showPriceDistribution;
+    showPriceDistribution = function() {
+        if (!selectedCrop) return;
+        const cropData = getCropData(selectedCrop);
+        const prices = cropData.map(item => Number(item.平均價));
+        const trace = {
+            x: prices,
+            type: 'histogram',
+            name: '價格分布',
+            marker: { color: '#ea4335' }
+        };
+        const layout = {
+            title: {
+                text: `${selectedCrop} 價格分布`,
+                font: { size: 20, color: '#ea4335', family: 'Microsoft JhengHei, Arial' }
+            },
+            xaxis: { title: '價格 (元/公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
+            yaxis: { title: '次數', titlefont: { size: 16 }, tickfont: { size: 15 } },
+            margin: { t: 60, l: 60, r: 30, b: 60 },
+            legend: { font: { size: 15 } },
+            hoverlabel: { font: { size: 15 } },
+            autosize: true,
+            responsive: true
+        };
+        Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+        showBasicStats(cropData);
+    };
+
+    // 修改季節性分析函數
+    const originalShowSeasonalAnalysis = showSeasonalAnalysis;
+    showSeasonalAnalysis = function() {
+        if (!selectedCrop) return;
+        const cropData = getCropData(selectedCrop);
+        const months = Array.from({length: 12}, (_, i) => i + 1);
+        const monthlyPrices = months.map(month => {
+            const monthData = cropData.filter(item => {
+                const date = new Date(item.交易日期);
+                return date.getMonth() + 1 === month;
+            });
+            const prices = monthData.map(item => Number(item.平均價));
+            return prices.length > 0 ? prices.reduce((a, b) => a + b) / prices.length : 0;
+        });
+        const trace = {
+            x: months,
+            y: monthlyPrices,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: '月均價',
+            line: { color: '#fbbc05', width: 4 },
+            marker: { size: 10, color: '#fbbc05' }
+        };
+        const layout = {
+            title: {
+                text: `${selectedCrop} 季節性分析`,
+                font: { size: 20, color: '#fbbc05', family: 'Microsoft JhengHei, Arial' }
+            },
+            xaxis: { 
+                title: '月份',
+                tickmode: 'array',
+                tickvals: months,
+                ticktext: months.map(m => `${m}月`),
+                titlefont: { size: 16 },
+                tickfont: { size: 15 }
+            },
+            yaxis: { title: '平均價格 (元/公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
+            margin: { t: 60, l: 60, r: 30, b: 60 },
+            legend: { font: { size: 15 } },
+            hoverlabel: { font: { size: 15 } },
+            autosize: true,
+            responsive: true
+        };
+        Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+        showBasicStats(cropData);
+    };
+
+    // 在頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        // 綁定休市檢查按鈕點擊事件
+        const checkRestButton = document.getElementById('checkRestButton');
+        const calendarContainer = document.getElementById('calendarContainer');
+        const calendarOverlay = document.getElementById('calendarOverlay');
+
+        if (checkRestButton) {
+            checkRestButton.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
+                    if (!response.ok) throw new Error('無法獲取市場休市資料');
+                    const restData = await response.json();
+                    
+                    // 生成日曆
+                    const now = new Date();
+                    const currentMonth = now.getMonth();
+                    const currentYear = now.getFullYear();
+                    
+                    let calendarHTML = `
+                        <div style="text-align: right;">
+                            <button onclick="document.getElementById('calendarContainer').style.display='none'; document.getElementById('calendarOverlay').style.display='none';" style="padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 3px; cursor: pointer;">關閉</button>
+                        </div>
+                        <h2 style="text-align: center; margin-bottom: 20px;">市場休市日曆</h2>
+                    `;
+                    
+                    // 生成當月和下月的日曆
+                    for (let monthOffset = 0; monthOffset < 2; monthOffset++) {
+                        const month = (currentMonth + monthOffset) % 12;
+                        const year = currentYear + Math.floor((currentMonth + monthOffset) / 12);
+                        
+                        calendarHTML += `
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="text-align: center;">${year}年${month + 1}月</h3>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">日</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">一</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">二</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">三</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">四</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">五</th>
+                                        <th style="padding: 8px; border: 1px solid #ddd;">六</th>
+                                    </tr>
+                        `;
+                        
+                        const firstDay = new Date(year, month, 1);
+                        const lastDay = new Date(year, month + 1, 0);
+                        let day = 1;
+                        
+                        for (let i = 0; i < 6; i++) {
+                            calendarHTML += '<tr>';
+                            for (let j = 0; j < 7; j++) {
+                                if (i === 0 && j < firstDay.getDay()) {
+                                    calendarHTML += '<td style="padding: 8px; border: 1px solid #ddd;"></td>';
+                                } else if (day > lastDay.getDate()) {
+                                    calendarHTML += '<td style="padding: 8px; border: 1px solid #ddd;"></td>';
+                                } else {
+                                    const isRestDay = restData.some(market => {
+                                        const yearMonth = year.toString().slice(-2) + (month + 1).toString().padStart(2, '0');
+                                        return market.YearMonth === yearMonth && 
+                                               market.ClosedDate.split('、').includes(day.toString().padStart(2, '0'));
+                                    });
+                                    const isMonday = new Date(year, month, day).getDay() === 1;
+                                    
+                                    let cellStyle = 'padding: 8px; border: 1px solid #ddd;';
+                                    let cellContent = day;
+                                    
+                                    if (isRestDay) {
+                                        cellStyle += 'background-color: #ffcdd2;';
+                                        cellContent += '<br><small style="color: #d32f2f;">休市</small>';
+                                    } else if (isMonday) {
+                                        cellStyle += 'background-color: #fff9c4;';
+                                        cellContent += '<br><small style="color: #f57f17;">通常休市</small>';
+                                    }
+                                    
+                                    calendarHTML += `<td style="${cellStyle}">${cellContent}</td>`;
+                                    day++;
+                                }
+                            }
+                            calendarHTML += '</tr>';
+                            if (day > lastDay.getDate()) break;
+                        }
+                        
+                        calendarHTML += `
+                                </table>
+                                <div style="margin-top: 10px; font-size: 14px;">
+                                    <span style="display: inline-block; margin-right: 15px;">
+                                        <span style="display: inline-block; width: 15px; height: 15px; background-color: #ffcdd2; margin-right: 5px;"></span>
+                                        休市日
+                                    </span>
+                                    <span style="display: inline-block;">
+                                        <span style="display: inline-block; width: 15px; height: 15px; background-color: #fff9c4; margin-right: 5px;"></span>
+                                        通常休市（週一）
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    calendarContainer.innerHTML = calendarHTML;
+                    calendarContainer.style.display = 'block';
+                    calendarOverlay.style.display = 'block';
+                } catch (error) {
+                    console.error('獲取市場休市資料失敗:', error);
+                    alert('無法獲取市場休市資料，請稍後再試');
+                }
+            });
+        }
+
+        // 點擊遮罩層關閉日曆
+        if (calendarOverlay) {
+            calendarOverlay.addEventListener('click', () => {
+                calendarContainer.style.display = 'none';
+                calendarOverlay.style.display = 'none';
+            });
+        }
+    });
+});
+
+// 休市日曆功能
+async function showMarketRestCalendar() {
+    try {
+        const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
+        if (!response.ok) throw new Error('無法獲取市場休市資料');
+        const restData = await response.json();
+        
+        // 生成日曆
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        // 獲取所有市場列表
+        const markets = [...new Set(restData.map(item => item.MarketName))].sort();
+        
+        let calendarHTML = `
+            <div style="text-align: right; margin-bottom: 15px;">
+                <button onclick="document.getElementById('calendarContainer').style.display='none'; document.getElementById('calendarOverlay').style.display='none';" style="padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 3px; cursor: pointer;">關閉</button>
+            </div>
+            <h2 style="text-align: center; margin-bottom: 20px;">市場休市日曆</h2>
+            <div style="margin-bottom: 20px;">
+                <label for="marketFilter" style="display: block; margin-bottom: 5px; font-weight: bold;">選擇市場：</label>
+                <select id="marketFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;">
+                    <option value="all">全部市場</option>
+                    ${markets.map(market => `<option value="${market}">${market}</option>`).join('')}
+                </select>
+            </div>
+        `;
+        
+        // 生成當月和下月的日曆
+        for (let monthOffset = 0; monthOffset < 2; monthOffset++) {
+            const month = (currentMonth + monthOffset) % 12;
+            const year = currentYear + Math.floor((currentMonth + monthOffset) / 12);
+            
+            calendarHTML += `
+                <div style="margin-bottom: 30px;">
+                    <h3 style="text-align: center;">${year}年${month + 1}月</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">日</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">一</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">二</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">三</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">四</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">五</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">六</th>
+                        </tr>
+        `;
+        
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            let day = 1;
+            
+            for (let i = 0; i < 6; i++) {
+                calendarHTML += '<tr>';
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < firstDay.getDay()) {
+                        calendarHTML += '<td style="padding: 8px; border: 1px solid #ddd;"></td>';
+                    } else if (day > lastDay.getDate()) {
+                        calendarHTML += '<td style="padding: 8px; border: 1px solid #ddd;"></td>';
+                    } else {
+                        const date = new Date(year, month, day);
+                        const isMonday = date.getDay() === 1;
+                        const yearMonth = year.toString().slice(-2) + (month + 1).toString().padStart(2, '0');
+                        const dayStr = day.toString().padStart(2, '0');
+                        
+                        // 獲取當天休市的市場
+                        const restMarkets = restData.filter(market => 
+                            market.YearMonth === yearMonth && 
+                            market.ClosedDate.split('、').includes(dayStr)
+                        );
+                        
+                        let cellStyle = 'padding: 8px; border: 1px solid #ddd;';
+                        let cellContent = day;
+                        let tooltipContent = '';
+                        
+                        if (restMarkets.length > 0) {
+                            cellStyle += 'background-color: #ffcdd2;';
+                            tooltipContent = restMarkets.map(market => 
+                                `${market.MarketName} ${market.MarketType}市場`
+                            ).join('<br>');
+                            cellContent += `<br><small style="color: #d32f2f;">休市</small>`;
+                        } else if (isMonday) {
+                            cellStyle += 'background-color: #fff9c4;';
+                            cellContent += '<br><small style="color: #f57f17;">通常休市</small>';
+                        }
+                        
+                        // 添加 tooltip
+                        if (tooltipContent) {
+                            cellStyle += 'position: relative;';
+                            cellContent += `
+                                <div style="display: none; position: absolute; background: white; border: 1px solid #ddd; padding: 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px; left: 100%; top: 0;">
+                                    ${tooltipContent}
+                                </div>
+                            `;
+                        }
+                        
+                        calendarHTML += `<td style="${cellStyle}" onmouseover="this.querySelector('div')?.style.display='block'" onmouseout="this.querySelector('div')?.style.display='none'">${cellContent}</td>`;
+                        day++;
+                    }
+                }
+                calendarHTML += '</tr>';
+                if (day > lastDay.getDate()) break;
+            }
+            
+            calendarHTML += `
+                    </table>
+                    <div style="margin-top: 10px; font-size: 14px;">
+                        <span style="display: inline-block; margin-right: 15px;">
+                            <span style="display: inline-block; width: 15px; height: 15px; background-color: #ffcdd2; margin-right: 5px;"></span>
+                            休市日
+                        </span>
+                        <span style="display: inline-block;">
+                            <span style="display: inline-block; width: 15px; height: 15px; background-color: #fff9c4; margin-right: 5px;"></span>
+                            通常休市（週一）
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 添加市場過濾功能
+        calendarHTML += `
+            <script>
+                document.getElementById('marketFilter').addEventListener('change', function() {
+                    const selectedMarket = this.value;
+                    const cells = document.querySelectorAll('#calendarContainer td');
+                    cells.forEach(cell => {
+                        if (selectedMarket === 'all') {
+                            cell.style.display = '';
+                        } else {
+                            const tooltip = cell.querySelector('div');
+                            if (tooltip) {
+                                cell.style.display = tooltip.textContent.includes(selectedMarket) ? '' : 'none';
+                            }
+                        }
+                    });
+                });
+            </script>
+        `;
+        
+        const calendarContainer = document.getElementById('calendarContainer');
+        calendarContainer.innerHTML = calendarHTML;
+        calendarContainer.style.display = 'block';
+        document.getElementById('calendarOverlay').style.display = 'block';
+    } catch (error) {
+        console.error('獲取市場休市資料失敗:', error);
+        alert('無法獲取市場休市資料，請稍後再試');
+    }
+}
+
+// 在頁面載入時初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing code ...
+    
+    // 綁定休市日曆按鈕點擊事件
+    const checkRestButton = document.getElementById('checkRestButton');
+    if (checkRestButton) {
+        checkRestButton.addEventListener('click', showMarketRestCalendar);
+    }
+    
+    // 點擊遮罩層關閉日曆
+    const calendarOverlay = document.getElementById('calendarOverlay');
+    if (calendarOverlay) {
+        calendarOverlay.addEventListener('click', () => {
+            document.getElementById('calendarContainer').style.display = 'none';
+            calendarOverlay.style.display = 'none';
+        });
+    }
+    
+    // ... existing code ...
 }); 

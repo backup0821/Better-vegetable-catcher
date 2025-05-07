@@ -478,4 +478,159 @@ footer {
 
 .device-id-btn.reset-btn:hover {
     background-color: #da190b;
+}
+
+/* 休市日曆樣式 */
+#calendarContainer {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    font-family: 'Microsoft JhengHei', Arial, sans-serif;
+}
+
+#calendarContainer h2 {
+    color: #1a73e8;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+#calendarContainer h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+#calendarContainer table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+#calendarContainer th {
+    background: #f5f5f5;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #ddd;
+}
+
+#calendarContainer td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+    position: relative;
+    min-height: 60px;
+    vertical-align: top;
+}
+
+#calendarContainer td:hover {
+    background-color: #f8f9fa;
+}
+
+#calendarContainer .rest-day {
+    background-color: #ffcdd2;
+}
+
+#calendarContainer .monday {
+    background-color: #fff9c4;
+}
+
+#calendarContainer small {
+    display: block;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+#calendarContainer .legend {
+    margin-top: 15px;
+    font-size: 14px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+#calendarContainer .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#calendarContainer .legend-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+}
+
+#calendarContainer .tooltip {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+    min-width: 150px;
+    left: 100%;
+    top: 0;
+}
+
+#calendarContainer td:hover .tooltip {
+    display: block;
+}
+
+#marketFilter {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+#calendarContainer .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#calendarContainer .close-button:hover {
+    background: #d32f2f;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    #calendarContainer {
+        padding: 10px;
+        max-width: 95%;
+    }
+    
+    #calendarContainer td {
+        padding: 5px;
+        font-size: 14px;
+    }
+    
+    #calendarContainer small {
+        font-size: 10px;
+    }
+    
+    #calendarContainer .tooltip {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        max-width: 300px;
+    }
 } 

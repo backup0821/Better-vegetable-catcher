@@ -131,6 +131,18 @@
             </div>
         </main>
 
+        <div id="notificationArea"></div>
+        
+        <!-- 休市日曆按鈕 -->
+        <button id="checkRestButton" style="position: fixed; bottom: 80px; right: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000;">休市日曆</button>
+        
+        <!-- 休市日曆容器 -->
+        <div id="calendarContainer" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 1001; max-width: 90%; max-height: 90vh; overflow-y: auto;">
+        </div>
+        
+        <!-- 遮罩層 -->
+        <div id="calendarOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;"></div>
+
         <footer>
             <p>資料來源：行政院農業委員會農產品交易行情站</p>
             <p>資料更新時間：<span id="dataUpdateTime">載入中...</span></p>
