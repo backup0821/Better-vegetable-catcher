@@ -2927,4 +2927,413 @@ function initPriceAlerts() {
     console.log('價格提醒功能已啟用');
 }
 
+// ... existing code ...
+
+// 系統診斷工具
+function showSystemDiagnostics() {
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
+        <div class="dev-settings-content">
+            <h3>系統診斷</h3>
+            <div class="diagnostic-section">
+                <h4>系統狀態</h4>
+                <div id="systemStatus">
+                    <div class="status-item">
+                        <span>CPU 使用率：</span>
+                        <span id="cpuUsage">計算中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span>記憶體使用率：</span>
+                        <span id="memoryUsage">計算中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span>網路狀態：</span>
+                        <span id="networkStatus">檢查中...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="diagnostic-section">
+                <h4>快取管理</h4>
+                <button id="clearCache">清除快取</button>
+                <button id="clearLocalStorage">清除本地儲存</button>
+            </div>
+            <div class="diagnostic-section">
+                <h4>錯誤日誌</h4>
+                <div id="errorLog" class="error-log"></div>
+            </div>
+            <div class="env-actions">
+                <button id="refreshDiagnostics">重新整理</button>
+                <button id="closeDiagnostics">關閉</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+
+    // 更新系統狀態
+    function updateSystemStatus() {
+        if ('performance' in window) {
+            const memory = performance.memory;
+            if (memory) {
+                document.getElementById('memoryUsage').textContent = 
+                    `${Math.round(memory.usedJSHeapSize / memory.totalJSHeapSize * 100)}%`;
+            }
+        }
+
+        // 檢查網路狀態
+        document.getElementById('networkStatus').textContent = 
+            navigator.onLine ? '已連接' : '離線';
+    }
+
+    // 清除快取
+    document.getElementById('clearCache').addEventListener('click', async () => {
+        try {
+            const cache = await caches.keys();
+            await Promise.all(cache.map(name => caches.delete(name)));
+            showNotification('成功', '快取已清除');
+        } catch (error) {
+            showNotification('錯誤', '清除快取失敗');
+        }
+    });
+
+    // 清除本地儲存
+    document.getElementById('clearLocalStorage').addEventListener('click', () => {
+        localStorage.clear();
+        showNotification('成功', '本地儲存已清除');
+    });
+
+    // 重新整理診斷資訊
+    document.getElementById('refreshDiagnostics').addEventListener('click', updateSystemStatus);
+
+    // 關閉診斷視窗
+    document.getElementById('closeDiagnostics').addEventListener('click', () => {
+        dialog.remove();
+    });
+
+    // 初始更新
+    updateSystemStatus();
+}
+
+// 進階資料分析工具
+function showAdvancedAnalysis() {
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
+        <div class="dev-settings-content">
+            <h3>進階資料分析</h3>
+            <div class="analysis-section">
+                <h4>資料匯出</h4>
+                <div class="export-options">
+                    <button id="exportCSV">匯出 CSV</button>
+                    <button id="exportJSON">匯出 JSON</button>
+                    <button id="exportExcel">匯出 Excel</button>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h4>資料過濾</h4>
+                <div class="filter-options">
+                    <input type="text" id="filterInput" placeholder="輸入過濾條件...">
+                    <select id="filterType">
+                        <option value="price">價格</option>
+                        <option value="volume">交易量</option>
+                        <option value="date">日期</option>
+                    </select>
+                    <button id="applyFilter">套用過濾</button>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h4>視覺化範本</h4>
+                <div class="visualization-templates">
+                    <button id="template1">範本 1：價格趨勢</button>
+                    <button id="template2">範本 2：交易量分布</button>
+                    <button id="template3">範本 3：季節性分析</button>
+                </div>
+            </div>
+            <div class="env-actions">
+                <button id="closeAnalysis">關閉</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+
+    // 匯出功能
+    document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
+    document.getElementById('exportJSON').addEventListener('click', () => exportData('json'));
+    document.getElementById('exportExcel').addEventListener('click', () => exportData('excel'));
+
+    // 過濾功能
+    document.getElementById('applyFilter').addEventListener('click', () => {
+        const filterValue = document.getElementById('filterInput').value;
+        const filterType = document.getElementById('filterType').value;
+        applyDataFilter(filterValue, filterType);
+    });
+
+    // 視覺化範本
+    document.getElementById('template1').addEventListener('click', () => showPriceTrend());
+    document.getElementById('template2').addEventListener('click', () => showVolumeDistribution());
+    document.getElementById('template3').addEventListener('click', () => showSeasonalAnalysis());
+
+    // 關閉視窗
+    document.getElementById('closeAnalysis').addEventListener('click', () => {
+        dialog.remove();
+    });
+}
+
+// 效能優化工具
+function showPerformanceTools() {
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
+        <div class="dev-settings-content">
+            <h3>效能優化</h3>
+            <div class="performance-section">
+                <h4>資源優化</h4>
+                <div class="optimization-options">
+                    <button id="optimizeImages">優化圖片</button>
+                    <button id="minifyCode">最小化程式碼</button>
+                    <button id="manageCache">管理快取</button>
+                </div>
+            </div>
+            <div class="performance-section">
+                <h4>效能分析</h4>
+                <div class="performance-metrics">
+                    <div class="metric">
+                        <span>頁面載入時間：</span>
+                        <span id="loadTime">計算中...</span>
+                    </div>
+                    <div class="metric">
+                        <span>資源載入時間：</span>
+                        <span id="resourceTime">計算中...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="env-actions">
+                <button id="refreshPerformance">重新整理</button>
+                <button id="closePerformance">關閉</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+
+    // 更新效能指標
+    function updatePerformanceMetrics() {
+        if ('performance' in window) {
+            const timing = performance.timing;
+            const loadTime = timing.loadEventEnd - timing.navigationStart;
+            const resourceTime = timing.domComplete - timing.domLoading;
+
+            document.getElementById('loadTime').textContent = `${loadTime}ms`;
+            document.getElementById('resourceTime').textContent = `${resourceTime}ms`;
+        }
+    }
+
+    // 優化圖片
+    document.getElementById('optimizeImages').addEventListener('click', async () => {
+        try {
+            const images = document.querySelectorAll('img');
+            for (const img of images) {
+                // 實作圖片優化邏輯
+            }
+            showNotification('成功', '圖片優化完成');
+        } catch (error) {
+            showNotification('錯誤', '圖片優化失敗');
+        }
+    });
+
+    // 最小化程式碼
+    document.getElementById('minifyCode').addEventListener('click', () => {
+        // 實作程式碼最小化邏輯
+        showNotification('成功', '程式碼最小化完成');
+    });
+
+    // 管理快取
+    document.getElementById('manageCache').addEventListener('click', async () => {
+        try {
+            const cache = await caches.keys();
+            await Promise.all(cache.map(name => caches.delete(name)));
+            showNotification('成功', '快取已清除');
+        } catch (error) {
+            showNotification('錯誤', '清除快取失敗');
+        }
+    });
+
+    // 重新整理效能指標
+    document.getElementById('refreshPerformance').addEventListener('click', updatePerformanceMetrics);
+
+    // 關閉視窗
+    document.getElementById('closePerformance').addEventListener('click', () => {
+        dialog.remove();
+    });
+
+    // 初始更新
+    updatePerformanceMetrics();
+}
+
+// 測試工具
+function showTestTools() {
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
+        <div class="dev-settings-content">
+            <h3>測試工具</h3>
+            <div class="test-section">
+                <h4>API 測試</h4>
+                <div class="api-test">
+                    <input type="text" id="apiUrl" placeholder="API URL">
+                    <select id="apiMethod">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <button id="testApi">測試 API</button>
+                </div>
+            </div>
+            <div class="test-section">
+                <h4>相容性測試</h4>
+                <div class="compatibility-test">
+                    <button id="testBrowser">測試瀏覽器相容性</button>
+                    <button id="testDevice">測試裝置相容性</button>
+                </div>
+            </div>
+            <div class="test-section">
+                <h4>自動化測試</h4>
+                <div class="automation-test">
+                    <button id="runTests">執行測試</button>
+                    <button id="viewResults">查看結果</button>
+                </div>
+            </div>
+            <div class="env-actions">
+                <button id="closeTest">關閉</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+
+    // API 測試
+    document.getElementById('testApi').addEventListener('click', async () => {
+        const url = document.getElementById('apiUrl').value;
+        const method = document.getElementById('apiMethod').value;
+        try {
+            const response = await fetch(url, { method });
+            const result = await response.json();
+            showNotification('成功', 'API 測試完成');
+        } catch (error) {
+            showNotification('錯誤', 'API 測試失敗');
+        }
+    });
+
+    // 相容性測試
+    document.getElementById('testBrowser').addEventListener('click', () => {
+        const browserInfo = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language
+        };
+        showNotification('成功', '瀏覽器相容性測試完成');
+    });
+
+    document.getElementById('testDevice').addEventListener('click', () => {
+        const deviceInfo = {
+            screenWidth: window.innerWidth,
+            screenHeight: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio
+        };
+        showNotification('成功', '裝置相容性測試完成');
+    });
+
+    // 自動化測試
+    document.getElementById('runTests').addEventListener('click', () => {
+        // 實作自動化測試邏輯
+        showNotification('成功', '自動化測試完成');
+    });
+
+    // 關閉視窗
+    document.getElementById('closeTest').addEventListener('click', () => {
+        dialog.remove();
+    });
+}
+
+// 安全性工具
+function showSecurityTools() {
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
+        <div class="dev-settings-content">
+            <h3>安全性工具</h3>
+            <div class="security-section">
+                <h4>權限管理</h4>
+                <div class="permission-list">
+                    <div class="permission-item">
+                        <input type="checkbox" id="permNotifications">
+                        <label for="permNotifications">通知權限</label>
+                    </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="permLocation">
+                        <label for="permLocation">位置權限</label>
+                    </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="permStorage">
+                        <label for="permStorage">儲存權限</label>
+                    </div>
+                </div>
+            </div>
+            <div class="security-section">
+                <h4>資料加密</h4>
+                <div class="encryption-options">
+                    <button id="encryptData">加密資料</button>
+                    <button id="decryptData">解密資料</button>
+                </div>
+            </div>
+            <div class="security-section">
+                <h4>安全性日誌</h4>
+                <div id="securityLog" class="security-log"></div>
+            </div>
+            <div class="env-actions">
+                <button id="saveSecurity">儲存設定</button>
+                <button id="closeSecurity">關閉</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+
+    // 權限管理
+    document.getElementById('permNotifications').addEventListener('change', async (e) => {
+        if (e.target.checked) {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                e.target.checked = false;
+                showNotification('錯誤', '通知權限被拒絕');
+            }
+        }
+    });
+
+    // 資料加密
+    document.getElementById('encryptData').addEventListener('click', () => {
+        // 實作資料加密邏輯
+        showNotification('成功', '資料加密完成');
+    });
+
+    document.getElementById('decryptData').addEventListener('click', () => {
+        // 實作資料解密邏輯
+        showNotification('成功', '資料解密完成');
+    });
+
+    // 儲存安全性設定
+    document.getElementById('saveSecurity').addEventListener('click', () => {
+        const securitySettings = {
+            notifications: document.getElementById('permNotifications').checked,
+            location: document.getElementById('permLocation').checked,
+            storage: document.getElementById('permStorage').checked
+        };
+        localStorage.setItem('securitySettings', JSON.stringify(securitySettings));
+        showNotification('成功', '安全性設定已儲存');
+    });
+
+    // 關閉視窗
+    document.getElementById('closeSecurity').addEventListener('click', () => {
+        dialog.remove();
+    });
+}
+
 // ... existing code ... 

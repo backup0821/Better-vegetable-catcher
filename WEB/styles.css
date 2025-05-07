@@ -1110,169 +1110,172 @@ footer {
 
 /* 系統診斷工具樣式 */
 .diagnostic-section {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 15px;
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
 }
 
-.diagnostic-section h4 {
-    color: var(--primary-color);
-    margin-bottom: 10px;
-}
-
-.error-entry {
-    background-color: rgba(255, 0, 0, 0.1);
-    padding: 10px;
-    margin-bottom: 8px;
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
-    border-left: 3px solid #ff4444;
 }
 
-/* 進階分析工具樣式 */
+.error-log {
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* 進階資料分析工具樣式 */
 .analysis-section {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 15px;
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
 }
 
-.filter-options {
+.export-options,
+.filter-options,
+.visualization-templates {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
-    margin-top: 10px;
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
-.filter-options input {
-    width: 100%;
-    padding: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--primary-color);
+.filter-options input,
+.filter-options select {
+    padding: 0.5rem;
     border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
 }
 
 /* 效能優化工具樣式 */
 .performance-section {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 15px;
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
 }
 
-.performance-section input[type="file"] {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 8px;
+.optimization-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.performance-metrics {
+    margin-top: 1rem;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
     background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--primary-color);
     border-radius: 4px;
-    color: var(--text-color);
+    margin-bottom: 0.5rem;
 }
 
 /* 測試工具樣式 */
 .test-section {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 15px;
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
 }
 
-.test-section input[type="text"],
-.test-section select,
-.test-section textarea {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--primary-color);
-    border-radius: 4px;
-    color: var(--text-color);
+.api-test {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
-.test-section textarea {
-    min-height: 100px;
-    resize: vertical;
+.compatibility-test,
+.automation-test {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 /* 安全性工具樣式 */
 .security-section {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 15px;
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
 }
 
 .permission-list {
     display: grid;
-    gap: 10px;
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
 
 .permission-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 8px;
-    background-color: rgba(255, 255, 255, 0.05);
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
 
-.log-entry {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 10px;
-    margin-bottom: 8px;
+.encryption-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.security-log {
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
     border-radius: 4px;
-    border-left: 3px solid var(--primary-color);
+    font-family: monospace;
+    margin-top: 1rem;
 }
 
-/* 按鈕樣式 */
-.diagnostics-actions,
-.analysis-actions,
-.performance-actions,
-.test-actions,
-.security-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.diagnostics-actions button,
-.analysis-actions button,
-.performance-actions button,
-.test-actions button,
-.security-actions button {
-    padding: 8px 16px;
+/* 通用按鈕樣式 */
+button {
+    padding: 0.5rem 1rem;
     border: none;
     border-radius: 4px;
+    background-color: var(--primary-color);
+    color: white;
     cursor: pointer;
-    font-size: 14px;
     transition: background-color 0.3s;
 }
 
-.diagnostics-actions button:first-child,
-.analysis-actions button:first-child,
-.performance-actions button:first-child,
-.test-actions button:first-child,
-.security-actions button:first-child {
-    background-color: var(--primary-color);
-    color: white;
+button:hover {
+    background-color: var(--secondary-color);
 }
 
-.diagnostics-actions button:not(:first-child),
-.analysis-actions button:not(:first-child),
-.performance-actions button:not(:first-child),
-.test-actions button:not(:first-child),
-.security-actions button:not(:first-child) {
-    background-color: #555;
-    color: white;
+button:active {
+    transform: scale(0.98);
 }
 
-.diagnostics-actions button:hover,
-.analysis-actions button:hover,
-.performance-actions button:hover,
-.test-actions button:hover,
-.security-actions button:hover {
-    opacity: 0.9;
+/* 環境操作按鈕樣式 */
+.env-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
 } 
