@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>農產品交易資料分析系統 v2.3.web.1</title>
+    <title>農產品交易資料分析系統 v2.4.web.1</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="manifest" href="manifest.json">
@@ -18,9 +18,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <script type="module">
         // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js";
-        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
     </script>
 </head>
 <body>
@@ -163,19 +163,19 @@
     <script src="script.js"></script>
     <script>
         // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js";
-        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBu7K1CL3UC2Gtd36Snj7bxJoMLD43-J9o",
-            authDomain: "pwa-notice.firebaseapp.com",
-            projectId: "pwa-notice",
-            storageBucket: "pwa-notice.firebasestorage.app",
-            messagingSenderId: "347013597846",
-            appId: "1:347013597846:web:4c20ebcbdc5c7da68010b7",
-            measurementId: "G-3B9FBQ2WZ6"
+            apiKey: "AIzaSyB_IOeArzu-KflgURBXmJRJDocMwtVBZrM",
+            authDomain: "vegetable-catcher-web-73aeb.firebaseapp.com",
+            projectId: "vegetable-catcher-web-73aeb",
+            storageBucket: "vegetable-catcher-web-73aeb.firebasestorage.app",
+            messagingSenderId: "949555736823",
+            appId: "1:949555736823:web:5d312bd730e43cf78523f2",
+            measurementId: "G-CK8RXL8HJJ"
         };
 
         // Initialize Firebase
@@ -191,51 +191,67 @@
                     console.log('通知權限已授予');
                     // 獲取 FCM token
                     const token = await getToken(messaging, {
-                        vapidKey: 'BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE'
+                        vapidKey: 'BNHh-t1UiYNADujsjR55RUUoaLzoypVrO1NEVya3rZPA_ord2rCArIl1T27R1eUm1Fdjb17J7VpYbQXG-4Z3v6Y'
                     });
                     console.log('FCM Token:', token);
-                    // 將 token 發送到您的後端伺服器
-                    await sendTokenToServer(token);
+                    
+                    // 儲存 token 到 localStorage
+                    localStorage.setItem('fcmToken', token);
+                    
+                    // 顯示成功訊息
+                    showNotification('通知設定成功', '您已成功啟用通知功能！');
                 } else {
                     console.log('通知權限被拒絕');
+                    showNotification('通知設定失敗', '請允許通知權限以接收重要更新。');
                 }
             } catch (error) {
                 console.error('獲取通知權限時發生錯誤:', error);
+                showNotification('通知設定錯誤', '設定通知時發生錯誤，請稍後再試。');
             }
         }
 
-        // 發送 token 到後端伺服器
-        async function sendTokenToServer(token) {
-            try {
-                const response = await fetch('/api/save-token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ token })
-                });
-                if (!response.ok) {
-                    throw new Error('發送 token 失敗');
-                }
-                console.log('Token 已成功發送到伺服器');
-            } catch (error) {
-                console.error('發送 token 到伺服器時發生錯誤:', error);
-            }
+        // 顯示通知的輔助函數
+        function showNotification(title, body) {
+            const notificationArea = document.getElementById('notificationArea');
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <h4>${title}</h4>
+                <p>${body}</p>
+            `;
+            notificationArea.appendChild(notification);
+            
+            // 5秒後自動移除通知
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
         }
 
         // 監聽前台訊息
         onMessage(messaging, (payload) => {
             console.log('收到前台訊息:', payload);
             const { title, body } = payload.notification;
+            
+            // 顯示系統通知
             new Notification(title, {
                 body,
-                icon: '/WEB/image/png/icon-192.png'
+                icon: '/WEB/image/png/icon-192.png',
+                badge: '/WEB/image/png/icon-192.png',
+                vibrate: [200, 100, 200]
             });
+            
+            // 同時在頁面上顯示通知
+            showNotification(title, body);
         });
 
         // 在頁面載入時請求通知權限
         window.addEventListener('load', () => {
             requestNotificationPermission();
+        });
+
+        // 測試通知按鈕事件處理
+        document.getElementById('testNotificationBtn').addEventListener('click', () => {
+            showNotification('測試通知', '這是一則測試通知訊息。');
         });
 
         // 註冊 Service Worker
