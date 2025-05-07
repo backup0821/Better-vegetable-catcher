@@ -672,4 +672,610 @@ footer {
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* 設定主題變數 */
+:root {
+    --primary-color: #1a73e8;
+    --secondary-color: #34a853;
+    --background-color: #2d2d2d;
+    --text-color: #ffffff;
+}
+
+/* 開發者模式面板 */
+.dev-mode-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--background-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    display: none;
+    color: var(--text-color);
+}
+
+.dev-mode-panel.active {
+    display: block;
+}
+
+.dev-mode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--primary-color);
+}
+
+.dev-mode-header h2 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.close-button:hover {
+    color: var(--primary-color);
+}
+
+.dev-mode-section {
+    margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.dev-mode-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.dev-mode-section button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1em;
+}
+
+.dev-mode-section button:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.dev-mode-section button:active {
+    transform: translateY(0);
+}
+
+/* 開發者設定對話框樣式 */
+.dev-settings-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.dev-settings-content {
+    background-color: var(--background-color, #2d2d2d);
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 300px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    color: var(--text-color, #ffffff);
+}
+
+.dev-settings-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--primary-color, #1a73e8);
+}
+
+/* 環境設定樣式 */
+.env-options,
+.params-options,
+.theme-options,
+.features-options {
+    margin-bottom: 20px;
+}
+
+.env-option,
+.param-option,
+.theme-option,
+.feature-option {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.env-option label,
+.param-option label,
+.theme-option label,
+.feature-option label {
+    margin-left: 8px;
+    color: var(--text-color, #ffffff);
+}
+
+/* 參數設定樣式 */
+.param-option input[type="number"] {
+    width: 60px;
+    padding: 4px;
+    margin-left: 8px;
+    background-color: #3d3d3d;
+    border: 1px solid #555;
+    color: var(--text-color, #ffffff);
+    border-radius: 4px;
+}
+
+/* 主題設定樣式 */
+.theme-option input[type="color"] {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    margin-left: 8px;
+    cursor: pointer;
+}
+
+/* 按鈕樣式 */
+.env-actions,
+.params-actions,
+.theme-actions,
+.features-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.env-actions button,
+.params-actions button,
+.theme-actions button,
+.features-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.env-actions button:first-child,
+.params-actions button:first-child,
+.theme-actions button:first-child,
+.features-actions button:first-child {
+    background-color: var(--primary-color, #1a73e8);
+    color: white;
+}
+
+.env-actions button:not(:first-child),
+.params-actions button:not(:first-child),
+.theme-actions button:not(:first-child),
+.features-actions button:not(:first-child) {
+    background-color: #555;
+    color: white;
+}
+
+.env-actions button:hover,
+.params-actions button:hover,
+.theme-actions button:hover,
+.features-actions button:hover {
+    opacity: 0.9;
+}
+
+/* 資料庫查看器 */
+.db-viewer {
+    background-color: var(--background-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.db-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.db-viewer-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.db-viewer-controls input,
+.db-viewer-controls select {
+    padding: 8px;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+}
+
+.db-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.db-table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.db-table-container th,
+.db-table-container td {
+    padding: 8px;
+    border: 1px solid var(--primary-color);
+    text-align: left;
+}
+
+.db-table-container th {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.db-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.db-pagination button {
+    padding: 8px 16px;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.db-pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 備份對話框樣式 */
+.backup-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.backup-dialog-content {
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.backup-dialog-content h3 {
+    color: #4CAF50;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+.backup-options {
+    margin-bottom: 20px;
+}
+
+.backup-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.backup-option input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.backup-option label {
+    color: #fff;
+}
+
+.backup-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.backup-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#startBackup {
+    background: #4CAF50;
+    color: white;
+}
+
+#startBackup:hover {
+    background: #45a049;
+}
+
+#cancelBackup {
+    background: #666;
+    color: white;
+}
+
+#cancelBackup:hover {
+    background: #555;
+}
+
+/* 確認對話框樣式 */
+.confirm-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.confirm-dialog-content {
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.confirm-dialog-content h3 {
+    color: #4CAF50;
+    margin: 0 0 15px 0;
+}
+
+.confirm-dialog-content p {
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.confirm-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#confirmRestore {
+    background: #4CAF50;
+    color: white;
+}
+
+#confirmRestore:hover {
+    background: #45a049;
+}
+
+#cancelRestore {
+    background: #666;
+    color: white;
+}
+
+#cancelRestore:hover {
+    background: #555;
+}
+
+/* 系統診斷工具樣式 */
+.diagnostic-section {
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.error-log {
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* 進階資料分析工具樣式 */
+.analysis-section {
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.export-options,
+.filter-options,
+.visualization-templates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.filter-options input,
+.filter-options select {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+}
+
+/* 效能優化工具樣式 */
+.performance-section {
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.optimization-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.performance-metrics {
+    margin-top: 1rem;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+/* 測試工具樣式 */
+.test-section {
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.api-test {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.compatibility-test,
+.automation-test {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* 安全性工具樣式 */
+.security-section {
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.permission-list {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.permission-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.encryption-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.security-log {
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: 4px;
+    font-family: monospace;
+    margin-top: 1rem;
+}
+
+/* 通用按鈕樣式 */
+button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: var(--secondary-color);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* 環境操作按鈕樣式 */
+.env-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
 } 
