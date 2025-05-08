@@ -2261,7 +2261,6 @@ function initAllFeatures() {
 // 資料庫操作相關功能
 async function viewDatabase() {
     try {
-        // 創建資料庫查看介面
         const dbViewer = document.createElement('div');
         dbViewer.className = 'db-viewer';
         dbViewer.innerHTML = `
@@ -2272,8 +2271,11 @@ async function viewDatabase() {
                     <select id="dbTableSelect">
                         <option value="farmTrans">農產品交易行情</option>
                         <option value="marketRest">市場休市資料</option>
+                        <option value="priceAlerts">價格提醒設定</option>
+                        <option value="userSettings">使用者設定</option>
                     </select>
                     <button id="refreshDbData">重新整理</button>
+                    <button id="exportDbData">匯出資料</button>
                 </div>
             </div>
             <div class="db-viewer-content">
@@ -2293,7 +2295,6 @@ async function viewDatabase() {
             </div>
         `;
 
-        // 添加到開發者模式面板
         const devModeContent = document.querySelector('.dev-mode-content');
         devModeContent.appendChild(dbViewer);
 
@@ -2305,199 +2306,33 @@ async function viewDatabase() {
     }
 }
 
-function initDatabaseViewer() {
-    const dbSearchInput = document.getElementById('dbSearchInput');
-    const dbTableSelect = document.getElementById('dbTableSelect');
-    const refreshDbData = document.getElementById('refreshDbData');
-    const prevPage = document.getElementById('prevPage');
-    const nextPage = document.getElementById('nextPage');
-
-    let currentPage = 1;
-    const itemsPerPage = 20;
-    let currentData = [];
-    let filteredData = [];
-
-    // 載入資料
-    async function loadData() {
-        try {
-            const table = dbTableSelect.value;
-            let response;
-            
-            if (table === 'farmTrans') {
-                response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx');
-            } else if (table === 'marketRest') {
-                response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx');
-            }
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            currentData = await response.json();
-            filteredData = [...currentData];
-            renderTable();
-        } catch (error) {
-            console.error('載入資料時發生錯誤:', error);
-            showNotification('錯誤', '載入資料失敗');
-        }
-    }
-
-    // 渲染表格
-    function renderTable() {
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        const pageData = filteredData.slice(start, end);
-
-        const tableHeader = document.getElementById('dbTableHeader');
-        const tableBody = document.getElementById('dbTableBody');
-        const pageInfo = document.getElementById('pageInfo');
-
-        // 清空表格
-        tableHeader.innerHTML = '';
-        tableBody.innerHTML = '';
-
-        if (pageData.length > 0) {
-            // 設置表頭
-            const headers = Object.keys(pageData[0]);
-            headers.forEach(header => {
-                const th = document.createElement('th');
-                th.textContent = header;
-                tableHeader.appendChild(th);
-            });
-
-            // 填充資料
-            pageData.forEach(row => {
-                const tr = document.createElement('tr');
-                headers.forEach(header => {
-                    const td = document.createElement('td');
-                    td.textContent = row[header];
-                    tr.appendChild(td);
-                });
-                tableBody.appendChild(tr);
-            });
-        }
-
-        // 更新分頁資訊
-        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-        pageInfo.textContent = `第 ${currentPage} 頁，共 ${totalPages} 頁`;
-
-        // 更新分頁按鈕狀態
-        prevPage.disabled = currentPage === 1;
-        nextPage.disabled = currentPage === totalPages;
-    }
-
-    // 搜尋功能
-    dbSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        filteredData = currentData.filter(row => 
-            Object.values(row).some(value => 
-                String(value).toLowerCase().includes(searchTerm)
-            )
-        );
-        currentPage = 1;
-        renderTable();
-    });
-
-    // 切換表格
-    dbTableSelect.addEventListener('change', () => {
-        currentPage = 1;
-        loadData();
-    });
-
-    // 重新整理按鈕
-    refreshDbData.addEventListener('click', loadData);
-
-    // 分頁按鈕
-    prevPage.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderTable();
-        }
-    });
-
-    nextPage.addEventListener('click', () => {
-        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderTable();
-        }
-    });
-
-    // 初始載入
-    loadData();
-}
-
-// 備份資料庫
 async function backupDatabase() {
     try {
-        const backupDialog = document.createElement('div');
-        backupDialog.className = 'backup-dialog';
-        backupDialog.innerHTML = `
-            <div class="backup-dialog-content">
-                <h3>資料庫備份</h3>
-                <div class="backup-options">
-                    <div class="backup-option">
-                        <input type="checkbox" id="backupCrops" checked>
-                        <label for="backupCrops">作物資料</label>
-                    </div>
-                    <div class="backup-option">
-                        <input type="checkbox" id="backupMarkets" checked>
-                        <label for="backupMarkets">市場資料</label>
-                    </div>
-                    <div class="backup-option">
-                        <input type="checkbox" id="backupPrices" checked>
-                        <label for="backupPrices">價格資料</label>
-                    </div>
-                </div>
-                <div class="backup-actions">
-                    <button id="startBackup">開始備份</button>
-                    <button id="cancelBackup">取消</button>
-                </div>
-            </div>
-        `;
+        const backupData = {
+            farmTrans: await getIndexedDBData('farmTrans'),
+            marketRest: await getIndexedDBData('marketRest'),
+            priceAlerts: await getIndexedDBData('priceAlerts'),
+            userSettings: await getIndexedDBData('userSettings'),
+            timestamp: new Date().toISOString()
+        };
 
-        document.body.appendChild(backupDialog);
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `database_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
-        // 備份功能
-        document.getElementById('startBackup').addEventListener('click', async () => {
-            const backupData = {};
-            
-            if (document.getElementById('backupCrops').checked) {
-                backupData.crops = await fetchDataFromAPI('crops');
-            }
-            if (document.getElementById('backupMarkets').checked) {
-                backupData.markets = await fetchDataFromAPI('markets');
-            }
-            if (document.getElementById('backupPrices').checked) {
-                backupData.prices = await fetchDataFromAPI('prices');
-            }
-
-            // 創建備份檔案
-            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `database_backup_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            backupDialog.remove();
-            showNotification('成功', '資料庫備份完成');
-        });
-
-        // 取消按鈕
-        document.getElementById('cancelBackup').addEventListener('click', () => {
-            backupDialog.remove();
-        });
+        showNotification('成功', '資料庫備份已完成');
     } catch (error) {
         console.error('備份資料庫時發生錯誤:', error);
         showNotification('錯誤', '備份資料庫失敗');
     }
 }
 
-// 還原資料庫
 async function restoreDatabase() {
     try {
         const input = document.createElement('input');
@@ -2506,54 +2341,33 @@ async function restoreDatabase() {
         
         input.onchange = async (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const backupData = JSON.parse(event.target.result);
-                    
-                    // 顯示確認對話框
-                    const confirmDialog = document.createElement('div');
-                    confirmDialog.className = 'confirm-dialog';
-                    confirmDialog.innerHTML = `
-                        <div class="confirm-dialog-content">
-                            <h3>確認還原</h3>
-                            <p>此操作將覆蓋現有資料，是否確定要還原？</p>
-                            <div class="confirm-actions">
-                                <button id="confirmRestore">確定還原</button>
-                                <button id="cancelRestore">取消</button>
-                            </div>
-                        </div>
-                    `;
-
-                    document.body.appendChild(confirmDialog);
-
-                    document.getElementById('confirmRestore').addEventListener('click', async () => {
-                        try {
-                            // 還原資料
-                            for (const [table, data] of Object.entries(backupData)) {
-                                await restoreDataToAPI(table, data);
-                            }
-                            showNotification('成功', '資料庫還原完成');
-                        } catch (error) {
-                            console.error('還原資料時發生錯誤:', error);
-                            showNotification('錯誤', '還原資料失敗');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const backupData = JSON.parse(event.target.result);
+                        
+                        // 驗證備份資料
+                        if (!backupData.timestamp || !backupData.farmTrans) {
+                            throw new Error('無效的備份檔案');
                         }
-                        confirmDialog.remove();
-                    });
 
-                    document.getElementById('cancelRestore').addEventListener('click', () => {
-                        confirmDialog.remove();
-                    });
-                } catch (error) {
-                    console.error('讀取備份檔案時發生錯誤:', error);
-                    showNotification('錯誤', '讀取備份檔案失敗');
-                }
-            };
-            reader.readAsText(file);
+                        // 還原資料
+                        await restoreIndexedDBData('farmTrans', backupData.farmTrans);
+                        await restoreIndexedDBData('marketRest', backupData.marketRest);
+                        await restoreIndexedDBData('priceAlerts', backupData.priceAlerts);
+                        await restoreIndexedDBData('userSettings', backupData.userSettings);
+
+                        showNotification('成功', '資料庫還原已完成');
+                    } catch (error) {
+                        console.error('還原資料庫時發生錯誤:', error);
+                        showNotification('錯誤', '還原資料庫失敗');
+                    }
+                };
+                reader.readAsText(file);
+            }
         };
-
+        
         input.click();
     } catch (error) {
         console.error('還原資料庫時發生錯誤:', error);
@@ -2561,40 +2375,48 @@ async function restoreDatabase() {
     }
 }
 
-// 從 API 獲取資料
-async function fetchDataFromAPI(table) {
-    try {
-        // 這裡使用實際的 API 端點
-        const response = await fetch(`https://api.example.com/${table}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error(`從 API 獲取 ${table} 資料時發生錯誤:`, error);
-        throw error;
-    }
+// IndexedDB 操作輔助函數
+async function getIndexedDBData(storeName) {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('VegetableCatcherDB', 1);
+        
+        request.onerror = () => reject(request.error);
+        
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction(storeName, 'readonly');
+            const store = transaction.objectStore(storeName);
+            const getAllRequest = store.getAll();
+            
+            getAllRequest.onsuccess = () => resolve(getAllRequest.result);
+            getAllRequest.onerror = () => reject(getAllRequest.error);
+        };
+    });
 }
 
-// 還原資料到 API
-async function restoreDataToAPI(table, data) {
-    try {
-        // 這裡使用實際的 API 端點
-        const response = await fetch(`https://api.example.com/${table}/restore`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error(`還原 ${table} 資料到 API 時發生錯誤:`, error);
-        throw error;
-    }
+async function restoreIndexedDBData(storeName, data) {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('VegetableCatcherDB', 1);
+        
+        request.onerror = () => reject(request.error);
+        
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction(storeName, 'readwrite');
+            const store = transaction.objectStore(storeName);
+            
+            // 清除現有資料
+            store.clear();
+            
+            // 新增備份資料
+            data.forEach(item => {
+                store.add(item);
+            });
+            
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        };
+    });
 }
 
 // 修改開發者模式功能初始化
@@ -2611,45 +2433,340 @@ function initDevModeFeatures() {
 
 // ... existing code ...
 
-// 顯示環境設定
+// 環境特定的預設設定
+const ENV_DEFAULT_CONFIGS = {
+    production: {
+        environment: 'production',
+        appMode: 'normal',
+        api: {
+            baseUrl: 'https://api.example.com',
+            version: 'v1',
+            key: '',
+            timeout: 30000,
+            retries: 3
+        },
+        database: {
+            type: 'indexeddb',
+            version: '1.0',
+            sizeLimit: 100
+        },
+        cache: {
+            enabled: true,
+            duration: 60,
+            strategy: 'hybrid',
+            maxSize: 200
+        },
+        logging: {
+            level: 'error',
+            outputs: {
+                console: true,
+                file: true,
+                remote: true
+            },
+            retentionDays: 90
+        },
+        performance: {
+            monitoring: true,
+            samplingInterval: 10,
+            optimization: true
+        },
+        security: {
+            https: true,
+            csp: true,
+            xssProtection: true,
+            csrfProtection: true
+        },
+        notifications: {
+            push: true,
+            priority: 'high',
+            sound: true
+        }
+    },
+    testing: {
+        environment: 'testing',
+        appMode: 'debug',
+        api: {
+            baseUrl: 'https://test-api.example.com',
+            version: 'v1',
+            key: '',
+            timeout: 15000,
+            retries: 5
+        },
+        database: {
+            type: 'indexeddb',
+            version: '1.0',
+            sizeLimit: 50
+        },
+        cache: {
+            enabled: true,
+            duration: 5,
+            strategy: 'memory',
+            maxSize: 50
+        },
+        logging: {
+            level: 'debug',
+            outputs: {
+                console: true,
+                file: true,
+                remote: false
+            },
+            retentionDays: 30
+        },
+        performance: {
+            monitoring: true,
+            samplingInterval: 5,
+            optimization: false
+        },
+        security: {
+            https: true,
+            csp: true,
+            xssProtection: true,
+            csrfProtection: true
+        },
+        notifications: {
+            push: true,
+            priority: 'normal',
+            sound: true
+        }
+    },
+    development: {
+        environment: 'development',
+        appMode: 'debug',
+        api: {
+            baseUrl: 'http://localhost:3000',
+            version: 'dev',
+            key: '',
+            timeout: 5000,
+            retries: 10
+        },
+        database: {
+            type: 'indexeddb',
+            version: 'dev',
+            sizeLimit: 20
+        },
+        cache: {
+            enabled: false,
+            duration: 1,
+            strategy: 'memory',
+            maxSize: 10
+        },
+        logging: {
+            level: 'trace',
+            outputs: {
+                console: true,
+                file: false,
+                remote: false
+            },
+            retentionDays: 7
+        },
+        performance: {
+            monitoring: true,
+            samplingInterval: 1,
+            optimization: false
+        },
+        security: {
+            https: false,
+            csp: false,
+            xssProtection: true,
+            csrfProtection: false
+        },
+        notifications: {
+            push: false,
+            priority: 'low',
+            sound: false
+        }
+    },
+    staging: {
+        environment: 'staging',
+        appMode: 'normal',
+        api: {
+            baseUrl: 'https://staging-api.example.com',
+            version: 'v1',
+            key: '',
+            timeout: 20000,
+            retries: 4
+        },
+        database: {
+            type: 'indexeddb',
+            version: '1.0',
+            sizeLimit: 75
+        },
+        cache: {
+            enabled: true,
+            duration: 30,
+            strategy: 'hybrid',
+            maxSize: 150
+        },
+        logging: {
+            level: 'info',
+            outputs: {
+                console: true,
+                file: true,
+                remote: true
+            },
+            retentionDays: 60
+        },
+        performance: {
+            monitoring: true,
+            samplingInterval: 5,
+            optimization: true
+        },
+        security: {
+            https: true,
+            csp: true,
+            xssProtection: true,
+            csrfProtection: true
+        },
+        notifications: {
+            push: true,
+            priority: 'normal',
+            sound: true
+        }
+    }
+};
+
+// 修改 showEnvironmentSettings 函數
 function showEnvironmentSettings() {
     const envDialog = document.createElement('div');
     envDialog.className = 'dev-settings-dialog';
     envDialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>環境設定</h3>
-            <div class="env-options">
-                <div class="env-option">
-                    <input type="radio" id="envProd" name="environment" value="production" checked>
-                    <label for="envProd">正式環境</label>
-                </div>
-                <div class="env-option">
-                    <input type="radio" id="envTest" name="environment" value="testing">
-                    <label for="envTest">測試環境</label>
-                </div>
-                <div class="env-option">
-                    <input type="radio" id="envDev" name="environment" value="development">
-                    <label for="envDev">開發環境</label>
+            
+            <div class="env-section">
+                <h4>基本環境設定</h4>
+                <div class="env-options">
+                    <div class="env-option">
+                        <label>環境選擇</label>
+                        <select id="environmentSelect">
+                            <option value="production">生產環境</option>
+                            <option value="testing">測試環境</option>
+                            <option value="development">開發環境</option>
+                            <option value="staging">預備環境</option>
+                        </select>
+                    </div>
+                    <div class="env-option">
+                        <label>應用程式模式</label>
+                        <select id="appModeSelect">
+                            <option value="normal">一般模式</option>
+                            <option value="maintenance">維護模式</option>
+                            <option value="debug">除錯模式</option>
+                            <option value="performance">效能模式</option>
+                        </select>
+                    </div>
+                    <div class="env-option">
+                        <button id="loadEnvDefaults" class="env-action-btn">載入環境預設值</button>
+                        <button id="saveEnvAsTemplate" class="env-action-btn">儲存為範本</button>
+                        <button id="loadEnvTemplate" class="env-action-btn">載入範本</button>
+                    </div>
                 </div>
             </div>
-            <div class="env-actions">
-                <button id="saveEnv">儲存</button>
-                <button id="cancelEnv">取消</button>
-            </div>
+
+            <!-- 其他設定區塊保持不變 -->
+            ${document.querySelector('.dev-settings-content').innerHTML.split('</div>').slice(1).join('</div>')}
         </div>
     `;
     document.body.appendChild(envDialog);
 
     // 載入現有設定
-    const currentEnv = localStorage.getItem('devEnvironment') || 'production';
-    document.querySelector(`input[name="environment"][value="${currentEnv}"]`).checked = true;
+    const currentEnv = localStorage.getItem('currentEnvironment') || 'production';
+    const envConfig = JSON.parse(localStorage.getItem(`envConfig_${currentEnv}`)) || ENV_DEFAULT_CONFIGS[currentEnv];
 
-    // 儲存環境設定
+    // 設定表單值
+    document.getElementById('environmentSelect').value = currentEnv;
+    // ... 其他表單值設定保持不變 ...
+
+    // 環境選擇變更事件
+    document.getElementById('environmentSelect').addEventListener('change', (e) => {
+        const newEnv = e.target.value;
+        const envConfig = JSON.parse(localStorage.getItem(`envConfig_${newEnv}`)) || ENV_DEFAULT_CONFIGS[newEnv];
+        
+        // 更新表單值
+        updateFormValues(envConfig);
+        
+        // 儲存當前環境
+        localStorage.setItem('currentEnvironment', newEnv);
+    });
+
+    // 載入環境預設值
+    document.getElementById('loadEnvDefaults').addEventListener('click', () => {
+        const currentEnv = document.getElementById('environmentSelect').value;
+        const defaultConfig = ENV_DEFAULT_CONFIGS[currentEnv];
+        
+        if (confirm(`確定要載入 ${currentEnv} 環境的預設設定嗎？這將會覆蓋目前的設定。`)) {
+            updateFormValues(defaultConfig);
+            showNotification('成功', `已載入 ${currentEnv} 環境的預設設定`);
+        }
+    });
+
+    // 儲存為範本
+    document.getElementById('saveEnvAsTemplate').addEventListener('click', () => {
+        const templateName = prompt('請輸入範本名稱：');
+        if (templateName) {
+            const currentEnv = document.getElementById('environmentSelect').value;
+            const envConfig = getFormValues();
+            
+            // 儲存範本
+            const templates = JSON.parse(localStorage.getItem('envTemplates') || '{}');
+            templates[templateName] = {
+                environment: currentEnv,
+                config: envConfig
+            };
+            localStorage.setItem('envTemplates', JSON.stringify(templates));
+            
+            showNotification('成功', `已將當前設定儲存為範本：${templateName}`);
+        }
+    });
+
+    // 載入範本
+    document.getElementById('loadEnvTemplate').addEventListener('click', () => {
+        const templates = JSON.parse(localStorage.getItem('envTemplates') || '{}');
+        const templateNames = Object.keys(templates);
+        
+        if (templateNames.length === 0) {
+            showNotification('提示', '目前沒有儲存的範本');
+            return;
+        }
+
+        const templateName = prompt(`請選擇要載入的範本：\n${templateNames.join('\n')}`);
+        if (templateName && templates[templateName]) {
+            const template = templates[templateName];
+            
+            // 更新環境選擇
+            document.getElementById('environmentSelect').value = template.environment;
+            
+            // 更新表單值
+            updateFormValues(template.config);
+            
+            showNotification('成功', `已載入範本：${templateName}`);
+        }
+    });
+
+    // 儲存設定
     document.getElementById('saveEnv').addEventListener('click', () => {
-        const selectedEnv = document.querySelector('input[name="environment"]:checked').value;
-        localStorage.setItem('devEnvironment', selectedEnv);
-        showNotification('成功', `已切換至${selectedEnv}環境`);
+        const currentEnv = document.getElementById('environmentSelect').value;
+        const newConfig = getFormValues();
+        
+        // 儲存環境特定設定
+        localStorage.setItem(`envConfig_${currentEnv}`, JSON.stringify(newConfig));
+        
+        // 套用設定
+        applyEnvironmentConfig(newConfig);
+        
         envDialog.remove();
+        showNotification('成功', `${currentEnv} 環境設定已更新`);
+    });
+
+    // 重設為預設值
+    document.getElementById('resetEnv').addEventListener('click', () => {
+        const currentEnv = document.getElementById('environmentSelect').value;
+        const defaultConfig = ENV_DEFAULT_CONFIGS[currentEnv];
+        
+        if (confirm(`確定要重設 ${currentEnv} 環境的設定為預設值嗎？`)) {
+            localStorage.setItem(`envConfig_${currentEnv}`, JSON.stringify(defaultConfig));
+            updateFormValues(defaultConfig);
+            showNotification('成功', `${currentEnv} 環境設定已重設為預設值`);
+        }
     });
 
     // 取消按鈕
@@ -2657,6 +2774,91 @@ function showEnvironmentSettings() {
         envDialog.remove();
     });
 }
+
+// 更新表單值
+function updateFormValues(config) {
+    document.getElementById('appModeSelect').value = config.appMode;
+    document.getElementById('apiBaseUrl').value = config.api.baseUrl;
+    document.getElementById('apiVersion').value = config.api.version;
+    document.getElementById('apiKey').value = config.api.key;
+    document.getElementById('apiTimeout').value = config.api.timeout;
+    document.getElementById('apiRetries').value = config.api.retries;
+    document.getElementById('dbTypeSelect').value = config.database.type;
+    document.getElementById('dbVersion').value = config.database.version;
+    document.getElementById('dbSizeLimit').value = config.database.sizeLimit;
+    document.getElementById('enableCache').checked = config.cache.enabled;
+    document.getElementById('cacheDuration').value = config.cache.duration;
+    document.getElementById('cacheStrategy').value = config.cache.strategy;
+    document.getElementById('maxCacheSize').value = config.cache.maxSize;
+    document.getElementById('logLevel').value = config.logging.level;
+    document.getElementById('logConsole').checked = config.logging.outputs.console;
+    document.getElementById('logFile').checked = config.logging.outputs.file;
+    document.getElementById('logRemote').checked = config.logging.outputs.remote;
+    document.getElementById('logRetentionDays').value = config.logging.retentionDays;
+    document.getElementById('enablePerformanceMonitoring').checked = config.performance.monitoring;
+    document.getElementById('performanceSamplingInterval').value = config.performance.samplingInterval;
+    document.getElementById('enablePerformanceOptimization').checked = config.performance.optimization;
+    document.getElementById('enableHttps').checked = config.security.https;
+    document.getElementById('enableCsp').checked = config.security.csp;
+    document.getElementById('enableXssProtection').checked = config.security.xssProtection;
+    document.getElementById('enableCsrfProtection').checked = config.security.csrfProtection;
+    document.getElementById('enablePushNotifications').checked = config.notifications.push;
+    document.getElementById('notificationPriority').value = config.notifications.priority;
+    document.getElementById('enableNotificationSound').checked = config.notifications.sound;
+}
+
+// 獲取表單值
+function getFormValues() {
+    return {
+        environment: document.getElementById('environmentSelect').value,
+        appMode: document.getElementById('appModeSelect').value,
+        api: {
+            baseUrl: document.getElementById('apiBaseUrl').value,
+            version: document.getElementById('apiVersion').value,
+            key: document.getElementById('apiKey').value,
+            timeout: parseInt(document.getElementById('apiTimeout').value),
+            retries: parseInt(document.getElementById('apiRetries').value)
+        },
+        database: {
+            type: document.getElementById('dbTypeSelect').value,
+            version: document.getElementById('dbVersion').value,
+            sizeLimit: parseInt(document.getElementById('dbSizeLimit').value)
+        },
+        cache: {
+            enabled: document.getElementById('enableCache').checked,
+            duration: parseInt(document.getElementById('cacheDuration').value),
+            strategy: document.getElementById('cacheStrategy').value,
+            maxSize: parseInt(document.getElementById('maxCacheSize').value)
+        },
+        logging: {
+            level: document.getElementById('logLevel').value,
+            outputs: {
+                console: document.getElementById('logConsole').checked,
+                file: document.getElementById('logFile').checked,
+                remote: document.getElementById('logRemote').checked
+            },
+            retentionDays: parseInt(document.getElementById('logRetentionDays').value)
+        },
+        performance: {
+            monitoring: document.getElementById('enablePerformanceMonitoring').checked,
+            samplingInterval: parseInt(document.getElementById('performanceSamplingInterval').value),
+            optimization: document.getElementById('enablePerformanceOptimization').checked
+        },
+        security: {
+            https: document.getElementById('enableHttps').checked,
+            csp: document.getElementById('enableCsp').checked,
+            xssProtection: document.getElementById('enableXssProtection').checked,
+            csrfProtection: document.getElementById('enableCsrfProtection').checked
+        },
+        notifications: {
+            push: document.getElementById('enablePushNotifications').checked,
+            priority: document.getElementById('notificationPriority').value,
+            sound: document.getElementById('enableNotificationSound').checked
+        }
+    };
+}
+
+// ... existing code ...
 
 // 顯示參數設定
 function showParameterSettings() {
@@ -3392,3 +3594,693 @@ function initDevModeFeatures() {
 }
 
 // ... existing code ... 
+
+// 假設有一個函數用於更新表格資料
+function updateDetailTable(data) {
+    const tableBody = document.getElementById('detailTableBody');
+    tableBody.innerHTML = ''; // 清空現有資料
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+
+        const dateCell = document.createElement('td');
+        dateCell.textContent = item.date;
+        row.appendChild(dateCell);
+
+        const marketCell = document.createElement('td');
+        marketCell.textContent = item.market;
+        row.appendChild(marketCell);
+
+        const priceCell = document.createElement('td');
+        priceCell.textContent = item.price;
+        // 根據價格變動設置顏色
+        if (item.priceChange > 0) {
+            priceCell.classList.add('price-up');
+        } else if (item.priceChange < 0) {
+            priceCell.classList.add('price-down');
+        }
+        row.appendChild(priceCell);
+
+        const volumeCell = document.createElement('td');
+        volumeCell.textContent = item.volume;
+        row.appendChild(volumeCell);
+
+        tableBody.appendChild(row);
+    });
+}
+
+// ... existing code ...
+
+// 參數調整相關功能
+function showParameterSettings() {
+    const paramsDialog = document.createElement('div');
+    paramsDialog.className = 'dev-settings-dialog';
+    paramsDialog.innerHTML = `
+        <div class="dev-settings-content">
+            <h3>參數調整</h3>
+            <div class="params-section">
+                <h4>資料更新設定</h4>
+                <div class="params-group">
+                    <div class="param-item">
+                        <label for="updateInterval">更新間隔（分鐘）</label>
+                        <input type="number" id="updateInterval" min="1" max="1440" value="30">
+                    </div>
+                    <div class="param-item">
+                        <label for="maxRetries">最大重試次數</label>
+                        <input type="number" id="maxRetries" min="1" max="10" value="3">
+                    </div>
+                    <div class="param-item">
+                        <label for="retryDelay">重試延遲（秒）</label>
+                        <input type="number" id="retryDelay" min="1" max="60" value="5">
+                    </div>
+                </div>
+            </div>
+            <div class="params-section">
+                <h4>快取設定</h4>
+                <div class="params-group">
+                    <div class="param-item">
+                        <label for="cacheSize">快取大小（MB）</label>
+                        <input type="number" id="cacheSize" min="1" max="1000" value="100">
+                    </div>
+                    <div class="param-item">
+                        <label for="cacheExpiry">快取過期時間（小時）</label>
+                        <input type="number" id="cacheExpiry" min="1" max="72" value="24">
+                    </div>
+                </div>
+            </div>
+            <div class="params-section">
+                <h4>效能設定</h4>
+                <div class="params-group">
+                    <div class="param-item">
+                        <label for="batchSize">批次處理大小</label>
+                        <input type="number" id="batchSize" min="10" max="1000" value="100">
+                    </div>
+                    <div class="param-item">
+                        <label for="maxConcurrent">最大並行請求數</label>
+                        <input type="number" id="maxConcurrent" min="1" max="10" value="3">
+                    </div>
+                    <div class="param-item">
+                        <label for="timeout">請求超時（秒）</label>
+                        <input type="number" id="timeout" min="1" max="60" value="30">
+                    </div>
+                </div>
+            </div>
+            <div class="params-section">
+                <h4>UI 設定</h4>
+                <div class="params-group">
+                    <div class="param-item">
+                        <label for="animationSpeed">動畫速度（毫秒）</label>
+                        <input type="number" id="animationSpeed" min="100" max="2000" value="300">
+                    </div>
+                    <div class="param-item">
+                        <label for="notificationDuration">通知顯示時間（秒）</label>
+                        <input type="number" id="notificationDuration" min="1" max="10" value="5">
+                    </div>
+                    <div class="param-item">
+                        <label for="tablePageSize">表格每頁筆數</label>
+                        <input type="number" id="tablePageSize" min="5" max="100" value="20">
+                    </div>
+                </div>
+            </div>
+            <div class="params-section">
+                <h4>進階設定</h4>
+                <div class="params-group">
+                    <div class="param-item">
+                        <label for="debugMode">除錯模式</label>
+                        <input type="checkbox" id="debugMode">
+                    </div>
+                    <div class="param-item">
+                        <label for="performanceMode">效能模式</label>
+                        <input type="checkbox" id="performanceMode">
+                    </div>
+                    <div class="param-item">
+                        <label for="offlineMode">離線模式</label>
+                        <input type="checkbox" id="offlineMode">
+                    </div>
+                </div>
+            </div>
+            <div class="env-actions">
+                <button id="saveParams">儲存設定</button>
+                <button id="resetParams">重設為預設值</button>
+                <button id="cancelParams">取消</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(paramsDialog);
+
+    // 載入現有設定
+    const paramsConfig = JSON.parse(localStorage.getItem('paramsConfig')) || {
+        update: {
+            interval: 30,
+            maxRetries: 3,
+            retryDelay: 5
+        },
+        cache: {
+            size: 100,
+            expiry: 24
+        },
+        performance: {
+            batchSize: 100,
+            maxConcurrent: 3,
+            timeout: 30
+        },
+        ui: {
+            animationSpeed: 300,
+            notificationDuration: 5,
+            tablePageSize: 20
+        },
+        advanced: {
+            debugMode: false,
+            performanceMode: false,
+            offlineMode: false
+        }
+    };
+
+    // 設定表單值
+    document.getElementById('updateInterval').value = paramsConfig.update.interval;
+    document.getElementById('maxRetries').value = paramsConfig.update.maxRetries;
+    document.getElementById('retryDelay').value = paramsConfig.update.retryDelay;
+    document.getElementById('cacheSize').value = paramsConfig.cache.size;
+    document.getElementById('cacheExpiry').value = paramsConfig.cache.expiry;
+    document.getElementById('batchSize').value = paramsConfig.performance.batchSize;
+    document.getElementById('maxConcurrent').value = paramsConfig.performance.maxConcurrent;
+    document.getElementById('timeout').value = paramsConfig.performance.timeout;
+    document.getElementById('animationSpeed').value = paramsConfig.ui.animationSpeed;
+    document.getElementById('notificationDuration').value = paramsConfig.ui.notificationDuration;
+    document.getElementById('tablePageSize').value = paramsConfig.ui.tablePageSize;
+    document.getElementById('debugMode').checked = paramsConfig.advanced.debugMode;
+    document.getElementById('performanceMode').checked = paramsConfig.advanced.performanceMode;
+    document.getElementById('offlineMode').checked = paramsConfig.advanced.offlineMode;
+
+    // 儲存設定
+    document.getElementById('saveParams').addEventListener('click', () => {
+        const newConfig = {
+            update: {
+                interval: parseInt(document.getElementById('updateInterval').value),
+                maxRetries: parseInt(document.getElementById('maxRetries').value),
+                retryDelay: parseInt(document.getElementById('retryDelay').value)
+            },
+            cache: {
+                size: parseInt(document.getElementById('cacheSize').value),
+                expiry: parseInt(document.getElementById('cacheExpiry').value)
+            },
+            performance: {
+                batchSize: parseInt(document.getElementById('batchSize').value),
+                maxConcurrent: parseInt(document.getElementById('maxConcurrent').value),
+                timeout: parseInt(document.getElementById('timeout').value)
+            },
+            ui: {
+                animationSpeed: parseInt(document.getElementById('animationSpeed').value),
+                notificationDuration: parseInt(document.getElementById('notificationDuration').value),
+                tablePageSize: parseInt(document.getElementById('tablePageSize').value)
+            },
+            advanced: {
+                debugMode: document.getElementById('debugMode').checked,
+                performanceMode: document.getElementById('performanceMode').checked,
+                offlineMode: document.getElementById('offlineMode').checked
+            }
+        };
+
+        localStorage.setItem('paramsConfig', JSON.stringify(newConfig));
+        applyParameters(newConfig);
+        paramsDialog.remove();
+        showNotification('成功', '參數設定已更新');
+    });
+
+    // 重設為預設值
+    document.getElementById('resetParams').addEventListener('click', () => {
+        const defaultConfig = {
+            update: {
+                interval: 30,
+                maxRetries: 3,
+                retryDelay: 5
+            },
+            cache: {
+                size: 100,
+                expiry: 24
+            },
+            performance: {
+                batchSize: 100,
+                maxConcurrent: 3,
+                timeout: 30
+            },
+            ui: {
+                animationSpeed: 300,
+                notificationDuration: 5,
+                tablePageSize: 20
+            },
+            advanced: {
+                debugMode: false,
+                performanceMode: false,
+                offlineMode: false
+            }
+        };
+
+        localStorage.setItem('paramsConfig', JSON.stringify(defaultConfig));
+        applyParameters(defaultConfig);
+        paramsDialog.remove();
+        showNotification('成功', '參數設定已重設為預設值');
+    });
+
+    // 取消按鈕
+    document.getElementById('cancelParams').addEventListener('click', () => {
+        paramsDialog.remove();
+    });
+}
+
+// 套用參數設定
+function applyParameters(config) {
+    // 更新設定
+    window.UPDATE_INTERVAL = config.update.interval;
+    window.MAX_RETRIES = config.update.maxRetries;
+    window.RETRY_DELAY = config.update.retryDelay;
+
+    // 快取設定
+    window.CACHE_SIZE = config.cache.size;
+    window.CACHE_EXPIRY = config.cache.expiry;
+
+    // 效能設定
+    window.BATCH_SIZE = config.performance.batchSize;
+    window.MAX_CONCURRENT = config.performance.maxConcurrent;
+    window.TIMEOUT = config.performance.timeout;
+
+    // UI 設定
+    window.ANIMATION_SPEED = config.ui.animationSpeed;
+    window.NOTIFICATION_DURATION = config.ui.notificationDuration;
+    window.TABLE_PAGE_SIZE = config.ui.tablePageSize;
+
+    // 進階設定
+    window.DEBUG_MODE = config.advanced.debugMode;
+    window.PERFORMANCE_MODE = config.advanced.performanceMode;
+    window.OFFLINE_MODE = config.advanced.offlineMode;
+
+    // 更新 UI
+    updateUIWithNewParameters();
+}
+
+// 更新 UI 以反映新的參數設定
+function updateUIWithNewParameters() {
+    // 更新動畫速度
+    document.documentElement.style.setProperty('--animation-speed', `${window.ANIMATION_SPEED}ms`);
+
+    // 更新表格分頁
+    const tables = document.querySelectorAll('.detail-table');
+    tables.forEach(table => {
+        if (table.dataset.pageSize !== window.TABLE_PAGE_SIZE.toString()) {
+            table.dataset.pageSize = window.TABLE_PAGE_SIZE;
+            // 重新渲染表格
+            renderTable(table);
+        }
+    });
+
+    // 更新通知持續時間
+    const notifications = document.querySelectorAll('.notification');
+    notifications.forEach(notification => {
+        notification.style.animationDuration = `${window.NOTIFICATION_DURATION}s`;
+    });
+
+    // 更新除錯模式
+    if (window.DEBUG_MODE) {
+        document.body.classList.add('debug-mode');
+    } else {
+        document.body.classList.remove('debug-mode');
+    }
+
+    // 更新效能模式
+    if (window.PERFORMANCE_MODE) {
+        document.body.classList.add('performance-mode');
+    } else {
+        document.body.classList.remove('performance-mode');
+    }
+
+    // 更新離線模式
+    if (window.OFFLINE_MODE) {
+        document.body.classList.add('offline-mode');
+        // 啟用離線功能
+        enableOfflineMode();
+    } else {
+        document.body.classList.remove('offline-mode');
+        // 停用離線功能
+        disableOfflineMode();
+    }
+}
+
+// ... existing code ...
+
+// 主題設定相關功能
+function showThemeSettings() {
+    const themeDialog = document.createElement('div');
+    themeDialog.className = 'dev-settings-dialog';
+    themeDialog.innerHTML = `
+        <div class="dev-settings-content">
+            <h3>主題設定</h3>
+            <div class="theme-section">
+                <h4>顏色設定</h4>
+                <div class="color-group">
+                    <div class="color-item">
+                        <label for="primaryColor">主要顏色</label>
+                        <input type="color" id="primaryColor" value="#1a73e8">
+                    </div>
+                    <div class="color-item">
+                        <label for="secondaryColor">次要顏色</label>
+                        <input type="color" id="secondaryColor" value="#34a853">
+                    </div>
+                    <div class="color-item">
+                        <label for="backgroundColor">背景顏色</label>
+                        <input type="color" id="backgroundColor" value="#2d2d2d">
+                    </div>
+                    <div class="color-item">
+                        <label for="textColor">文字顏色</label>
+                        <input type="color" id="textColor" value="#ffffff">
+                    </div>
+                    <div class="color-item">
+                        <label for="accentColor">強調顏色</label>
+                        <input type="color" id="accentColor" value="#fbbc05">
+                    </div>
+                    <div class="color-item">
+                        <label for="errorColor">錯誤顏色</label>
+                        <input type="color" id="errorColor" value="#ea4335">
+                    </div>
+                </div>
+            </div>
+            <div class="theme-section">
+                <h4>字型設定</h4>
+                <div class="font-group">
+                    <div class="font-item">
+                        <label for="fontFamily">字型</label>
+                        <select id="fontFamily">
+                            <option value="'Microsoft JhengHei', sans-serif">微軟正黑體</option>
+                            <option value="'Noto Sans TC', sans-serif">思源黑體</option>
+                            <option value="'PingFang TC', sans-serif">蘋方</option>
+                            <option value="'Microsoft YaHei', sans-serif">微軟雅黑</option>
+                        </select>
+                    </div>
+                    <div class="font-item">
+                        <label for="baseFontSize">基礎字型大小</label>
+                        <input type="number" id="baseFontSize" min="12" max="20" value="16">
+                    </div>
+                    <div class="font-item">
+                        <label for="lineHeight">行高</label>
+                        <input type="number" id="lineHeight" min="1" max="2" step="0.1" value="1.5">
+                    </div>
+                </div>
+            </div>
+            <div class="theme-section">
+                <h4>間距設定</h4>
+                <div class="spacing-group">
+                    <div class="spacing-item">
+                        <label for="spacingUnit">間距單位（px）</label>
+                        <input type="number" id="spacingUnit" min="4" max="16" value="8">
+                    </div>
+                    <div class="spacing-item">
+                        <label for="borderRadius">圓角大小（px）</label>
+                        <input type="number" id="borderRadius" min="0" max="20" value="4">
+                    </div>
+                </div>
+            </div>
+            <div class="theme-section">
+                <h4>動畫設定</h4>
+                <div class="animation-group">
+                    <div class="animation-item">
+                        <label for="animationDuration">動畫持續時間（毫秒）</label>
+                        <input type="number" id="animationDuration" min="100" max="1000" value="300">
+                    </div>
+                    <div class="animation-item">
+                        <label for="animationCurve">動畫曲線</label>
+                        <select id="animationCurve">
+                            <option value="ease">Ease</option>
+                            <option value="ease-in">Ease In</option>
+                            <option value="ease-out">Ease Out</option>
+                            <option value="ease-in-out">Ease In Out</option>
+                            <option value="linear">Linear</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-section">
+                <h4>預設主題</h4>
+                <div class="preset-group">
+                    <button id="presetLight" class="preset-btn">淺色主題</button>
+                    <button id="presetDark" class="preset-btn">深色主題</button>
+                    <button id="presetHighContrast" class="preset-btn">高對比主題</button>
+                </div>
+            </div>
+            <div class="env-actions">
+                <button id="saveTheme">儲存設定</button>
+                <button id="resetTheme">重設為預設值</button>
+                <button id="cancelTheme">取消</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(themeDialog);
+
+    // 載入現有設定
+    const themeConfig = JSON.parse(localStorage.getItem('themeConfig')) || {
+        colors: {
+            primary: '#1a73e8',
+            secondary: '#34a853',
+            background: '#2d2d2d',
+            text: '#ffffff',
+            accent: '#fbbc05',
+            error: '#ea4335'
+        },
+        typography: {
+            fontFamily: "'Microsoft JhengHei', sans-serif",
+            baseFontSize: 16,
+            lineHeight: 1.5
+        },
+        spacing: {
+            unit: 8,
+            borderRadius: 4
+        },
+        animation: {
+            duration: 300,
+            curve: 'ease'
+        }
+    };
+
+    // 設定表單值
+    document.getElementById('primaryColor').value = themeConfig.colors.primary;
+    document.getElementById('secondaryColor').value = themeConfig.colors.secondary;
+    document.getElementById('backgroundColor').value = themeConfig.colors.background;
+    document.getElementById('textColor').value = themeConfig.colors.text;
+    document.getElementById('accentColor').value = themeConfig.colors.accent;
+    document.getElementById('errorColor').value = themeConfig.colors.error;
+    document.getElementById('fontFamily').value = themeConfig.typography.fontFamily;
+    document.getElementById('baseFontSize').value = themeConfig.typography.baseFontSize;
+    document.getElementById('lineHeight').value = themeConfig.typography.lineHeight;
+    document.getElementById('spacingUnit').value = themeConfig.spacing.unit;
+    document.getElementById('borderRadius').value = themeConfig.spacing.borderRadius;
+    document.getElementById('animationDuration').value = themeConfig.animation.duration;
+    document.getElementById('animationCurve').value = themeConfig.animation.curve;
+
+    // 儲存設定
+    document.getElementById('saveTheme').addEventListener('click', () => {
+        const newConfig = {
+            colors: {
+                primary: document.getElementById('primaryColor').value,
+                secondary: document.getElementById('secondaryColor').value,
+                background: document.getElementById('backgroundColor').value,
+                text: document.getElementById('textColor').value,
+                accent: document.getElementById('accentColor').value,
+                error: document.getElementById('errorColor').value
+            },
+            typography: {
+                fontFamily: document.getElementById('fontFamily').value,
+                baseFontSize: parseInt(document.getElementById('baseFontSize').value),
+                lineHeight: parseFloat(document.getElementById('lineHeight').value)
+            },
+            spacing: {
+                unit: parseInt(document.getElementById('spacingUnit').value),
+                borderRadius: parseInt(document.getElementById('borderRadius').value)
+            },
+            animation: {
+                duration: parseInt(document.getElementById('animationDuration').value),
+                curve: document.getElementById('animationCurve').value
+            }
+        };
+
+        localStorage.setItem('themeConfig', JSON.stringify(newConfig));
+        applyTheme(newConfig);
+        themeDialog.remove();
+        showNotification('成功', '主題設定已更新');
+    });
+
+    // 重設為預設值
+    document.getElementById('resetTheme').addEventListener('click', () => {
+        const defaultConfig = {
+            colors: {
+                primary: '#1a73e8',
+                secondary: '#34a853',
+                background: '#2d2d2d',
+                text: '#ffffff',
+                accent: '#fbbc05',
+                error: '#ea4335'
+            },
+            typography: {
+                fontFamily: "'Microsoft JhengHei', sans-serif",
+                baseFontSize: 16,
+                lineHeight: 1.5
+            },
+            spacing: {
+                unit: 8,
+                borderRadius: 4
+            },
+            animation: {
+                duration: 300,
+                curve: 'ease'
+            }
+        };
+
+        localStorage.setItem('themeConfig', JSON.stringify(defaultConfig));
+        applyTheme(defaultConfig);
+        themeDialog.remove();
+        showNotification('成功', '主題設定已重設為預設值');
+    });
+
+    // 預設主題按鈕
+    document.getElementById('presetLight').addEventListener('click', () => {
+        const lightTheme = {
+            colors: {
+                primary: '#1a73e8',
+                secondary: '#34a853',
+                background: '#ffffff',
+                text: '#202124',
+                accent: '#fbbc05',
+                error: '#ea4335'
+            },
+            typography: {
+                fontFamily: "'Microsoft JhengHei', sans-serif",
+                baseFontSize: 16,
+                lineHeight: 1.5
+            },
+            spacing: {
+                unit: 8,
+                borderRadius: 4
+            },
+            animation: {
+                duration: 300,
+                curve: 'ease'
+            }
+        };
+        applyTheme(lightTheme);
+    });
+
+    document.getElementById('presetDark').addEventListener('click', () => {
+        const darkTheme = {
+            colors: {
+                primary: '#8ab4f8',
+                secondary: '#81c995',
+                background: '#202124',
+                text: '#e8eaed',
+                accent: '#fdd663',
+                error: '#f28b82'
+            },
+            typography: {
+                fontFamily: "'Microsoft JhengHei', sans-serif",
+                baseFontSize: 16,
+                lineHeight: 1.5
+            },
+            spacing: {
+                unit: 8,
+                borderRadius: 4
+            },
+            animation: {
+                duration: 300,
+                curve: 'ease'
+            }
+        };
+        applyTheme(darkTheme);
+    });
+
+    document.getElementById('presetHighContrast').addEventListener('click', () => {
+        const highContrastTheme = {
+            colors: {
+                primary: '#ffffff',
+                secondary: '#ffff00',
+                background: '#000000',
+                text: '#ffffff',
+                accent: '#00ff00',
+                error: '#ff0000'
+            },
+            typography: {
+                fontFamily: "'Microsoft JhengHei', sans-serif",
+                baseFontSize: 18,
+                lineHeight: 1.5
+            },
+            spacing: {
+                unit: 8,
+                borderRadius: 0
+            },
+            animation: {
+                duration: 0,
+                curve: 'linear'
+            }
+        };
+        applyTheme(highContrastTheme);
+    });
+
+    // 取消按鈕
+    document.getElementById('cancelTheme').addEventListener('click', () => {
+        themeDialog.remove();
+    });
+}
+
+// 套用主題設定
+function applyTheme(config) {
+    // 設定 CSS 變數
+    const root = document.documentElement;
+    
+    // 顏色
+    root.style.setProperty('--primary-color', config.colors.primary);
+    root.style.setProperty('--secondary-color', config.colors.secondary);
+    root.style.setProperty('--background-color', config.colors.background);
+    root.style.setProperty('--text-color', config.colors.text);
+    root.style.setProperty('--accent-color', config.colors.accent);
+    root.style.setProperty('--error-color', config.colors.error);
+
+    // 字型
+    root.style.setProperty('--font-family', config.typography.fontFamily);
+    root.style.setProperty('--base-font-size', `${config.typography.baseFontSize}px`);
+    root.style.setProperty('--line-height', config.typography.lineHeight);
+
+    // 間距
+    root.style.setProperty('--spacing-unit', `${config.spacing.unit}px`);
+    root.style.setProperty('--border-radius', `${config.spacing.borderRadius}px`);
+
+    // 動畫
+    root.style.setProperty('--animation-duration', `${config.animation.duration}ms`);
+    root.style.setProperty('--animation-curve', config.animation.curve);
+
+    // 更新所有使用這些變數的元素
+    updateThemeElements();
+}
+
+// 更新使用主題變數的元素
+function updateThemeElements() {
+    // 更新按鈕樣式
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.style.transition = `all var(--animation-duration) var(--animation-curve)`;
+    });
+
+    // 更新輸入框樣式
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.style.transition = `all var(--animation-duration) var(--animation-curve)`;
+    });
+
+    // 更新卡片樣式
+    const cards = document.querySelectorAll('.card, .stat-card');
+    cards.forEach(card => {
+        card.style.transition = `all var(--animation-duration) var(--animation-curve)`;
+    });
+
+    // 更新表格樣式
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+        table.style.transition = `all var(--animation-duration) var(--animation-curve)`;
+    });
+}
+
+// ... existing code ...

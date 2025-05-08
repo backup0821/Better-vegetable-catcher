@@ -1278,4 +1278,194 @@ button:active {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
+}
+
+.price-up {
+    color: red;
+}
+
+.price-down {
+    color: green;
+}
+
+/* 主題設定相關樣式 */
+.theme-section {
+    margin-bottom: var(--spacing-unit) * 2;
+    padding: var(--spacing-unit);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+}
+
+.theme-section h4 {
+    margin-bottom: var(--spacing-unit);
+    color: var(--text-color);
+    font-size: 1.1em;
+}
+
+.color-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-unit);
+}
+
+.color-item {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing-unit) / 2);
+}
+
+.color-item label {
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+
+.color-item input[type="color"] {
+    width: 100%;
+    height: 40px;
+    padding: 2px;
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    background: var(--background-color);
+    cursor: pointer;
+}
+
+.font-group,
+.spacing-group,
+.animation-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-unit);
+}
+
+.font-item,
+.spacing-item,
+.animation-item {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing-unit) / 2);
+}
+
+.font-item label,
+.spacing-item label,
+.animation-item label {
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+
+.font-item select,
+.font-item input,
+.spacing-item input,
+.animation-item input,
+.animation-item select {
+    padding: calc(var(--spacing-unit) / 2);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    background: var(--background-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+}
+
+.preset-group {
+    display: flex;
+    gap: var(--spacing-unit);
+    flex-wrap: wrap;
+}
+
+.preset-btn {
+    padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    background: var(--background-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all var(--animation-duration) var(--animation-curve);
+}
+
+.preset-btn:hover {
+    background: var(--primary-color);
+    color: var(--background-color);
+}
+
+/* 主題變數 */
+:root {
+    /* 顏色 */
+    --primary-color: #1a73e8;
+    --secondary-color: #34a853;
+    --background-color: #2d2d2d;
+    --text-color: #ffffff;
+    --accent-color: #fbbc05;
+    --error-color: #ea4335;
+
+    /* 字型 */
+    --font-family: 'Microsoft JhengHei', sans-serif;
+    --base-font-size: 16px;
+    --line-height: 1.5;
+
+    /* 間距 */
+    --spacing-unit: 8px;
+    --border-radius: 4px;
+
+    /* 動畫 */
+    --animation-duration: 300ms;
+    --animation-curve: ease;
+}
+
+/* 使用主題變數的元素樣式 */
+button {
+    background: var(--primary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+    font-family: var(--font-family);
+    font-size: var(--base-font-size);
+    line-height: var(--line-height);
+    cursor: pointer;
+    transition: all var(--animation-duration) var(--animation-curve);
+}
+
+button:hover {
+    background: var(--secondary-color);
+}
+
+input, select, textarea {
+    background: var(--background-color);
+    color: var(--text-color);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: calc(var(--spacing-unit) / 2);
+    font-family: var(--font-family);
+    font-size: var(--base-font-size);
+    line-height: var(--line-height);
+    transition: all var(--animation-duration) var(--animation-curve);
+}
+
+.card, .stat-card {
+    background: var(--background-color);
+    color: var(--text-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-unit);
+    transition: all var(--animation-duration) var(--animation-curve);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--spacing-unit) 0;
+    background: var(--background-color);
+    color: var(--text-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: all var(--animation-duration) var(--animation-curve);
+}
+
+th, td {
+    padding: calc(var(--spacing-unit) / 2);
+    border: 1px solid var(--primary-color);
+    text-align: left;
+}
+
+th {
+    background: var(--primary-color);
+    color: var(--text-color);
 } 
