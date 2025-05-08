@@ -886,7 +886,10 @@ async function checkMarketRest() {
                 showMarketRestBanner(market);
                 showPageNotification({
                     title: '市場休市通知',
-                    time: `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`
+                    messenge: `${market.MarketName} ${market.MarketType}市場今日休市`,
+                    time: `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`,
+                    isMarketRest: true,
+                    marketInfo: market
                 });
             }
         }
@@ -1948,31 +1951,29 @@ async function showMarketRestCalendar() {
                 </select>
             </div>
         `;
-        
-        // 生成當月和下月的日曆
+
         for (let monthOffset = 0; monthOffset < 2; monthOffset++) {
             const month = (currentMonth + monthOffset) % 12;
             const year = currentYear + Math.floor((currentMonth + monthOffset) / 12);
-            
-            calendarHTML += `
-                <div style="margin-bottom: 30px;">
-                    <h3 style="text-align: center;">${year}年${month + 1}月</h3>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">日</th>
-                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">一</th>
-                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">二</th>
-                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">三</th>
-                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">四</th>
-                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">五</th>
-                            <th style="padding: 8px; border: 1px solid #ddd; background: #f5f5f5;">六</th>
-                        </tr>
-        `;
-        
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             let day = 1;
-            
+
+            calendarHTML += `
+                <div style="margin-bottom: 30px;">
+                    <h3 style="text-align: center; margin-bottom: 15px;">${year}年${month + 1}月</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <th style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5;">日</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5;">一</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5;">二</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5;">三</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5;">四</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5;">五</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5;">六</th>
+                        </tr>
+            `;
+
             for (let i = 0; i < 6; i++) {
                 calendarHTML += '<tr>';
                 for (let j = 0; j < 7; j++) {
@@ -2627,948 +2628,132 @@ const ENV_DEFAULT_CONFIGS = {
 
 // 修改 showEnvironmentSettings 函數
 function showEnvironmentSettings() {
-    const envDialog = document.createElement('div');
-    envDialog.className = 'dev-settings-dialog';
-    envDialog.innerHTML = `
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>環境設定</h3>
-            
-            <div class="env-section">
-                <h4>基本環境設定</h4>
-                <div class="env-options">
-                    <div class="env-option">
-                        <label>環境選擇</label>
-                        <select id="environmentSelect">
-                            <option value="production">生產環境</option>
-                            <option value="testing">測試環境</option>
-                            <option value="development">開發環境</option>
-                            <option value="staging">預備環境</option>
-                        </select>
-                    </div>
-                    <div class="env-option">
-                        <label>應用程式模式</label>
-                        <select id="appModeSelect">
-                            <option value="normal">一般模式</option>
-                            <option value="maintenance">維護模式</option>
-                            <option value="debug">除錯模式</option>
-                            <option value="performance">效能模式</option>
-                        </select>
-                    </div>
-                    <div class="env-option">
-                        <button id="loadEnvDefaults" class="env-action-btn">載入環境預設值</button>
-                        <button id="saveEnvAsTemplate" class="env-action-btn">儲存為範本</button>
-                        <button id="loadEnvTemplate" class="env-action-btn">載入範本</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 其他設定區塊保持不變 -->
-            ${document.querySelector('.dev-settings-content').innerHTML.split('</div>').slice(1).join('</div>')}
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeEnvDialog">關閉</button></div>
         </div>
     `;
-    document.body.appendChild(envDialog);
-
-    // 載入現有設定
-    const currentEnv = localStorage.getItem('currentEnvironment') || 'production';
-    const envConfig = JSON.parse(localStorage.getItem(`envConfig_${currentEnv}`)) || ENV_DEFAULT_CONFIGS[currentEnv];
-
-    // 設定表單值
-    document.getElementById('environmentSelect').value = currentEnv;
-    // ... 其他表單值設定保持不變 ...
-
-    // 環境選擇變更事件
-    document.getElementById('environmentSelect').addEventListener('change', (e) => {
-        const newEnv = e.target.value;
-        const envConfig = JSON.parse(localStorage.getItem(`envConfig_${newEnv}`)) || ENV_DEFAULT_CONFIGS[newEnv];
-        
-        // 更新表單值
-        updateFormValues(envConfig);
-        
-        // 儲存當前環境
-        localStorage.setItem('currentEnvironment', newEnv);
-    });
-
-    // 載入環境預設值
-    document.getElementById('loadEnvDefaults').addEventListener('click', () => {
-        const currentEnv = document.getElementById('environmentSelect').value;
-        const defaultConfig = ENV_DEFAULT_CONFIGS[currentEnv];
-        
-        if (confirm(`確定要載入 ${currentEnv} 環境的預設設定嗎？這將會覆蓋目前的設定。`)) {
-            updateFormValues(defaultConfig);
-            showNotification('成功', `已載入 ${currentEnv} 環境的預設設定`);
-        }
-    });
-
-    // 儲存為範本
-    document.getElementById('saveEnvAsTemplate').addEventListener('click', () => {
-        const templateName = prompt('請輸入範本名稱：');
-        if (templateName) {
-            const currentEnv = document.getElementById('environmentSelect').value;
-            const envConfig = getFormValues();
-            
-            // 儲存範本
-            const templates = JSON.parse(localStorage.getItem('envTemplates') || '{}');
-            templates[templateName] = {
-                environment: currentEnv,
-                config: envConfig
-            };
-            localStorage.setItem('envTemplates', JSON.stringify(templates));
-            
-            showNotification('成功', `已將當前設定儲存為範本：${templateName}`);
-        }
-    });
-
-    // 載入範本
-    document.getElementById('loadEnvTemplate').addEventListener('click', () => {
-        const templates = JSON.parse(localStorage.getItem('envTemplates') || '{}');
-        const templateNames = Object.keys(templates);
-        
-        if (templateNames.length === 0) {
-            showNotification('提示', '目前沒有儲存的範本');
-            return;
-        }
-
-        const templateName = prompt(`請選擇要載入的範本：\n${templateNames.join('\n')}`);
-        if (templateName && templates[templateName]) {
-            const template = templates[templateName];
-            
-            // 更新環境選擇
-            document.getElementById('environmentSelect').value = template.environment;
-            
-            // 更新表單值
-            updateFormValues(template.config);
-            
-            showNotification('成功', `已載入範本：${templateName}`);
-        }
-    });
-
-    // 儲存設定
-    document.getElementById('saveEnv').addEventListener('click', () => {
-        const currentEnv = document.getElementById('environmentSelect').value;
-        const newConfig = getFormValues();
-        
-        // 儲存環境特定設定
-        localStorage.setItem(`envConfig_${currentEnv}`, JSON.stringify(newConfig));
-        
-        // 套用設定
-        applyEnvironmentConfig(newConfig);
-        
-        envDialog.remove();
-        showNotification('成功', `${currentEnv} 環境設定已更新`);
-    });
-
-    // 重設為預設值
-    document.getElementById('resetEnv').addEventListener('click', () => {
-        const currentEnv = document.getElementById('environmentSelect').value;
-        const defaultConfig = ENV_DEFAULT_CONFIGS[currentEnv];
-        
-        if (confirm(`確定要重設 ${currentEnv} 環境的設定為預設值嗎？`)) {
-            localStorage.setItem(`envConfig_${currentEnv}`, JSON.stringify(defaultConfig));
-            updateFormValues(defaultConfig);
-            showNotification('成功', `${currentEnv} 環境設定已重設為預設值`);
-        }
-    });
-
-    // 取消按鈕
-    document.getElementById('cancelEnv').addEventListener('click', () => {
-        envDialog.remove();
-    });
+    document.body.appendChild(dialog);
+    document.getElementById('closeEnvDialog').onclick = () => dialog.remove();
 }
 
-// 更新表單值
-function updateFormValues(config) {
-    document.getElementById('appModeSelect').value = config.appMode;
-    document.getElementById('apiBaseUrl').value = config.api.baseUrl;
-    document.getElementById('apiVersion').value = config.api.version;
-    document.getElementById('apiKey').value = config.api.key;
-    document.getElementById('apiTimeout').value = config.api.timeout;
-    document.getElementById('apiRetries').value = config.api.retries;
-    document.getElementById('dbTypeSelect').value = config.database.type;
-    document.getElementById('dbVersion').value = config.database.version;
-    document.getElementById('dbSizeLimit').value = config.database.sizeLimit;
-    document.getElementById('enableCache').checked = config.cache.enabled;
-    document.getElementById('cacheDuration').value = config.cache.duration;
-    document.getElementById('cacheStrategy').value = config.cache.strategy;
-    document.getElementById('maxCacheSize').value = config.cache.maxSize;
-    document.getElementById('logLevel').value = config.logging.level;
-    document.getElementById('logConsole').checked = config.logging.outputs.console;
-    document.getElementById('logFile').checked = config.logging.outputs.file;
-    document.getElementById('logRemote').checked = config.logging.outputs.remote;
-    document.getElementById('logRetentionDays').value = config.logging.retentionDays;
-    document.getElementById('enablePerformanceMonitoring').checked = config.performance.monitoring;
-    document.getElementById('performanceSamplingInterval').value = config.performance.samplingInterval;
-    document.getElementById('enablePerformanceOptimization').checked = config.performance.optimization;
-    document.getElementById('enableHttps').checked = config.security.https;
-    document.getElementById('enableCsp').checked = config.security.csp;
-    document.getElementById('enableXssProtection').checked = config.security.xssProtection;
-    document.getElementById('enableCsrfProtection').checked = config.security.csrfProtection;
-    document.getElementById('enablePushNotifications').checked = config.notifications.push;
-    document.getElementById('notificationPriority').value = config.notifications.priority;
-    document.getElementById('enableNotificationSound').checked = config.notifications.sound;
-}
-
-// 獲取表單值
-function getFormValues() {
-    return {
-        environment: document.getElementById('environmentSelect').value,
-        appMode: document.getElementById('appModeSelect').value,
-        api: {
-            baseUrl: document.getElementById('apiBaseUrl').value,
-            version: document.getElementById('apiVersion').value,
-            key: document.getElementById('apiKey').value,
-            timeout: parseInt(document.getElementById('apiTimeout').value),
-            retries: parseInt(document.getElementById('apiRetries').value)
-        },
-        database: {
-            type: document.getElementById('dbTypeSelect').value,
-            version: document.getElementById('dbVersion').value,
-            sizeLimit: parseInt(document.getElementById('dbSizeLimit').value)
-        },
-        cache: {
-            enabled: document.getElementById('enableCache').checked,
-            duration: parseInt(document.getElementById('cacheDuration').value),
-            strategy: document.getElementById('cacheStrategy').value,
-            maxSize: parseInt(document.getElementById('maxCacheSize').value)
-        },
-        logging: {
-            level: document.getElementById('logLevel').value,
-            outputs: {
-                console: document.getElementById('logConsole').checked,
-                file: document.getElementById('logFile').checked,
-                remote: document.getElementById('logRemote').checked
-            },
-            retentionDays: parseInt(document.getElementById('logRetentionDays').value)
-        },
-        performance: {
-            monitoring: document.getElementById('enablePerformanceMonitoring').checked,
-            samplingInterval: parseInt(document.getElementById('performanceSamplingInterval').value),
-            optimization: document.getElementById('enablePerformanceOptimization').checked
-        },
-        security: {
-            https: document.getElementById('enableHttps').checked,
-            csp: document.getElementById('enableCsp').checked,
-            xssProtection: document.getElementById('enableXssProtection').checked,
-            csrfProtection: document.getElementById('enableCsrfProtection').checked
-        },
-        notifications: {
-            push: document.getElementById('enablePushNotifications').checked,
-            priority: document.getElementById('notificationPriority').value,
-            sound: document.getElementById('enableNotificationSound').checked
-        }
-    };
-}
-
-// ... existing code ...
-
-// 顯示參數設定
 function showParameterSettings() {
-    const paramsDialog = document.createElement('div');
-    paramsDialog.className = 'dev-settings-dialog';
-    paramsDialog.innerHTML = `
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>參數調整</h3>
-            <div class="params-options">
-                <div class="param-option">
-                    <label for="cacheTime">快取時間（分鐘）</label>
-                    <input type="number" id="cacheTime" min="1" max="60" value="5">
-                </div>
-                <div class="param-option">
-                    <label for="updateInterval">更新間隔（分鐘）</label>
-                    <input type="number" id="updateInterval" min="1" max="60" value="30">
-                </div>
-                <div class="param-option">
-                    <label for="maxRetries">最大重試次數</label>
-                    <input type="number" id="maxRetries" min="1" max="10" value="3">
-                </div>
-            </div>
-            <div class="params-actions">
-                <button id="saveParams">儲存</button>
-                <button id="cancelParams">取消</button>
-            </div>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeParamDialog">關閉</button></div>
         </div>
     `;
-    document.body.appendChild(paramsDialog);
-
-    // 載入現有設定
-    const cacheTime = localStorage.getItem('devCacheTime') || 5;
-    const updateInterval = localStorage.getItem('devUpdateInterval') || 30;
-    const maxRetries = localStorage.getItem('devMaxRetries') || 3;
-
-    document.getElementById('cacheTime').value = cacheTime;
-    document.getElementById('updateInterval').value = updateInterval;
-    document.getElementById('maxRetries').value = maxRetries;
-
-    // 儲存參數設定
-    document.getElementById('saveParams').addEventListener('click', () => {
-        const newCacheTime = document.getElementById('cacheTime').value;
-        const newUpdateInterval = document.getElementById('updateInterval').value;
-        const newMaxRetries = document.getElementById('maxRetries').value;
-
-        localStorage.setItem('devCacheTime', newCacheTime);
-        localStorage.setItem('devUpdateInterval', newUpdateInterval);
-        localStorage.setItem('devMaxRetries', newMaxRetries);
-
-        showNotification('成功', '參數設定已更新');
-        paramsDialog.remove();
-    });
-
-    // 取消按鈕
-    document.getElementById('cancelParams').addEventListener('click', () => {
-        paramsDialog.remove();
-    });
+    document.body.appendChild(dialog);
+    document.getElementById('closeParamDialog').onclick = () => dialog.remove();
 }
 
-// 顯示主題設定
 function showThemeSettings() {
-    const themeDialog = document.createElement('div');
-    themeDialog.className = 'dev-settings-dialog';
-    themeDialog.innerHTML = `
+    const dialog = document.createElement('div');
+    dialog.className = 'dev-settings-dialog';
+    dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>主題設定</h3>
-            <div class="theme-options">
-                <div class="theme-option">
-                    <label for="primaryColor">主要顏色</label>
-                    <input type="color" id="primaryColor" value="#1a73e8">
-                </div>
-                <div class="theme-option">
-                    <label for="secondaryColor">次要顏色</label>
-                    <input type="color" id="secondaryColor" value="#34a853">
-                </div>
-                <div class="theme-option">
-                    <label for="backgroundColor">背景顏色</label>
-                    <input type="color" id="backgroundColor" value="#2d2d2d">
-                </div>
-                <div class="theme-option">
-                    <label for="textColor">文字顏色</label>
-                    <input type="color" id="textColor" value="#ffffff">
-                </div>
-            </div>
-            <div class="theme-actions">
-                <button id="saveTheme">儲存</button>
-                <button id="resetTheme">重設</button>
-                <button id="cancelTheme">取消</button>
-            </div>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeThemeDialog">關閉</button></div>
         </div>
     `;
-    document.body.appendChild(themeDialog);
-
-    // 載入現有主題設定
-    const theme = JSON.parse(localStorage.getItem('devTheme')) || {
-        primaryColor: '#1a73e8',
-        secondaryColor: '#34a853',
-        backgroundColor: '#2d2d2d',
-        textColor: '#ffffff'
-    };
-
-    document.getElementById('primaryColor').value = theme.primaryColor;
-    document.getElementById('secondaryColor').value = theme.secondaryColor;
-    document.getElementById('backgroundColor').value = theme.backgroundColor;
-    document.getElementById('textColor').value = theme.textColor;
-
-    // 儲存主題設定
-    document.getElementById('saveTheme').addEventListener('click', () => {
-        const newTheme = {
-            primaryColor: document.getElementById('primaryColor').value,
-            secondaryColor: document.getElementById('secondaryColor').value,
-            backgroundColor: document.getElementById('backgroundColor').value,
-            textColor: document.getElementById('textColor').value
-        };
-
-        localStorage.setItem('devTheme', JSON.stringify(newTheme));
-        applyTheme(newTheme);
-        showNotification('成功', '主題設定已更新');
-        themeDialog.remove();
-    });
-
-    // 重設主題
-    document.getElementById('resetTheme').addEventListener('click', () => {
-        const defaultTheme = {
-            primaryColor: '#1a73e8',
-            secondaryColor: '#34a853',
-            backgroundColor: '#2d2d2d',
-            textColor: '#ffffff'
-        };
-
-        localStorage.setItem('devTheme', JSON.stringify(defaultTheme));
-        applyTheme(defaultTheme);
-        showNotification('成功', '主題已重設為預設值');
-        themeDialog.remove();
-    });
-
-    // 取消按鈕
-    document.getElementById('cancelTheme').addEventListener('click', () => {
-        themeDialog.remove();
-    });
+    document.body.appendChild(dialog);
+    document.getElementById('closeThemeDialog').onclick = () => dialog.remove();
 }
 
-// 顯示功能設定
 function showFeatureSettings() {
     const dialog = document.createElement('div');
     dialog.className = 'dev-settings-dialog';
-    
-    // 從 localStorage 讀取當前設定
-    const features = JSON.parse(localStorage.getItem('devFeatures') || '{}');
-    
     dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>功能開關</h3>
-            <div class="feature-options">
-                <div class="feature-group">
-                    <h4>基本功能</h4>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureSearch" ${features.search ? 'checked' : ''}>
-                        <label for="featureSearch">搜尋功能</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureCropSelect" ${features.cropSelect ? 'checked' : ''}>
-                        <label for="featureCropSelect">作物選擇</label>
-                    </div>
-                </div>
-                
-                <div class="feature-group">
-                    <h4>分析功能</h4>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featurePriceTrend" ${features.priceTrend ? 'checked' : ''}>
-                        <label for="featurePriceTrend">價格趨勢分析</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureVolumeDistribution" ${features.volumeDistribution ? 'checked' : ''}>
-                        <label for="featureVolumeDistribution">交易量分布</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featurePriceDistribution" ${features.priceDistribution ? 'checked' : ''}>
-                        <label for="featurePriceDistribution">價格分布</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureSeasonalAnalysis" ${features.seasonalAnalysis ? 'checked' : ''}>
-                        <label for="featureSeasonalAnalysis">季節性分析</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featurePricePrediction" ${features.pricePrediction ? 'checked' : ''}>
-                        <label for="featurePricePrediction">價格預測</label>
-                    </div>
-                </div>
-                
-                <div class="feature-group">
-                    <h4>通知功能</h4>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureNotifications" ${features.notifications ? 'checked' : ''}>
-                        <label for="featureNotifications">通知系統</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureMarketRest" ${features.marketRest ? 'checked' : ''}>
-                        <label for="featureMarketRest">休市提醒</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featurePriceAlerts" ${features.priceAlerts ? 'checked' : ''}>
-                        <label for="featurePriceAlerts">價格提醒</label>
-                    </div>
-                </div>
-                
-                <div class="feature-group">
-                    <h4>資料功能</h4>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureExport" ${features.export ? 'checked' : ''}>
-                        <label for="featureExport">資料匯出</label>
-                    </div>
-                    <div class="feature-option">
-                        <input type="checkbox" id="featureStats" ${features.stats ? 'checked' : ''}>
-                        <label for="featureStats">統計資訊</label>
-                    </div>
-                </div>
-            </div>
-            <div class="env-actions">
-                <button id="saveFeatures">儲存設定</button>
-                <button id="cancelFeatures">取消</button>
-            </div>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeFeatureDialog">關閉</button></div>
         </div>
     `;
-    
     document.body.appendChild(dialog);
-    
-    // 儲存設定
-    document.getElementById('saveFeatures').addEventListener('click', () => {
-        const newFeatures = {
-            search: document.getElementById('featureSearch').checked,
-            cropSelect: document.getElementById('featureCropSelect').checked,
-            priceTrend: document.getElementById('featurePriceTrend').checked,
-            volumeDistribution: document.getElementById('featureVolumeDistribution').checked,
-            priceDistribution: document.getElementById('featurePriceDistribution').checked,
-            seasonalAnalysis: document.getElementById('featureSeasonalAnalysis').checked,
-            pricePrediction: document.getElementById('featurePricePrediction').checked,
-            notifications: document.getElementById('featureNotifications').checked,
-            marketRest: document.getElementById('featureMarketRest').checked,
-            priceAlerts: document.getElementById('featurePriceAlerts').checked,
-            export: document.getElementById('featureExport').checked,
-            stats: document.getElementById('featureStats').checked
-        };
-        
-        localStorage.setItem('devFeatures', JSON.stringify(newFeatures));
-        applyFeatures(newFeatures);
-        document.body.removeChild(dialog);
-    });
-    
-    // 取消設定
-    document.getElementById('cancelFeatures').addEventListener('click', () => {
-        document.body.removeChild(dialog);
-    });
+    document.getElementById('closeFeatureDialog').onclick = () => dialog.remove();
 }
 
-function applyFeatures(features) {
-    // 基本功能
-    document.querySelector('.search-box').style.display = features.search ? 'block' : 'none';
-    document.querySelector('.crop-select').style.display = features.cropSelect ? 'block' : 'none';
-    
-    // 分析功能
-    const analysisButtons = document.querySelectorAll('.analysis-buttons button');
-    analysisButtons[0].style.display = features.priceTrend ? 'block' : 'none';
-    analysisButtons[1].style.display = features.volumeDistribution ? 'block' : 'none';
-    analysisButtons[2].style.display = features.priceDistribution ? 'block' : 'none';
-    analysisButtons[3].style.display = features.seasonalAnalysis ? 'block' : 'none';
-    analysisButtons[4].style.display = features.pricePrediction ? 'block' : 'none';
-    
-    // 通知功能
-    if (features.notifications) {
-        initNotificationCheck();
-    } else {
-        // 停用通知功能
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.unregister();
-            });
-        }
-    }
-    
-    if (features.marketRest) {
-        initMarketRestCheck();
-    }
-    
-    if (features.priceAlerts) {
-        // 啟用價格提醒功能
-        initPriceAlerts();
-    }
-    
-    // 資料功能
-    document.querySelector('.export-section').style.display = features.export ? 'block' : 'none';
-    document.querySelector('.stats-area').style.display = features.stats ? 'block' : 'none';
-}
-
-// 初始化價格提醒功能
-function initPriceAlerts() {
-    // 實作價格提醒功能
-    console.log('價格提醒功能已啟用');
-}
-
-// ... existing code ...
-
-// 系統診斷工具
 function showSystemDiagnostics() {
     const dialog = document.createElement('div');
     dialog.className = 'dev-settings-dialog';
     dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>系統診斷</h3>
-            <div class="diagnostic-section">
-                <h4>系統狀態</h4>
-                <div id="systemStatus">
-                    <div class="status-item">
-                        <span>CPU 使用率：</span>
-                        <span id="cpuUsage">計算中...</span>
-                    </div>
-                    <div class="status-item">
-                        <span>記憶體使用率：</span>
-                        <span id="memoryUsage">計算中...</span>
-                    </div>
-                    <div class="status-item">
-                        <span>網路狀態：</span>
-                        <span id="networkStatus">檢查中...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="diagnostic-section">
-                <h4>快取管理</h4>
-                <button id="clearCache">清除快取</button>
-                <button id="clearLocalStorage">清除本地儲存</button>
-            </div>
-            <div class="diagnostic-section">
-                <h4>錯誤日誌</h4>
-                <div id="errorLog" class="error-log"></div>
-            </div>
-            <div class="env-actions">
-                <button id="refreshDiagnostics">重新整理</button>
-                <button id="closeDiagnostics">關閉</button>
-            </div>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeSysDiagDialog">關閉</button></div>
         </div>
     `;
     document.body.appendChild(dialog);
-
-    // 更新系統狀態
-    function updateSystemStatus() {
-        if ('performance' in window) {
-            const memory = performance.memory;
-            if (memory) {
-                document.getElementById('memoryUsage').textContent = 
-                    `${Math.round(memory.usedJSHeapSize / memory.totalJSHeapSize * 100)}%`;
-            }
-        }
-
-        // 檢查網路狀態
-        document.getElementById('networkStatus').textContent = 
-            navigator.onLine ? '已連接' : '離線';
-    }
-
-    // 清除快取
-    document.getElementById('clearCache').addEventListener('click', async () => {
-        try {
-            const cache = await caches.keys();
-            await Promise.all(cache.map(name => caches.delete(name)));
-            showNotification('成功', '快取已清除');
-        } catch (error) {
-            showNotification('錯誤', '清除快取失敗');
-        }
-    });
-
-    // 清除本地儲存
-    document.getElementById('clearLocalStorage').addEventListener('click', () => {
-        localStorage.clear();
-        showNotification('成功', '本地儲存已清除');
-    });
-
-    // 重新整理診斷資訊
-    document.getElementById('refreshDiagnostics').addEventListener('click', updateSystemStatus);
-
-    // 關閉診斷視窗
-    document.getElementById('closeDiagnostics').addEventListener('click', () => {
-        dialog.remove();
-    });
-
-    // 初始更新
-    updateSystemStatus();
+    document.getElementById('closeSysDiagDialog').onclick = () => dialog.remove();
 }
 
-// 進階資料分析工具
 function showAdvancedAnalysis() {
     const dialog = document.createElement('div');
     dialog.className = 'dev-settings-dialog';
     dialog.innerHTML = `
         <div class="dev-settings-content">
-            <h3>進階資料分析</h3>
-            <div class="analysis-section">
-                <h4>資料匯出</h4>
-                <div class="export-options">
-                    <button id="exportCSV">匯出 CSV</button>
-                    <button id="exportJSON">匯出 JSON</button>
-                    <button id="exportExcel">匯出 Excel</button>
-                </div>
-            </div>
-            <div class="analysis-section">
-                <h4>資料過濾</h4>
-                <div class="filter-options">
-                    <input type="text" id="filterInput" placeholder="輸入過濾條件...">
-                    <select id="filterType">
-                        <option value="price">價格</option>
-                        <option value="volume">交易量</option>
-                        <option value="date">日期</option>
-                    </select>
-                    <button id="applyFilter">套用過濾</button>
-                </div>
-            </div>
-            <div class="analysis-section">
-                <h4>視覺化範本</h4>
-                <div class="visualization-templates">
-                    <button id="template1">範本 1：價格趨勢</button>
-                    <button id="template2">範本 2：交易量分布</button>
-                    <button id="template3">範本 3：季節性分析</button>
-                </div>
-            </div>
-            <div class="env-actions">
-                <button id="closeAnalysis">關閉</button>
-            </div>
+            <h3>進階分析</h3>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeAdvAnalysisDialog">關閉</button></div>
         </div>
     `;
     document.body.appendChild(dialog);
-
-    // 匯出功能
-    document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
-    document.getElementById('exportJSON').addEventListener('click', () => exportData('json'));
-    document.getElementById('exportExcel').addEventListener('click', () => exportData('excel'));
-
-    // 過濾功能
-    document.getElementById('applyFilter').addEventListener('click', () => {
-        const filterValue = document.getElementById('filterInput').value;
-        const filterType = document.getElementById('filterType').value;
-        applyDataFilter(filterValue, filterType);
-    });
-
-    // 視覺化範本
-    document.getElementById('template1').addEventListener('click', () => showPriceTrend());
-    document.getElementById('template2').addEventListener('click', () => showVolumeDistribution());
-    document.getElementById('template3').addEventListener('click', () => showSeasonalAnalysis());
-
-    // 關閉視窗
-    document.getElementById('closeAnalysis').addEventListener('click', () => {
-        dialog.remove();
-    });
+    document.getElementById('closeAdvAnalysisDialog').onclick = () => dialog.remove();
 }
 
-// 效能優化工具
 function showPerformanceTools() {
     const dialog = document.createElement('div');
     dialog.className = 'dev-settings-dialog';
     dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>效能優化</h3>
-            <div class="performance-section">
-                <h4>資源優化</h4>
-                <div class="optimization-options">
-                    <button id="optimizeImages">優化圖片</button>
-                    <button id="minifyCode">最小化程式碼</button>
-                    <button id="manageCache">管理快取</button>
-                </div>
-            </div>
-            <div class="performance-section">
-                <h4>效能分析</h4>
-                <div class="performance-metrics">
-                    <div class="metric">
-                        <span>頁面載入時間：</span>
-                        <span id="loadTime">計算中...</span>
-                    </div>
-                    <div class="metric">
-                        <span>資源載入時間：</span>
-                        <span id="resourceTime">計算中...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="env-actions">
-                <button id="refreshPerformance">重新整理</button>
-                <button id="closePerformance">關閉</button>
-            </div>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closePerfDialog">關閉</button></div>
         </div>
     `;
     document.body.appendChild(dialog);
-
-    // 更新效能指標
-    function updatePerformanceMetrics() {
-        if ('performance' in window) {
-            const timing = performance.timing;
-            const loadTime = timing.loadEventEnd - timing.navigationStart;
-            const resourceTime = timing.domComplete - timing.domLoading;
-
-            document.getElementById('loadTime').textContent = `${loadTime}ms`;
-            document.getElementById('resourceTime').textContent = `${resourceTime}ms`;
-        }
-    }
-
-    // 優化圖片
-    document.getElementById('optimizeImages').addEventListener('click', async () => {
-        try {
-            const images = document.querySelectorAll('img');
-            for (const img of images) {
-                // 實作圖片優化邏輯
-            }
-            showNotification('成功', '圖片優化完成');
-        } catch (error) {
-            showNotification('錯誤', '圖片優化失敗');
-        }
-    });
-
-    // 最小化程式碼
-    document.getElementById('minifyCode').addEventListener('click', () => {
-        // 實作程式碼最小化邏輯
-        showNotification('成功', '程式碼最小化完成');
-    });
-
-    // 管理快取
-    document.getElementById('manageCache').addEventListener('click', async () => {
-        try {
-            const cache = await caches.keys();
-            await Promise.all(cache.map(name => caches.delete(name)));
-            showNotification('成功', '快取已清除');
-        } catch (error) {
-            showNotification('錯誤', '清除快取失敗');
-        }
-    });
-
-    // 重新整理效能指標
-    document.getElementById('refreshPerformance').addEventListener('click', updatePerformanceMetrics);
-
-    // 關閉視窗
-    document.getElementById('closePerformance').addEventListener('click', () => {
-        dialog.remove();
-    });
-
-    // 初始更新
-    updatePerformanceMetrics();
+    document.getElementById('closePerfDialog').onclick = () => dialog.remove();
 }
 
-// 測試工具
 function showTestTools() {
     const dialog = document.createElement('div');
     dialog.className = 'dev-settings-dialog';
     dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>測試工具</h3>
-            <div class="test-section">
-                <h4>API 測試</h4>
-                <div class="api-test">
-                    <input type="text" id="apiUrl" placeholder="API URL">
-                    <select id="apiMethod">
-                        <option value="GET">GET</option>
-                        <option value="POST">POST</option>
-                        <option value="PUT">PUT</option>
-                        <option value="DELETE">DELETE</option>
-                    </select>
-                    <button id="testApi">測試 API</button>
-                </div>
-            </div>
-            <div class="test-section">
-                <h4>相容性測試</h4>
-                <div class="compatibility-test">
-                    <button id="testBrowser">測試瀏覽器相容性</button>
-                    <button id="testDevice">測試裝置相容性</button>
-                </div>
-            </div>
-            <div class="test-section">
-                <h4>自動化測試</h4>
-                <div class="automation-test">
-                    <button id="runTests">執行測試</button>
-                    <button id="viewResults">查看結果</button>
-                </div>
-            </div>
-            <div class="env-actions">
-                <button id="closeTest">關閉</button>
-            </div>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeTestDialog">關閉</button></div>
         </div>
     `;
     document.body.appendChild(dialog);
-
-    // API 測試
-    document.getElementById('testApi').addEventListener('click', async () => {
-        const url = document.getElementById('apiUrl').value;
-        const method = document.getElementById('apiMethod').value;
-        try {
-            const response = await fetch(url, { method });
-            const result = await response.json();
-            showNotification('成功', 'API 測試完成');
-        } catch (error) {
-            showNotification('錯誤', 'API 測試失敗');
-        }
-    });
-
-    // 相容性測試
-    document.getElementById('testBrowser').addEventListener('click', () => {
-        const browserInfo = {
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language
-        };
-        showNotification('成功', '瀏覽器相容性測試完成');
-    });
-
-    document.getElementById('testDevice').addEventListener('click', () => {
-        const deviceInfo = {
-            screenWidth: window.innerWidth,
-            screenHeight: window.innerHeight,
-            devicePixelRatio: window.devicePixelRatio
-        };
-        showNotification('成功', '裝置相容性測試完成');
-    });
-
-    // 自動化測試
-    document.getElementById('runTests').addEventListener('click', () => {
-        // 實作自動化測試邏輯
-        showNotification('成功', '自動化測試完成');
-    });
-
-    // 關閉視窗
-    document.getElementById('closeTest').addEventListener('click', () => {
-        dialog.remove();
-    });
+    document.getElementById('closeTestDialog').onclick = () => dialog.remove();
 }
 
-// 安全性工具
 function showSecurityTools() {
     const dialog = document.createElement('div');
     dialog.className = 'dev-settings-dialog';
     dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>安全性工具</h3>
-            <div class="security-section">
-                <h4>權限管理</h4>
-                <div class="permission-list">
-                    <div class="permission-item">
-                        <input type="checkbox" id="permNotifications">
-                        <label for="permNotifications">通知權限</label>
-                    </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="permLocation">
-                        <label for="permLocation">位置權限</label>
-                    </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="permStorage">
-                        <label for="permStorage">儲存權限</label>
-                    </div>
-                </div>
-            </div>
-            <div class="security-section">
-                <h4>資料加密</h4>
-                <div class="encryption-options">
-                    <button id="encryptData">加密資料</button>
-                    <button id="decryptData">解密資料</button>
-                </div>
-            </div>
-            <div class="security-section">
-                <h4>安全性日誌</h4>
-                <div id="securityLog" class="security-log"></div>
-            </div>
-            <div class="env-actions">
-                <button id="saveSecurity">儲存設定</button>
-                <button id="closeSecurity">關閉</button>
-            </div>
+            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
+            <div class="env-actions"><button id="closeSecDialog">關閉</button></div>
         </div>
     `;
     document.body.appendChild(dialog);
-
-    // 權限管理
-    document.getElementById('permNotifications').addEventListener('change', async (e) => {
-        if (e.target.checked) {
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                e.target.checked = false;
-                showNotification('錯誤', '通知權限被拒絕');
-            }
-        }
-    });
-
-    // 資料加密
-    document.getElementById('encryptData').addEventListener('click', () => {
-        // 實作資料加密邏輯
-        showNotification('成功', '資料加密完成');
-    });
-
-    document.getElementById('decryptData').addEventListener('click', () => {
-        // 實作資料解密邏輯
-        showNotification('成功', '資料解密完成');
-    });
-
-    // 儲存安全性設定
-    document.getElementById('saveSecurity').addEventListener('click', () => {
-        const securitySettings = {
-            notifications: document.getElementById('permNotifications').checked,
-            location: document.getElementById('permLocation').checked,
-            storage: document.getElementById('permStorage').checked
-        };
-        localStorage.setItem('securitySettings', JSON.stringify(securitySettings));
-        showNotification('成功', '安全性設定已儲存');
-    });
-
-    // 關閉視窗
-    document.getElementById('closeSecurity').addEventListener('click', () => {
-        dialog.remove();
-    });
+    document.getElementById('closeSecDialog').onclick = () => dialog.remove();
 }
 
-// ... existing code ... 
+// ... existing code ...
 
 // 關閉開發者模式
 function deactivateDevMode() {
@@ -4135,7 +3320,7 @@ function showThemeSettings() {
         localStorage.setItem('themeConfig', JSON.stringify(defaultConfig));
         applyTheme(defaultConfig);
         themeDialog.remove();
-        showNotification('成功', '主題設定已重設為預設值');
+        showNotification('成功', '主題已重設為預設值');
     });
 
     // 預設主題按鈕
@@ -4282,5 +3467,163 @@ function updateThemeElements() {
         table.style.transition = `all var(--animation-duration) var(--animation-curve)`;
     });
 }
+
+// ... existing code ...
+
+// 資料庫查看功能
+function initDatabaseViewer() {
+    const viewDatabaseBtn = document.getElementById('viewDatabase');
+    if (viewDatabaseBtn) {
+        viewDatabaseBtn.addEventListener('click', showDatabaseViewer);
+    }
+}
+
+function showDatabaseViewer() {
+    // 創建資料庫查看器對話框
+    const dialog = document.createElement('div');
+    dialog.className = 'db-viewer';
+    dialog.innerHTML = `
+        <div class="db-viewer-header">
+            <h3>資料庫查看器</h3>
+            <button id="closeDbViewer" class="close-button">×</button>
+            <div class="db-viewer-controls">
+                <input type="text" id="dbSearchInput" placeholder="搜尋...">
+                <select id="dbTableSelect">
+                    <option value="cropData">作物交易資料</option>
+                    <option value="marketRestData">市場休市資料</option>
+                </select>
+            </div>
+        </div>
+        <div class="db-table-container">
+            <table>
+                <thead id="dbTableHeader">
+                    <!-- 表頭將由 JS 動態產生 -->
+                </thead>
+                <tbody id="dbTableBody">
+                    <!-- 表格內容將由 JS 動態產生 -->
+                </tbody>
+            </table>
+        </div>
+        <div class="db-pagination">
+            <button id="prevPage" disabled>上一頁</button>
+            <span id="pageInfo">第 1 頁</span>
+            <button id="nextPage">下一頁</button>
+        </div>
+    `;
+
+    // 添加到頁面
+    document.body.appendChild(dialog);
+
+    // 綁定關閉按鈕事件
+    document.getElementById('closeDbViewer').addEventListener('click', () => {
+        dialog.remove();
+    });
+
+    // 初始化分頁
+    let currentPage = 1;
+    const itemsPerPage = 20;
+    let currentData = [];
+
+    // 更新表格內容
+    function updateTable(data) {
+        currentData = data;
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pageData = data.slice(start, end);
+
+        // 更新表頭
+        const header = document.getElementById('dbTableHeader');
+        header.innerHTML = '';
+        if (pageData.length > 0) {
+            const tr = document.createElement('tr');
+            Object.keys(pageData[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                tr.appendChild(th);
+            });
+            header.appendChild(tr);
+        }
+
+        // 更新表格內容
+        const tbody = document.getElementById('dbTableBody');
+        tbody.innerHTML = '';
+        pageData.forEach(item => {
+            const tr = document.createElement('tr');
+            Object.values(item).forEach(value => {
+                const td = document.createElement('td');
+                td.textContent = value;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+
+        // 更新分頁資訊
+        const totalPages = Math.ceil(data.length / itemsPerPage);
+        document.getElementById('pageInfo').textContent = `第 ${currentPage} 頁 / 共 ${totalPages} 頁`;
+        document.getElementById('prevPage').disabled = currentPage === 1;
+        document.getElementById('nextPage').disabled = currentPage === totalPages;
+    }
+
+    // 綁定事件
+    document.getElementById('dbTableSelect').addEventListener('change', function() {
+        currentPage = 1;
+        const selectedTable = this.value;
+        let data = [];
+        
+        if (selectedTable === 'cropData') {
+            data = cropData;
+        } else if (selectedTable === 'marketRestData') {
+            data = marketRestData;
+        }
+        
+        updateTable(data);
+    });
+
+    document.getElementById('dbSearchInput').addEventListener('input', function() {
+        const searchText = this.value.toLowerCase();
+        const selectedTable = document.getElementById('dbTableSelect').value;
+        let data = [];
+        
+        if (selectedTable === 'cropData') {
+            data = cropData.filter(item => 
+                Object.values(item).some(value => 
+                    String(value).toLowerCase().includes(searchText)
+                )
+            );
+        } else if (selectedTable === 'marketRestData') {
+            data = marketRestData.filter(item => 
+                Object.values(item).some(value => 
+                    String(value).toLowerCase().includes(searchText)
+                )
+            );
+        }
+        
+        currentPage = 1;
+        updateTable(data);
+    });
+
+    document.getElementById('prevPage').addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            updateTable(currentData);
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', function() {
+        const totalPages = Math.ceil(currentData.length / itemsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateTable(currentData);
+        }
+    });
+
+    // 初始顯示作物交易資料
+    updateTable(cropData);
+}
+
+// 在頁面載入時初始化資料庫查看功能
+document.addEventListener('DOMContentLoaded', () => {
+    initDatabaseViewer();
+});
 
 // ... existing code ...

@@ -897,10 +897,19 @@ footer {
 
 /* 資料庫查看器 */
 .db-viewer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: var(--background-color);
     border-radius: 8px;
     padding: 20px;
-    margin-top: 20px;
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 10000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .db-viewer-header {
@@ -908,11 +917,19 @@ footer {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    position: relative;
+}
+
+.db-viewer-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.5em;
 }
 
 .db-viewer-controls {
     display: flex;
     gap: 10px;
+    margin-left: 20px;
 }
 
 .db-viewer-controls input,
@@ -920,35 +937,62 @@ footer {
     padding: 8px;
     border: 1px solid var(--primary-color);
     border-radius: 4px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.db-viewer-controls input {
+    width: 200px;
+}
+
+.db-viewer-controls select {
+    min-width: 150px;
 }
 
 .db-table-container {
     overflow-x: auto;
     margin-bottom: 20px;
+    background-color: var(--background-color);
+    border-radius: 4px;
 }
 
 .db-table-container table {
     width: 100%;
     border-collapse: collapse;
+    margin-bottom: 0;
 }
 
 .db-table-container th,
 .db-table-container td {
-    padding: 8px;
+    padding: 12px;
     border: 1px solid var(--primary-color);
     text-align: left;
+    white-space: nowrap;
 }
 
 .db-table-container th {
     background-color: var(--primary-color);
     color: white;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.db-table-container tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.db-table-container tr:hover {
+    background-color: rgba(0, 0, 0, 0.1);
 }
 
 .db-pagination {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
+    margin-top: 20px;
 }
 
 .db-pagination button {
@@ -958,11 +1002,40 @@ footer {
     background-color: var(--background-color);
     color: var(--text-color);
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.db-pagination button:hover:not(:disabled) {
+    background-color: var(--primary-color);
+    color: white;
 }
 
 .db-pagination button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+#pageInfo {
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+
+.close-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.close-button:hover {
+    color: var(--primary-color);
 }
 
 /* 備份對話框樣式 */
