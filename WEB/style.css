@@ -236,4 +236,19 @@
 
 .notification-button:hover {
     background-color: #45a049;
+}
+
+.tv-version-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #2196F3;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-left: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.tv-version-btn:hover {
+    background-color: #1976D2;
 } 

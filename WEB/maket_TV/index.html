@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>農產品交易資料分析系統 - 電視看板</title>
+    <link rel="stylesheet" href="styles/tv-display.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- 頁首區域 -->
+        <header>
+            <div class="header-content">
+                <h1>農產品交易資料分析系統</h1>
+                <div class="market-info">
+                    <span id="marketName">載入中...</span>
+                    <div class="timestamp" id="currentTime">--:--:--</div>
+                </div>
+            </div>
+            <div class="subtitle">
+                <span>資料來源：農業部資料開放平台</span>
+                <span>製作單位：鹿中創客</span>
+            </div>
+        </header>
+
+        <!-- 主要內容區域 -->
+        <main class="main-layout">
+            <!-- 左側面板 -->
+            <aside class="left-panel">
+                <div class="clock-card">
+                    <div class="clock-icon">🕒</div>
+                    <div class="clock-time" id="clockTime">--:--:--</div>
+                </div>
+                <div class="notification-card">
+                    <div class="notification-header">
+                        <span class="notification-icon">🔔</span>
+                        <span class="notification-title">即時通知</span>
+                    </div>
+                    <div class="notification-list" id="notificationList"></div>
+                </div>
+            </aside>
+
+            <!-- 中央面板 -->
+            <section class="center-panel">
+                <div class="display-mode" id="displayMode">
+                    <div class="mode-indicator">
+                        <span class="mode-icon">📊</span>
+                        <span class="mode-text">價格趨勢</span>
+                    </div>
+                </div>
+                <div class="chart-area" id="chartArea"></div>
+                <div class="price-display" id="priceDisplay"></div>
+            </section>
+
+            <!-- 右側面板 -->
+            <aside class="right-panel">
+                <div class="info-cards">
+                    <div class="info-card" id="cropNameCard">
+                        <div class="card-icon">🌱</div>
+                        <div class="card-content">
+                            <div class="card-title">作物名稱</div>
+                            <div class="card-value" id="cropName">--</div>
+                        </div>
+                    </div>
+                    <div class="info-card" id="tradeVolumeCard">
+                        <div class="card-icon">📦</div>
+                        <div class="card-content">
+                            <div class="card-title">交易量</div>
+                            <div class="card-value" id="tradeVolume">--</div>
+                        </div>
+                    </div>
+                    <div class="info-card" id="avgPriceCard">
+                        <div class="card-icon">💰</div>
+                        <div class="card-content">
+                            <div class="card-title">平均價</div>
+                            <div class="card-value" id="avgPrice">--</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- 頁尾區域 -->
+        <footer>
+            <div class="footer-content">
+                <div class="refresh-info">
+                    <span class="refresh-icon">🔄</span>
+                    <span id="lastUpdateTime">最後更新：--:--:--</span>
+                </div>
+                <div class="device-info">
+                    <span class="device-icon">📺</span>
+                    <span id="deviceId">裝置ID：--</span>
+                    <button id="resetDevice" class="reset-button">重設裝置</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 載入 JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/tv-display.js"></script>
+</body>
+</html>
