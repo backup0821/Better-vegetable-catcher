@@ -116,6 +116,48 @@ function initUpdateCheck() {
 // 在頁面載入時初始化更新檢查
 document.addEventListener('DOMContentLoaded', () => {
     initUpdateCheck();
+    
+    // 檢查環境設定並顯示農業氣象影片
+    showAgriculturalWeatherVideo();
+
+    // 新增市場選擇的事件監聽器
+    const marketSelect = document.getElementById('marketSelect');
+    if (marketSelect) {
+        // 處理地區群組選擇
+        marketSelect.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.tagName === 'OPTGROUP') {
+                // 獲取該群組下的所有選項
+                const options = Array.from(target.children);
+                // 檢查是否所有選項都已選中
+                const allSelected = options.every(option => option.selected);
+                
+                // 如果全部已選中，則取消選中；否則全部選中
+                options.forEach(option => {
+                    option.selected = !allSelected;
+                });
+                
+                // 觸發 change 事件以更新圖表
+                marketSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // 處理市場選擇變更
+        marketSelect.addEventListener('change', () => {
+            if (selectedCrop) {
+                // 根據當前選擇的分析功能自動更新
+                if (showPriceTrendBtn.classList.contains('active')) {
+                    showPriceTrend();
+                } else if (showVolumeDistBtn.classList.contains('active')) {
+                    showVolumeDistribution();
+                } else if (showPriceDistBtn.classList.contains('active')) {
+                    showPriceDistribution();
+                } else if (showSeasonalBtn.classList.contains('active')) {
+                    showSeasonalAnalysis();
+                }
+            }
+        });
+    }
 });
 
 // 從農產品交易行情站獲取資料
@@ -130,18 +172,7 @@ async function fetchData() {
         cropData = data;
         updateCropList();
         
-        // 更新市場列表
-        const marketSelect = document.getElementById('marketSelect');
-        if (marketSelect) {
-            const markets = [...new Set(cropData.map(item => item.市場名稱))].sort();
-            marketSelect.innerHTML = '<option value="all">全部市場</option>';
-            markets.forEach(market => {
-                const option = document.createElement('option');
-                option.value = market;
-                option.textContent = market;
-                marketSelect.appendChild(option);
-            });
-        }
+
         
         // 更新資料時間
         const now = new Date();
@@ -539,13 +570,14 @@ function convertToExcel(data) {
 
 // 獲取特定作物的資料
 function getCropData(cropName) {
-    const selectedMarket = marketSelect.value;
+    const marketSelect = document.getElementById('marketSelect');
     let filteredData = cropData.filter(item => item.作物名稱 === cropName);
-    
-    if (selectedMarket !== 'all') {
-        filteredData = filteredData.filter(item => item.市場名稱 === selectedMarket);
+    if (marketSelect) {
+        const selectedOptions = Array.from(marketSelect.selectedOptions).map(opt => opt.value);
+        if (!selectedOptions.includes('all')) {
+            filteredData = filteredData.filter(item => selectedOptions.includes(item.市場名稱));
+        }
     }
-    
     return filteredData;
 }
 
@@ -1636,141 +1668,6 @@ self.addEventListener('pushsubscriptionchange', (event) => {
     }
 });
 
-// 在頁面載入時初始化
-document.addEventListener('DOMContentLoaded', () => {
-    // 創建市場選擇下拉選單
-    const marketSelectContainer = document.createElement('div');
-    marketSelectContainer.className = 'market-select-container';
-    marketSelectContainer.style.cssText = `
-        margin-bottom: 15px;
-    `;
-
-    const marketSelectLabel = document.createElement('label');
-    marketSelectLabel.textContent = '選擇市場：';
-    marketSelectLabel.style.cssText = `
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-    `;
-
-    const marketSelect = document.createElement('select');
-    marketSelect.id = 'marketSelect';
-    marketSelect.style.cssText = `
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 16px;
-        background-color: white;
-    `;
-
-    // 將市場選擇元素添加到控制面板
-    const controlPanel = document.querySelector('.control-panel');
-    const searchSection = controlPanel.querySelector('.search-section');
-    marketSelectContainer.appendChild(marketSelectLabel);
-    marketSelectContainer.appendChild(marketSelect);
-    controlPanel.insertBefore(marketSelectContainer, searchSection);
-
-    // 更新市場列表
-    function updateMarketList() {
-        const markets = [...new Set(cropData.map(item => item.市場名稱))].sort();
-        marketSelect.innerHTML = '<option value="all">全部市場</option>';
-        markets.forEach(market => {
-            const option = document.createElement('option');
-            option.value = market;
-            option.textContent = market;
-            marketSelect.appendChild(option);
-        });
-    }
-
-    // 當市場選擇改變時更新圖表
-    marketSelect.addEventListener('change', () => {
-        if (selectedCrop) {
-            showPriceTrend();
-        }
-    });
-
-    // 修改價格趨勢圖函數
-    const originalShowPriceTrend = showPriceTrend;
-    showPriceTrend = function() {
-        if (!selectedCrop) return;
-        const cropData = getCropData(selectedCrop);
-        
-        // 如果選擇了特定市場，只顯示該市場的資料
-        if (marketSelect.value !== 'all') {
-            const marketData = cropData.filter(item => item.市場名稱 === marketSelect.value);
-            const dates = marketData.map(item => item.交易日期);
-            const prices = marketData.map(item => Number(item.平均價));
-            
-            const trace = {
-                x: dates,
-                y: prices,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: marketSelect.value,
-                line: { width: 2 },
-                marker: { size: 8 }
-            };
-
-            const maxPrice = Math.max(...prices);
-            const minPrice = Math.min(...prices);
-            const maxItem = marketData.find(item => Number(item.平均價) === maxPrice);
-            const minItem = marketData.find(item => Number(item.平均價) === minPrice);
-
-            const layout = {
-                title: {
-                    text: `${selectedCrop} - ${marketSelect.value} 價格趨勢`,
-                    font: { size: 22, color: '#1a73e8', family: 'Microsoft JhengHei, Arial' }
-                },
-                xaxis: { 
-                    title: '日期',
-                    titlefont: { size: 18 },
-                    tickfont: { size: 16 }
-                },
-                yaxis: { 
-                    title: '價格 (元/公斤)',
-                    titlefont: { size: 18 },
-                    tickfont: { size: 16 }
-                },
-                margin: { t: 60, l: 60, r: 30, b: 60 },
-                legend: { font: { size: 16 } },
-                hoverlabel: { font: { size: 16 } },
-                autosize: true,
-                responsive: true,
-                annotations: [
-                    {
-                        x: maxItem.交易日期,
-                        y: maxPrice,
-                        xref: 'x',
-                        yref: 'y',
-                        text: `最高 ${maxPrice}`,
-                        showarrow: true,
-                        arrowhead: 7,
-                        ax: 0,
-                        ay: -40,
-                        font: { color: '#ea4335', size: 16 }
-                    },
-                    {
-                        x: minItem.交易日期,
-                        y: minPrice,
-                        xref: 'x',
-                        yref: 'y',
-                        text: `最低 ${minPrice}`,
-                        showarrow: true,
-                        arrowhead: 7,
-                        ax: 0,
-                        ay: 40,
-                        font: { color: '#34a853', size: 16 }
-                    }
-                ]
-            };
-            Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
-            showBasicStats(marketData);
-        } else {
-            // 如果選擇全部市場，使用原有的多市場顯示邏輯
-            originalShowPriceTrend();
-        }
-    };
 
     // 修改其他分析函數
     const originalShowVolumeDistribution = showVolumeDistribution;
@@ -2109,7 +2006,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-});
 
 // 休市日曆功能
 async function showMarketRestCalendar() {
@@ -2610,12 +2506,19 @@ async function restoreIndexedDBData(storeName, data) {
 
 // 修改開發者模式功能初始化
 function initDevModeFeatures() {
-    // ... existing code ...
+    const devModeContent = document.querySelector('.dev-mode-content');
+    
+    // 新增農業氣象影片區塊
+    const weatherSection = document.createElement('div');
+    weatherSection.className = 'dev-mode-section';
+    weatherSection.innerHTML = `
+        <h3>農業氣象</h3>
+        <button id="showAgriculturalWeather">今日農業氣象</button>
+    `;
+    devModeContent.appendChild(weatherSection);
 
-    // 資料庫操作工具
-    document.getElementById('viewDatabase').addEventListener('click', viewDatabase);
-    document.getElementById('backupDatabase').addEventListener('click', backupDatabase);
-    document.getElementById('restoreDatabase').addEventListener('click', restoreDatabase);
+    // 綁定農業氣象按鈕事件
+    document.getElementById('showAgriculturalWeather').addEventListener('click', showAgriculturalWeatherVideo);
     
     // ... existing code ...
 }
@@ -2817,12 +2720,13 @@ const ENV_DEFAULT_CONFIGS = {
 // 修改 showEnvironmentSettings 函數
 function showEnvironmentSettings() {
     const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
+    dialog.className = 'dialog';
     dialog.innerHTML = `
-        <div class="dev-settings-content">
+        <div class="dialog-content">
             <h3>環境設定</h3>
             <div class="env-options">
                 <div class="env-option">
+                    <input type="radio" id="env-prod" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
                     <input type="radio" id="envProduction" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
                     <label for="envProduction">正式版環境</label>
                 </div>
@@ -2846,7 +2750,6 @@ function showEnvironmentSettings() {
         
         // 如果是測試版環境，將版本號改為 test
         if (selectedEnv === 'testing') {
-            window.ENV_DEFAULT_CONFIGS.appMode = 'test';
             document.title = document.title.replace(/v\d+\.\d+\.\d+/, 'vtest');
         } else {
             window.ENV_DEFAULT_CONFIGS.appMode = 'normal';
@@ -3850,5 +3753,89 @@ function showDatabaseViewer() {
 document.addEventListener('DOMContentLoaded', () => {
     initDatabaseViewer();
 });
+
+// ... existing code ...
+
+// 獲取農業氣象影片
+async function fetchAgriculturalWeatherVideo() {
+    try {
+        const response = await fetch('https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx');
+        if (!response.ok) throw new Error('無法獲取農業氣象影片資料');
+        const data = await response.json();
+        
+        // 獲取今天的日期
+        const today = new Date();
+        const year = today.getFullYear() - 1911; // 轉換為民國年
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}${month}${day}`;
+        
+        // 尋找今天的影片
+        const todayVideo = data.find(item => item.title.includes(todayStr));
+        
+        if (todayVideo) {
+            // 從 YouTube 連結中提取影片 ID
+            const videoId = todayVideo.link.split('/').pop();
+            return videoId;
+        }
+        return null;
+    } catch (error) {
+        console.error('獲取農業氣象影片時發生錯誤:', error);
+        return null;
+    }
+}
+
+// 顯示農業氣象影片
+async function showAgriculturalWeatherVideo() {
+    try {
+        const videoId = await fetchAgriculturalWeatherVideo();
+        if (!videoId) {
+            showNotification('無法獲取今日農業氣象影片');
+            return;
+        }
+
+        // 在主畫面中顯示影片
+        const mainContent = document.querySelector('.display-panel');
+        const videoContainer = document.createElement('div');
+        videoContainer.className = 'video-container';
+        videoContainer.innerHTML = `
+            <iframe 
+                width="100%" 
+                height="315" 
+                src="https://www.youtube.com/embed/${videoId}" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        `;
+        
+        // 將影片容器插入到圖表區域之前
+        mainContent.insertBefore(videoContainer, document.getElementById('chartArea'));
+    } catch (error) {
+        console.error('顯示農業氣象影片時發生錯誤:', error);
+        showNotification('無法顯示農業氣象影片');
+    }
+}
+
+// 在開發者模式中新增農業氣象按鈕
+function initDevModeFeatures() {
+    // ... existing code ...
+    
+    // 新增農業氣象按鈕
+    const weatherButton = document.createElement('button');
+    weatherButton.id = 'showWeatherVideo';
+    weatherButton.textContent = '今日農業氣象';
+    weatherButton.addEventListener('click', showAgriculturalWeatherVideo);
+    
+    // 將按鈕加入到開發者模式介面中
+    const devModeContent = document.querySelector('.dev-mode-content');
+    if (devModeContent) {
+        const weatherSection = document.createElement('div');
+        weatherSection.className = 'dev-mode-section';
+        weatherSection.innerHTML = '<h3>農業氣象</h3>';
+        weatherSection.appendChild(weatherButton);
+        devModeContent.appendChild(weatherSection);
+    }
+}
 
 // ... existing code ...

@@ -39,7 +39,6 @@
 
         <main>
             <div class="control-panel">
-                <div class="search-section">
                     <h2>作物選擇</h2>
                     <div class="search-box">
                         <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
@@ -49,7 +48,31 @@
                             <option value="">請選擇作物</option>
                         </select>
                     </div>
-                </div>
+                    <div class="market-select">
+                        <select id="marketSelect" multiple size="6">
+                            <option value="all" selected>全部市場</option>
+                            <optgroup label="北部地區">
+                                <option value="台北一">台北第一果菜批發市場</option>
+                                <option value="台北二">台北第二果菜批發市場</option>
+                                <option value="新北">新北市果菜批發市場</option>
+                                <option value="桃園">桃園果菜批發市場</option>
+                                <option value="新竹">新竹果菜批發市場</option>
+                            </optgroup>
+                            <optgroup label="中部地區">
+                                <option value="台中">台中果菜批發市場</option>
+                                <option value="彰化">彰化果菜批發市場</option>
+                                <option value="南投">南投果菜批發市場</option>
+                                <option value="雲林">雲林果菜批發市場</option>
+                            </optgroup>
+                            <optgroup label="南部地區">
+                                <option value="嘉義">嘉義果菜批發市場</option>
+                                <option value="台南">台南果菜批發市場</option>
+                                <option value="高雄">高雄果菜批發市場</option>
+                                <option value="屏東">屏東果菜批發市場</option>
+                            </optgroup>
+                        </select>
+                        <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
+                    </div>
 
                 <!-- 載入動畫區塊 -->
                 <div id="loadingSpinner" class="loading-spinner" style="display:none;">
