@@ -116,6 +116,9 @@ function initUpdateCheck() {
 // 在頁面載入時初始化更新檢查
 document.addEventListener('DOMContentLoaded', () => {
     initUpdateCheck();
+    
+    // 檢查環境設定並顯示農業氣象影片
+    showAgriculturalWeatherVideo();
 });
 
 // 從農產品交易行情站獲取資料
@@ -2610,12 +2613,19 @@ async function restoreIndexedDBData(storeName, data) {
 
 // 修改開發者模式功能初始化
 function initDevModeFeatures() {
-    // ... existing code ...
+    const devModeContent = document.querySelector('.dev-mode-content');
+    
+    // 新增農業氣象影片區塊
+    const weatherSection = document.createElement('div');
+    weatherSection.className = 'dev-mode-section';
+    weatherSection.innerHTML = `
+        <h3>農業氣象</h3>
+        <button id="showAgriculturalWeather">今日農業氣象</button>
+    `;
+    devModeContent.appendChild(weatherSection);
 
-    // 資料庫操作工具
-    document.getElementById('viewDatabase').addEventListener('click', viewDatabase);
-    document.getElementById('backupDatabase').addEventListener('click', backupDatabase);
-    document.getElementById('restoreDatabase').addEventListener('click', restoreDatabase);
+    // 綁定農業氣象按鈕事件
+    document.getElementById('showAgriculturalWeather').addEventListener('click', showAgriculturalWeatherVideo);
     
     // ... existing code ...
 }
@@ -2817,12 +2827,13 @@ const ENV_DEFAULT_CONFIGS = {
 // 修改 showEnvironmentSettings 函數
 function showEnvironmentSettings() {
     const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
+    dialog.className = 'dialog';
     dialog.innerHTML = `
-        <div class="dev-settings-content">
+        <div class="dialog-content">
             <h3>環境設定</h3>
             <div class="env-options">
                 <div class="env-option">
+                    <input type="radio" id="env-prod" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
                     <input type="radio" id="envProduction" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
                     <label for="envProduction">正式版環境</label>
                 </div>
@@ -2846,7 +2857,6 @@ function showEnvironmentSettings() {
         
         // 如果是測試版環境，將版本號改為 test
         if (selectedEnv === 'testing') {
-            window.ENV_DEFAULT_CONFIGS.appMode = 'test';
             document.title = document.title.replace(/v\d+\.\d+\.\d+/, 'vtest');
         } else {
             window.ENV_DEFAULT_CONFIGS.appMode = 'normal';
@@ -3850,5 +3860,89 @@ function showDatabaseViewer() {
 document.addEventListener('DOMContentLoaded', () => {
     initDatabaseViewer();
 });
+
+// ... existing code ...
+
+// 獲取農業氣象影片
+async function fetchAgriculturalWeatherVideo() {
+    try {
+        const response = await fetch('https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx');
+        if (!response.ok) throw new Error('無法獲取農業氣象影片資料');
+        const data = await response.json();
+        
+        // 獲取今天的日期
+        const today = new Date();
+        const year = today.getFullYear() - 1911; // 轉換為民國年
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${year}${month}${day}`;
+        
+        // 尋找今天的影片
+        const todayVideo = data.find(item => item.title.includes(todayStr));
+        
+        if (todayVideo) {
+            // 從 YouTube 連結中提取影片 ID
+            const videoId = todayVideo.link.split('/').pop();
+            return videoId;
+        }
+        return null;
+    } catch (error) {
+        console.error('獲取農業氣象影片時發生錯誤:', error);
+        return null;
+    }
+}
+
+// 顯示農業氣象影片
+async function showAgriculturalWeatherVideo() {
+    try {
+        const videoId = await fetchAgriculturalWeatherVideo();
+        if (!videoId) {
+            showNotification('無法獲取今日農業氣象影片');
+            return;
+        }
+
+        // 在主畫面中顯示影片
+        const mainContent = document.querySelector('.display-panel');
+        const videoContainer = document.createElement('div');
+        videoContainer.className = 'video-container';
+        videoContainer.innerHTML = `
+            <iframe 
+                width="100%" 
+                height="315" 
+                src="https://www.youtube.com/embed/${videoId}" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        `;
+        
+        // 將影片容器插入到圖表區域之前
+        mainContent.insertBefore(videoContainer, document.getElementById('chartArea'));
+    } catch (error) {
+        console.error('顯示農業氣象影片時發生錯誤:', error);
+        showNotification('無法顯示農業氣象影片');
+    }
+}
+
+// 在開發者模式中新增農業氣象按鈕
+function initDevModeFeatures() {
+    // ... existing code ...
+    
+    // 新增農業氣象按鈕
+    const weatherButton = document.createElement('button');
+    weatherButton.id = 'showWeatherVideo';
+    weatherButton.textContent = '今日農業氣象';
+    weatherButton.addEventListener('click', showAgriculturalWeatherVideo);
+    
+    // 將按鈕加入到開發者模式介面中
+    const devModeContent = document.querySelector('.dev-mode-content');
+    if (devModeContent) {
+        const weatherSection = document.createElement('div');
+        weatherSection.className = 'dev-mode-section';
+        weatherSection.innerHTML = '<h3>農業氣象</h3>';
+        weatherSection.appendChild(weatherButton);
+        devModeContent.appendChild(weatherSection);
+    }
+}
 
 // ... existing code ...
