@@ -8,6 +8,7 @@ html, body {
     color: #222;
 }
 
+/* 主要容器自適應 */
 .tv-container {
     width: 100vw;
     height: 100vh;
@@ -152,7 +153,7 @@ html, body {
 .tv-main-display {
     background: #fff;
     border-radius: 32px;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07);
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.07);
     width: 100%;
     height: 100%;
     min-height: 380px;
@@ -359,6 +360,10 @@ html, body {
     .tv-bottom-item {
         font-size: 1rem;
     }
+    
+    .video-container {
+        min-height: 300px;
+    }
 }
 
 /* 手機直向 (575px 以下) */
@@ -396,6 +401,10 @@ html, body {
     
     .tv-price-card {
         padding: 16px 0;
+    }
+    
+    .video-container {
+        min-height: 250px;
     }
 }
 
@@ -647,6 +656,25 @@ img, svg, video {
     }
 }
 
+/* 影片容器樣式 */
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 380px;
+    overflow: hidden;
+    border-radius: 32px;
+}
+
+.video-container #player {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+}
+
 /* 全局樣式 */
 * {
     margin: 0;
@@ -871,4 +899,4 @@ body {
     .video-container {
         min-height: 250px;
     }
-} 
+}

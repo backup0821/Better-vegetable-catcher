@@ -737,17 +737,17 @@ function startClock() {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
-        }).replace(/\//g, '/');
+        });
         const timeStr = now.toLocaleTimeString('zh-TW', {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
             hour12: false
         });
-        
+
         const dateElement = document.getElementById('currentDate');
         const timeElement = document.getElementById('currentTime');
-        
+
         if (dateElement) dateElement.textContent = dateStr;
         if (timeElement) timeElement.textContent = timeStr;
     }
