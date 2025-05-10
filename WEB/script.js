@@ -51,6 +51,15 @@ const VERIFICATION_CODES = [
 let pushSubscription = null;
 const VAPID_PUBLIC_KEY = 'BFYqvIzvnaOJRZGbzp9PGcwZ-MJkpLV1mTFU95cT4qITH7as3TMqzaYQTvVQq2FgzQ3F_A_J3xfy_sKfjBPTWPE';
 
+// === 初始化環境設定 ===
+if (!window.ENV_DEFAULT_CONFIGS) {
+    window.ENV_DEFAULT_CONFIGS = { environment: 'production' };
+}
+const savedEnv = localStorage.getItem('environment');
+if (savedEnv) {
+    window.ENV_DEFAULT_CONFIGS.environment = savedEnv;
+}
+
 // 檢查版本更新
 async function checkForUpdates() {
     try {
@@ -291,26 +300,96 @@ function showPriceDistribution() {
     if (!selectedCrop) return;
     const cropData = getCropData(selectedCrop);
     const prices = cropData.map(item => Number(item.平均價));
-    const trace = {
-        x: prices,
-        type: 'histogram',
-        name: '價格分布',
-        marker: { color: '#ea4335' }
-    };
-    const layout = {
-        title: {
-            text: `${selectedCrop} 價格分布`,
-            font: { size: 20, color: '#ea4335', family: 'Microsoft JhengHei, Arial' }
-        },
-        xaxis: { title: '價格 (元/公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
-        yaxis: { title: '次數', titlefont: { size: 16 }, tickfont: { size: 15 } },
-        margin: { t: 60, l: 60, r: 30, b: 60 },
-        legend: { font: { size: 15 } },
-        hoverlabel: { font: { size: 15 } },
-        autosize: true,
-        responsive: true
-    };
-    Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+    
+    // 檢查是否在測試版環境
+    const isTestingEnv = window.ENV_DEFAULT_CONFIGS.environment === 'testing';
+    
+    if (isTestingEnv) {
+        // 測試版環境：顯示價格分布和交易量
+        const volumes = cropData.map(item => Number(item.交易量));
+        const traces = [{
+            x: prices,
+            type: 'histogram',
+            name: '價格分布',
+            marker: { color: '#ea4335' }
+        }, {
+            x: prices,
+            y: volumes,
+            type: 'scatter',
+            mode: 'markers',
+            name: '交易量',
+            yaxis: 'y2',
+            marker: {
+                color: '#34a853',
+                size: 8,
+                opacity: 0.7
+            }
+        }];
+
+        const layout = {
+            title: {
+                text: `${selectedCrop} 價格分布與交易量`,
+                font: { size: 20, color: '#ea4335', family: 'Microsoft JhengHei, Arial' }
+            },
+            xaxis: { 
+                title: '價格 (元/公斤)', 
+                titlefont: { size: 16 }, 
+                tickfont: { size: 15 } 
+            },
+            yaxis: { 
+                title: '次數', 
+                titlefont: { size: 16 }, 
+                tickfont: { size: 15 } 
+            },
+            yaxis2: {
+                title: '交易量 (公斤)',
+                titlefont: { size: 16, color: '#34a853' },
+                tickfont: { size: 15, color: '#34a853' },
+                overlaying: 'y',
+                side: 'right'
+            },
+            margin: { t: 60, l: 60, r: 60, b: 60 },
+            legend: { font: { size: 15 } },
+            hoverlabel: { font: { size: 15 } },
+            autosize: true,
+            responsive: true
+        };
+
+        Plotly.newPlot(chartArea, traces, layout, {responsive: true});
+    } else {
+        // 正式版環境：使用原本的價格分布功能
+        const trace = {
+            x: prices,
+            type: 'histogram',
+            name: '價格分布',
+            marker: { color: '#ea4335' }
+        };
+
+        const layout = {
+            title: {
+                text: `${selectedCrop} 價格分布`,
+                font: { size: 20, color: '#ea4335', family: 'Microsoft JhengHei, Arial' }
+            },
+            xaxis: { 
+                title: '價格 (元/公斤)', 
+                titlefont: { size: 16 }, 
+                tickfont: { size: 15 } 
+            },
+            yaxis: { 
+                title: '次數', 
+                titlefont: { size: 16 }, 
+                tickfont: { size: 15 } 
+            },
+            margin: { t: 60, l: 60, r: 30, b: 60 },
+            legend: { font: { size: 15 } },
+            hoverlabel: { font: { size: 15 } },
+            autosize: true,
+            responsive: true
+        };
+
+        Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+    }
+    
     showBasicStats(cropData);
 }
 
@@ -1733,26 +1812,135 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!selectedCrop) return;
         const cropData = getCropData(selectedCrop);
         const prices = cropData.map(item => Number(item.平均價));
-        const trace = {
-            x: prices,
-            type: 'histogram',
-            name: '價格分布',
-            marker: { color: '#ea4335' }
-        };
-        const layout = {
-            title: {
-                text: `${selectedCrop} 價格分布`,
-                font: { size: 20, color: '#ea4335', family: 'Microsoft JhengHei, Arial' }
-            },
-            xaxis: { title: '價格 (元/公斤)', titlefont: { size: 16 }, tickfont: { size: 15 } },
-            yaxis: { title: '次數', titlefont: { size: 16 }, tickfont: { size: 15 } },
-            margin: { t: 60, l: 60, r: 30, b: 60 },
-            legend: { font: { size: 15 } },
-            hoverlabel: { font: { size: 15 } },
-            autosize: true,
-            responsive: true
-        };
-        Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+        const envConfig = window.ENV_DEFAULT_CONFIGS || { environment: 'production' };
+        const isTestingEnv = envConfig.environment === 'testing';
+        if (isTestingEnv) {
+            // 依市場分組
+            const markets = [...new Set(cropData.map(item => item.市場名稱))];
+            // 色盲友善色盤（不含紅、綠）
+            const colorPalette = [
+                '#0072B2', // 藍
+                '#E69F00', // 橘
+                '#56B4E9', // 淺藍
+                '#F0E442', // 黃
+                '#CC79A7', // 紫
+                '#D55E00', // 棕
+                '#999999', // 灰
+                '#000000', // 黑
+                '#009E73', // 青
+                '#9467bd'  // 深紫
+            ];
+            // 直方圖分隔線計算
+            const binCount = 10;
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+            const binWidth = (maxPrice - minPrice) / binCount;
+            const binEdges = Array.from({length: binCount+1}, (_, i) => minPrice + i * binWidth);
+            // 產生分隔線
+            const shapes = binEdges.slice(1, -1).map(x => ({
+                type: 'line',
+                x0: x, x1: x,
+                y0: 0, y1: 1,
+                yref: 'paper',
+                line: { color: '#b0b0b0', width: 1, dash: 'dot' }
+            }));
+            const traces = [{
+                x: prices,
+                type: 'histogram',
+                name: '價格分布',
+                marker: { color: '#0072B2', opacity: 0.35 }, // 藍色、透明
+                opacity: 0.35,
+                hoverlabel: { font: { size: 16 } },
+                xbins: { start: minPrice, end: maxPrice, size: binWidth }
+            }];
+            markets.forEach((market, idx) => {
+                const marketData = cropData.filter(item => item.市場名稱 === market);
+                const x = marketData.map(item => Number(item.平均價));
+                const y = marketData.map(item => Number(item.交易量));
+                traces.push({
+                    x,
+                    y,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: `${market} 交易量`,
+                    yaxis: 'y2',
+                    marker: {
+                        color: colorPalette[idx % colorPalette.length],
+                        size: 12,
+                        line: { width: 2, color: '#fff' }
+                    },
+                    line: {
+                        color: colorPalette[idx % colorPalette.length],
+                        width: 4
+                    },
+                    hovertemplate: `市場: ${market}<br>價格: %{x} 元/公斤<br>交易量: %{y} 公斤<extra></extra>`
+                });
+            });
+            const layout = {
+                title: {
+                    text: `${selectedCrop} 價格分布與各市場交易量`,
+                    font: { size: 22, color: '#0072B2', family: 'Microsoft JhengHei, Arial' }
+                },
+                xaxis: { 
+                    title: '價格 (元/公斤)', 
+                    titlefont: { size: 18 }, 
+                    tickfont: { size: 16 },
+                    showgrid: true,
+                    gridcolor: '#e0e0e0'
+                },
+                yaxis: { 
+                    title: '次數', 
+                    titlefont: { size: 18 }, 
+                    tickfont: { size: 16 },
+                    showgrid: true,
+                    gridcolor: '#e0e0e0'
+                },
+                yaxis2: {
+                    title: '交易量 (公斤)',
+                    titlefont: { size: 18, color: '#0072B2' },
+                    tickfont: { size: 16, color: '#0072B2' },
+                    overlaying: 'y',
+                    side: 'right',
+                    showgrid: false
+                },
+                margin: { t: 70, l: 70, r: 70, b: 70 },
+                legend: { font: { size: 18 }, orientation: 'h', x: 0, y: -0.2 },
+                hoverlabel: { font: { size: 16 } },
+                shapes,
+                autosize: true,
+                responsive: true
+            };
+            Plotly.newPlot(chartArea, traces, layout, {responsive: true});
+        } else {
+            const trace = {
+                x: prices,
+                type: 'histogram',
+                name: '價格分布',
+                marker: { color: '#0072B2' }
+            };
+            const layout = {
+                title: {
+                    text: `${selectedCrop} 價格分布`,
+                    font: { size: 20, color: '#0072B2', family: 'Microsoft JhengHei, Arial' }
+                },
+                xaxis: { 
+                    title: '價格 (元/公斤)', 
+                    titlefont: { size: 16 }, 
+                    tickfont: { size: 15 } 
+                },
+                yaxis: { 
+                    title: '次數', 
+                    titlefont: { size: 16 }, 
+                    tickfont: { size: 15 } 
+                },
+                margin: { t: 60, l: 60, r: 30, b: 60 },
+                legend: { font: { size: 15 } },
+                hoverlabel: { font: { size: 15 } },
+                autosize: true,
+                responsive: true
+            };
+            Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
+        }
         showBasicStats(cropData);
     };
 
@@ -2633,12 +2821,49 @@ function showEnvironmentSettings() {
     dialog.innerHTML = `
         <div class="dev-settings-content">
             <h3>環境設定</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closeEnvDialog">關閉</button></div>
+            <div class="env-options">
+                <div class="env-option">
+                    <input type="radio" id="envProduction" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
+                    <label for="envProduction">正式版環境</label>
+                </div>
+                <div class="env-option">
+                    <input type="radio" id="envTesting" name="environment" value="testing" ${window.ENV_DEFAULT_CONFIGS.environment === 'testing' ? 'checked' : ''}>
+                    <label for="envTesting">測試版環境</label>
+                </div>
+            </div>
+            <div class="env-actions">
+                <button id="saveEnv">儲存設定</button>
+                <button id="closeEnvDialog">取消</button>
+            </div>
         </div>
     `;
     document.body.appendChild(dialog);
-    document.getElementById('closeEnvDialog').onclick = () => dialog.remove();
+
+    // 儲存設定
+    document.getElementById('saveEnv').addEventListener('click', () => {
+        const selectedEnv = document.querySelector('input[name="environment"]:checked').value;
+        window.ENV_DEFAULT_CONFIGS.environment = selectedEnv;
+        
+        // 如果是測試版環境，將版本號改為 test
+        if (selectedEnv === 'testing') {
+            window.ENV_DEFAULT_CONFIGS.appMode = 'test';
+            document.title = document.title.replace(/v\d+\.\d+\.\d+/, 'vtest');
+        } else {
+            window.ENV_DEFAULT_CONFIGS.appMode = 'normal';
+            // 恢復原始版本號
+            const originalVersion = 'v1.0.0'; // 這裡可以根據實際情況修改
+            document.title = document.title.replace(/vtest|v\d+\.\d+\.\d+/, originalVersion);
+        }
+        
+        localStorage.setItem('environment', selectedEnv);
+        dialog.remove();
+        showNotification('環境設定已更新');
+    });
+
+    // 關閉對話框
+    document.getElementById('closeEnvDialog').addEventListener('click', () => {
+        dialog.remove();
+    });
 }
 
 function showParameterSettings() {
