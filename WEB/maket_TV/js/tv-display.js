@@ -14,6 +14,22 @@ const MARKET_API = 'https://backup0821.github.io/API/Better-vegetable-catcher/ma
 const PRICE_API = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx';
 const CROP_INTERVAL = 5000; // 5秒輪播
 
+// 市場名稱對應表
+const MARKET_NAME_MAP = {
+    '台北一': '台北第一果菜批發市場',
+    '台北二': '台北第二果菜批發市場',
+    '三重': '三重果菜批發市場',
+    '桃園': '桃園果菜批發市場',
+    '台中': '台中果菜批發市場',
+    '彰化': '彰化果菜批發市場',
+    '嘉義': '嘉義果菜批發市場',
+    '台南': '台南果菜批發市場',
+    '高雄': '高雄果菜批發市場',
+    '宜蘭': '宜蘭果菜批發市場',
+    '花蓮': '花蓮果菜批發市場',
+    '台東': '台東果菜批發市場'
+};
+
 // 開發者模式相關功能
 const DevMode = {
     isEnabled: false,
@@ -251,10 +267,15 @@ function showDeviceSetupDialog() {
     const dialog = document.createElement('div');
     dialog.className = 'device-setup-dialog';
     dialog.innerHTML = `
-        <h2>請輸入裝置識別碼</h2>
-        <input type="text" id="deviceIdInput" placeholder="請輸入裝置識別碼">
-        <button id="confirmDeviceId">確認</button>
-        <div id="deviceError" class="error-message"></div>
+        <div class="dialog-content">
+            <h2>請輸入裝置識別碼</h2>
+            <p>請輸入您的裝置識別碼，例如：drvice-Taipai01</p>
+            <input type="text" id="deviceIdInput" placeholder="請輸入裝置識別碼">
+            <div class="dialog-buttons">
+                <button id="confirmDeviceId">確認</button>
+            </div>
+            <div id="deviceError" class="error-message"></div>
+        </div>
     `;
 
     document.body.appendChild(overlay);
@@ -293,22 +314,27 @@ function showDeviceSetupDialog() {
 // 驗證裝置識別碼
 async function verifyDeviceId() {
     try {
-        const response = await safeFetch(MARKET_API);
-        if (!response) return false;
-
-        const device = response.find(d => d.deviceId === deviceId);
+        const response = await fetch(MARKET_API);
+        const devices = await response.json();
+        const device = devices.find(d => d.devicesID === deviceId);
+        
         if (!device) {
             showError('無效的裝置識別碼');
             localStorage.removeItem('deviceId');
             return false;
         }
 
-        marketName = device.marketName;
+        // 使用對應表轉換市場名稱
+        marketName = MARKET_NAME_MAP[device.market_name] || device.market_name;
         document.getElementById('marketName').textContent = marketName;
+        
+        // 儲存市場代碼供後續使用
+        localStorage.setItem('marketName', marketName);
+        
         return true;
     } catch (error) {
         console.error('驗證裝置識別碼時發生錯誤:', error);
-        showError('驗證裝置識別碼失敗');
+        showError('驗證裝置識別碼失敗，請檢查網路連線');
         return false;
     }
 }
@@ -436,74 +462,77 @@ function startDisplayRotation() {
 }
 
 // 開始作物輪播
-function startCropRotation() {
-    if (cropTimer) clearInterval(cropTimer);
-    if (cropNames.length === 0) return;
-    cropIndex = 0;
-    showCropInfo(cropNames[cropIndex]);
-    cropTimer = setInterval(() => {
-        cropIndex = (cropIndex + 1) % cropNames.length;
+async function startCropRotation() {
+    try {
+        // 獲取所有作物資料
+        const response = await fetch(PRICE_API);
+        const data = await response.json();
+        
+        // 過濾出當前市場的資料
+        const marketData = data.filter(item => item.市場名稱 === marketName);
+        
+        // 取得所有作物名稱（去重）
+        cropNames = [...new Set(marketData.map(item => item.作物名稱))].filter(Boolean);
+        
+        if (cropNames.length === 0) {
+            showError('無法獲取作物資料');
+            return;
+        }
+        
+        // 儲存市場作物資料
+        marketCrops = marketData;
+        
+        // 開始輪播
+        let cropIndex = 0;
         showCropInfo(cropNames[cropIndex]);
-    }, CROP_INTERVAL);
-}
-
-// 更新顯示內容
-function updateDisplay() {
-    if (currentDisplayMode === 'price') {
-        showPriceDisplay();
-    } else {
-        showChartDisplay();
-    }
-}
-
-// 顯示價格資訊
-function showPriceDisplay() {
-    document.getElementById('displayMode').innerHTML = `
-        <span class="mode-icon">💰</span>
-        <span class="mode-text">價格資訊</span>
-    `;
-    document.getElementById('chartArea').style.display = 'none';
-}
-
-// 顯示圖表
-function showChartDisplay() {
-    document.getElementById('displayMode').innerHTML = `
-        <span class="mode-icon">📊</span>
-        <span class="mode-text">價格趨勢</span>
-    `;
-    document.getElementById('chartArea').style.display = 'block';
-    
-    if (selectedCrop) {
-        showPriceTrend();
+        
+        // 每5秒切換一次作物
+        if (cropTimer) clearInterval(cropTimer);
+        cropTimer = setInterval(() => {
+            cropIndex = (cropIndex + 1) % cropNames.length;
+            showCropInfo(cropNames[cropIndex]);
+        }, CROP_INTERVAL);
+        
+    } catch (error) {
+        console.error('作物輪播初始化失敗:', error);
+        showError('無法獲取作物資料，請檢查網路連線');
     }
 }
 
 // 顯示作物資訊
 function showCropInfo(cropName) {
+    // 過濾出該作物的資料
     const cropData = marketCrops.filter(item => item.作物名稱 === cropName);
     if (cropData.length === 0) return;
     
+    // 取得最新一筆資料
     const latestData = cropData[cropData.length - 1];
+    
+    // 更新作物基本資訊
     document.getElementById('cropName').textContent = cropName;
-    document.getElementById('cropCode').textContent = `代碼：${latestData.作物代號}`;
+    document.getElementById('tradeVolume').textContent = `${Number(latestData.交易量).toLocaleString()} 公斤`;
+    document.getElementById('avgPrice').textContent = `${Number(latestData.平均價).toFixed(2)} 元/公斤`;
     
-    // 更新價格趨勢
+    // 更新價格資訊
+    document.getElementById('priceHigh').textContent = `${Number(latestData.上價).toFixed(2)} 元/公斤`;
+    document.getElementById('priceLow').textContent = `${Number(latestData.下價).toFixed(2)} 元/公斤`;
+    
+    // 計算價格變化
     const prices = cropData.map(item => Number(item.平均價));
-    document.getElementById('maxPrice').textContent = `${Math.max(...prices).toFixed(2)} 元/公斤`;
-    document.getElementById('minPrice').textContent = `${Math.min(...prices).toFixed(2)} 元/公斤`;
-    
     const priceChange = ((prices[prices.length - 1] - prices[0]) / prices[0] * 100).toFixed(2);
-    document.getElementById('priceChange').textContent = `${priceChange}%`;
-    document.getElementById('priceChange').style.color = priceChange >= 0 ? '#4caf50' : '#f44336';
     
     // 更新圖表
-    if (currentDisplayMode === 'chart') {
-        drawChart(cropData);
+    updateChart(cropData);
+    
+    // 如果價格變化超過5%，顯示通知
+    if (Math.abs(priceChange) > 5) {
+        const direction = priceChange > 0 ? '上漲' : '下跌';
+        addNotification(`${cropName}價格${direction}${Math.abs(priceChange)}%`);
     }
 }
 
-// 繪製圖表
-function drawChart(cropData) {
+// 更新圖表
+function updateChart(cropData) {
     const dates = cropData.map(item => item.交易日期);
     const prices = cropData.map(item => Number(item.平均價));
     const volumes = cropData.map(item => Number(item.交易量));
@@ -514,7 +543,8 @@ function drawChart(cropData) {
         type: 'scatter',
         mode: 'lines+markers',
         name: '價格',
-        line: { color: '#1a237e' }
+        line: { color: '#1a237e', width: 3 },
+        marker: { size: 8, color: '#1a237e' }
     };
     
     const trace2 = {
@@ -523,23 +553,41 @@ function drawChart(cropData) {
         type: 'bar',
         name: '交易量',
         yaxis: 'y2',
-        marker: { color: '#4caf50' }
+        marker: { color: '#4caf50', opacity: 0.7 }
     };
     
     const layout = {
         title: `${cropData[0].作物名稱} 價格趨勢`,
-        xaxis: { title: '日期' },
-        yaxis: { title: '價格 (元/公斤)' },
+        xaxis: { 
+            title: '日期',
+            gridcolor: 'rgba(255,255,255,0.1)'
+        },
+        yaxis: { 
+            title: '價格 (元/公斤)',
+            gridcolor: 'rgba(255,255,255,0.1)'
+        },
         yaxis2: {
             title: '交易量 (公斤)',
             overlaying: 'y',
-            side: 'right'
+            side: 'right',
+            gridcolor: 'rgba(255,255,255,0.1)'
         },
         showlegend: true,
-        legend: { x: 1, y: 1 }
+        legend: { x: 1, y: 1 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: {
+            color: '#ffffff'
+        },
+        margin: {
+            l: 50,
+            r: 50,
+            t: 50,
+            b: 50
+        }
     };
     
-    Plotly.newPlot('chartArea', [trace1, trace2], layout);
+    Plotly.newPlot('mainDisplay', [trace1, trace2], layout);
 }
 
 // 主程式
@@ -560,12 +608,8 @@ async function main() {
             return;
         }
 
-        // 初始化顯示
-        await initDisplay();
-
-        // 開始輪播
-        startDisplayRotation();
-        startCropRotation();
+        // 開始作物輪播
+        await startCropRotation();
 
         // 顯示通知
         showNotifications([
@@ -762,4 +806,123 @@ async function safeFetch(url, options = {}) {
         handleApiError(error, url);
         return null;
     }
+}
+
+// 全局變數
+let currentMarket = '台北第一果菜批發市場';
+let currentCrop = '高麗菜';
+let notifications = [];
+let priceData = {
+    high: 0,
+    low: 0,
+    avg: 0,
+    volume: 0
+};
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+    updateClock();
+    setInterval(updateClock, 1000);
+    initializeMarketData();
+    setInterval(updateMarketData, 30000); // 每30秒更新一次市場資料
+});
+
+// 更新時鐘
+function updateClock() {
+    const now = new Date();
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-TW');
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString('zh-TW');
+}
+
+// 初始化市場資料
+async function initializeMarketData() {
+    try {
+        const response = await fetch(PRICE_API);
+        const data = await response.json();
+        const marketData = data.filter(item => item.市場名稱 === marketName);
+        updateDisplay(marketData);
+    } catch (error) {
+        console.error('無法獲取市場資料:', error);
+        showError('無法獲取市場資料，請檢查網路連線');
+    }
+}
+
+// 更新市場資料
+async function updateMarketData() {
+    try {
+        const response = await fetch(PRICE_API);
+        const data = await response.json();
+        const marketData = data.filter(item => item.市場名稱 === marketName);
+        updateDisplay(marketData);
+        checkPriceChanges(marketData);
+    } catch (error) {
+        console.error('無法更新市場資料:', error);
+        showError('無法更新市場資料，請檢查網路連線');
+    }
+}
+
+// 更新顯示
+function updateDisplay(data) {
+    if (!data || data.length === 0) return;
+    
+    // 取得最新一筆資料
+    const latestData = data[data.length - 1];
+    
+    // 更新市場名稱
+    document.getElementById('marketName').textContent = marketName;
+    
+    // 更新價格資訊
+    document.getElementById('priceHigh').textContent = `${latestData.上價} 元/公斤`;
+    document.getElementById('priceLow').textContent = `${latestData.下價} 元/公斤`;
+    
+    // 更新底部資訊
+    document.getElementById('cropName').textContent = latestData.作物名稱;
+    document.getElementById('tradeVolume').textContent = `${Number(latestData.交易量).toLocaleString()} 公斤`;
+    document.getElementById('avgPrice').textContent = `${latestData.平均價} 元/公斤`;
+    
+    // 更新圖表
+    updateChart(data);
+}
+
+// 檢查價格變化並產生通知
+function checkPriceChanges(newData) {
+    if (!newData || newData.length < 2) return;
+    
+    const latestData = newData[newData.length - 1];
+    const previousData = newData[newData.length - 2];
+    
+    const priceChange = Number(latestData.平均價) - Number(previousData.平均價);
+    if (Math.abs(priceChange) > 5) {
+        const direction = priceChange > 0 ? '上漲' : '下跌';
+        addNotification(`${latestData.作物名稱}價格${direction}${Math.abs(priceChange)}元`);
+    }
+}
+
+// 新增通知
+function addNotification(message) {
+    const notification = {
+        id: Date.now(),
+        message: message,
+        timestamp: new Date()
+    };
+    
+    notifications.unshift(notification);
+    if (notifications.length > 5) {
+        notifications.pop();
+    }
+    
+    updateNotificationDisplay();
+}
+
+// 更新通知顯示
+function updateNotificationDisplay() {
+    const notificationList = document.getElementById('notificationList');
+    notificationList.innerHTML = '';
+    
+    notifications.forEach(notification => {
+        const notificationElement = document.createElement('div');
+        notificationElement.className = 'notification-item';
+        notificationElement.textContent = notification.message;
+        notificationList.appendChild(notificationElement);
+    });
 }
