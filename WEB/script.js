@@ -119,6 +119,45 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 檢查環境設定並顯示農業氣象影片
     showAgriculturalWeatherVideo();
+
+    // 新增市場選擇的事件監聽器
+    const marketSelect = document.getElementById('marketSelect');
+    if (marketSelect) {
+        // 處理地區群組選擇
+        marketSelect.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.tagName === 'OPTGROUP') {
+                // 獲取該群組下的所有選項
+                const options = Array.from(target.children);
+                // 檢查是否所有選項都已選中
+                const allSelected = options.every(option => option.selected);
+                
+                // 如果全部已選中，則取消選中；否則全部選中
+                options.forEach(option => {
+                    option.selected = !allSelected;
+                });
+                
+                // 觸發 change 事件以更新圖表
+                marketSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // 處理市場選擇變更
+        marketSelect.addEventListener('change', () => {
+            if (selectedCrop) {
+                // 根據當前選擇的分析功能自動更新
+                if (showPriceTrendBtn.classList.contains('active')) {
+                    showPriceTrend();
+                } else if (showVolumeDistBtn.classList.contains('active')) {
+                    showVolumeDistribution();
+                } else if (showPriceDistBtn.classList.contains('active')) {
+                    showPriceDistribution();
+                } else if (showSeasonalBtn.classList.contains('active')) {
+                    showSeasonalAnalysis();
+                }
+            }
+        });
+    }
 });
 
 // 從農產品交易行情站獲取資料
@@ -133,18 +172,7 @@ async function fetchData() {
         cropData = data;
         updateCropList();
         
-        // 更新市場列表
-        const marketSelect = document.getElementById('marketSelect');
-        if (marketSelect) {
-            const markets = [...new Set(cropData.map(item => item.市場名稱))].sort();
-            marketSelect.innerHTML = '<option value="all">全部市場</option>';
-            markets.forEach(market => {
-                const option = document.createElement('option');
-                option.value = market;
-                option.textContent = market;
-                marketSelect.appendChild(option);
-            });
-        }
+
         
         // 更新資料時間
         const now = new Date();
@@ -542,13 +570,14 @@ function convertToExcel(data) {
 
 // 獲取特定作物的資料
 function getCropData(cropName) {
-    const selectedMarket = marketSelect.value;
+    const marketSelect = document.getElementById('marketSelect');
     let filteredData = cropData.filter(item => item.作物名稱 === cropName);
-    
-    if (selectedMarket !== 'all') {
-        filteredData = filteredData.filter(item => item.市場名稱 === selectedMarket);
+    if (marketSelect) {
+        const selectedOptions = Array.from(marketSelect.selectedOptions).map(opt => opt.value);
+        if (!selectedOptions.includes('all')) {
+            filteredData = filteredData.filter(item => selectedOptions.includes(item.市場名稱));
+        }
     }
-    
     return filteredData;
 }
 
@@ -1639,141 +1668,6 @@ self.addEventListener('pushsubscriptionchange', (event) => {
     }
 });
 
-// 在頁面載入時初始化
-document.addEventListener('DOMContentLoaded', () => {
-    // 創建市場選擇下拉選單
-    const marketSelectContainer = document.createElement('div');
-    marketSelectContainer.className = 'market-select-container';
-    marketSelectContainer.style.cssText = `
-        margin-bottom: 15px;
-    `;
-
-    const marketSelectLabel = document.createElement('label');
-    marketSelectLabel.textContent = '選擇市場：';
-    marketSelectLabel.style.cssText = `
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-    `;
-
-    const marketSelect = document.createElement('select');
-    marketSelect.id = 'marketSelect';
-    marketSelect.style.cssText = `
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 16px;
-        background-color: white;
-    `;
-
-    // 將市場選擇元素添加到控制面板
-    const controlPanel = document.querySelector('.control-panel');
-    const searchSection = controlPanel.querySelector('.search-section');
-    marketSelectContainer.appendChild(marketSelectLabel);
-    marketSelectContainer.appendChild(marketSelect);
-    controlPanel.insertBefore(marketSelectContainer, searchSection);
-
-    // 更新市場列表
-    function updateMarketList() {
-        const markets = [...new Set(cropData.map(item => item.市場名稱))].sort();
-        marketSelect.innerHTML = '<option value="all">全部市場</option>';
-        markets.forEach(market => {
-            const option = document.createElement('option');
-            option.value = market;
-            option.textContent = market;
-            marketSelect.appendChild(option);
-        });
-    }
-
-    // 當市場選擇改變時更新圖表
-    marketSelect.addEventListener('change', () => {
-        if (selectedCrop) {
-            showPriceTrend();
-        }
-    });
-
-    // 修改價格趨勢圖函數
-    const originalShowPriceTrend = showPriceTrend;
-    showPriceTrend = function() {
-        if (!selectedCrop) return;
-        const cropData = getCropData(selectedCrop);
-        
-        // 如果選擇了特定市場，只顯示該市場的資料
-        if (marketSelect.value !== 'all') {
-            const marketData = cropData.filter(item => item.市場名稱 === marketSelect.value);
-            const dates = marketData.map(item => item.交易日期);
-            const prices = marketData.map(item => Number(item.平均價));
-            
-            const trace = {
-                x: dates,
-                y: prices,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: marketSelect.value,
-                line: { width: 2 },
-                marker: { size: 8 }
-            };
-
-            const maxPrice = Math.max(...prices);
-            const minPrice = Math.min(...prices);
-            const maxItem = marketData.find(item => Number(item.平均價) === maxPrice);
-            const minItem = marketData.find(item => Number(item.平均價) === minPrice);
-
-            const layout = {
-                title: {
-                    text: `${selectedCrop} - ${marketSelect.value} 價格趨勢`,
-                    font: { size: 22, color: '#1a73e8', family: 'Microsoft JhengHei, Arial' }
-                },
-                xaxis: { 
-                    title: '日期',
-                    titlefont: { size: 18 },
-                    tickfont: { size: 16 }
-                },
-                yaxis: { 
-                    title: '價格 (元/公斤)',
-                    titlefont: { size: 18 },
-                    tickfont: { size: 16 }
-                },
-                margin: { t: 60, l: 60, r: 30, b: 60 },
-                legend: { font: { size: 16 } },
-                hoverlabel: { font: { size: 16 } },
-                autosize: true,
-                responsive: true,
-                annotations: [
-                    {
-                        x: maxItem.交易日期,
-                        y: maxPrice,
-                        xref: 'x',
-                        yref: 'y',
-                        text: `最高 ${maxPrice}`,
-                        showarrow: true,
-                        arrowhead: 7,
-                        ax: 0,
-                        ay: -40,
-                        font: { color: '#ea4335', size: 16 }
-                    },
-                    {
-                        x: minItem.交易日期,
-                        y: minPrice,
-                        xref: 'x',
-                        yref: 'y',
-                        text: `最低 ${minPrice}`,
-                        showarrow: true,
-                        arrowhead: 7,
-                        ax: 0,
-                        ay: 40,
-                        font: { color: '#34a853', size: 16 }
-                    }
-                ]
-            };
-            Plotly.newPlot(chartArea, [trace], layout, {responsive: true});
-            showBasicStats(marketData);
-        } else {
-            // 如果選擇全部市場，使用原有的多市場顯示邏輯
-            originalShowPriceTrend();
-        }
-    };
 
     // 修改其他分析函數
     const originalShowVolumeDistribution = showVolumeDistribution;
@@ -2112,7 +2006,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-});
 
 // 休市日曆功能
 async function showMarketRestCalendar() {

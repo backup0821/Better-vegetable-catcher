@@ -39,7 +39,6 @@
 
         <main>
             <div class="control-panel">
-                <div class="search-section">
                     <h2>作物選擇</h2>
                     <div class="search-box">
                         <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
@@ -51,6 +50,7 @@
                     </div>
                     <div class="market-select">
                         <select id="marketSelect" multiple size="6">
+                            <option value="all" selected>全部市場</option>
                             <optgroup label="北部地區">
                                 <option value="台北一">台北第一果菜批發市場</option>
                                 <option value="台北二">台北第二果菜批發市場</option>
@@ -73,7 +73,6 @@
                         </select>
                         <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
                     </div>
-                </div>
 
                 <!-- 載入動畫區塊 -->
                 <div id="loadingSpinner" class="loading-spinner" style="display:none;">
