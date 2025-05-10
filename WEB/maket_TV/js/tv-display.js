@@ -731,31 +731,27 @@ function showCurrentCrop() {
 
 // ====== 時鐘功能（修正版）======
 function startClock() {
-    function updateClock() {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('zh-TW', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        const timeStr = now.toLocaleTimeString('zh-TW', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        });
+    updateClock(); // 立即更新一次
+    setInterval(updateClock, 1000); // 每秒更新一次
+}
 
-        const dateElement = document.getElementById('currentDate');
-        const timeElement = document.getElementById('currentTime');
-
-        if (dateElement) dateElement.textContent = dateStr;
-        if (timeElement) timeElement.textContent = timeStr;
-    }
-
-    // 立即更新一次
-    updateClock();
-    // 每秒更新一次
-    return setInterval(updateClock, 1000);
+function updateClock() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).replace(/\//g, '/');
+    
+    const timeStr = now.toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+    
+    document.getElementById('currentDate').textContent = dateStr;
+    document.getElementById('currentTime').textContent = timeStr;
 }
 
 // ====== 啟動流程修正 ======
@@ -830,8 +826,21 @@ document.addEventListener('DOMContentLoaded', () => {
 // 更新時鐘
 function updateClock() {
     const now = new Date();
-    document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-TW');
-    document.getElementById('currentTime').textContent = now.toLocaleTimeString('zh-TW');
+    const dateStr = now.toLocaleDateString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).replace(/\//g, '/');
+    
+    const timeStr = now.toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+    
+    document.getElementById('currentDate').textContent = dateStr;
+    document.getElementById('currentTime').textContent = timeStr;
 }
 
 // 初始化市場資料

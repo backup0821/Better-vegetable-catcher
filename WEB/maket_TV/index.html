@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="styles/tv-display.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- 先載入 YouTube API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
     <div class="tv-container">
@@ -35,6 +37,7 @@
             <!-- 中央主要顯示區 -->
             <div class="tv-center-panel">
                 <div class="tv-main-display" id="mainDisplay">
+                </div>
             </div>
             <!-- 右側區塊 -->
             <div class="tv-right-panel">
@@ -49,7 +52,6 @@
                 <div class="video-container">
                     <div id="player"></div>
                 </div>
-            </div>
             </div>
         </div>
         <!-- 下方資訊列 -->
@@ -73,12 +75,6 @@
     </div>
     <script src="js/tv-display.js"></script>
     <script>
-        // YouTube API
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
         let player;
         let currentVideoIndex = 0;
         let videos = [];
@@ -97,6 +93,12 @@
                     
                     // 初始化播放器
                     initPlayer();
+                })
+                .catch(error => {
+                    console.error('獲取影片列表失敗:', error);
+                    // 如果獲取失敗，使用預設影片
+                    videos = ['dQw4w9WgXcQ']; // 預設影片ID
+                    initPlayer();
                 });
         }
 
@@ -110,7 +112,9 @@
                     'controls': 0,
                     'rel': 0,
                     'showinfo': 0,
-                    'mute': 1  // 自動播放需要靜音
+                    'mute': 1,  // 自動播放需要靜音
+                    'loop': 1,  // 循環播放
+                    'playlist': videos.join(',')  // 播放清單
                 },
                 events: {
                     'onReady': onPlayerReady,

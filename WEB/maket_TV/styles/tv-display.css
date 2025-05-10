@@ -4,8 +4,9 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif;
-    background: #f5f6fa;
-    color: #222;
+    background: #f0f2f5;
+    color: #2c3e50;
+    line-height: 1.6;
 }
 
 /* 主要容器自適應 */
@@ -14,17 +15,17 @@ html, body {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #f5f6fa;
+    background: #f0f2f5;
     overflow: hidden;
 }
 
 /* 頁首 */
 .tv-header {
     width: 100%;
-    background: #fff;
+    background: linear-gradient(135deg, #1a237e, #283593);
     border-radius: 32px;
     margin: 24px auto 16px auto;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07);
+    box-shadow: 0 4px 24px 0 rgba(26, 35, 126, 0.15);
     padding: 24px 48px 16px 48px;
     display: flex;
     flex-direction: column;
@@ -34,13 +35,16 @@ html, body {
 .tv-title {
     font-size: 2.4rem;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     margin-bottom: 8px;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 .tv-subtitle {
-    font-size: 1.1rem;
-    color: #888;
-    font-weight: 400;
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 /* 主體三欄排版 */
@@ -63,9 +67,9 @@ html, body {
     height: 100%;
 }
 .tv-clock-card {
-    background: #fff;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
     border-radius: 32px;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07);
+    box-shadow: 0 4px 24px 0 rgba(76, 175, 80, 0.15);
     display: flex;
     align-items: center;
     padding: 24px 24px 24px 32px;
@@ -73,6 +77,7 @@ html, body {
 }
 .tv-clock-icon {
     font-size: 2.8rem;
+    color: #ffffff;
 }
 .tv-clock-datetime {
     display: flex;
@@ -80,52 +85,81 @@ html, body {
     align-items: flex-start;
 }
 .tv-date {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 500;
     margin-bottom: 4px;
+    color: rgba(255, 255, 255, 0.9);
 }
 .tv-time {
-    font-size: 1.7rem;
+    font-size: 1.8rem;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
+    color: #ffffff;
 }
 
 .tv-notify-card {
-    background: #fff;
+    background: #ffffff;
     border-radius: 32px;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07);
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
     padding: 18px 24px 18px 24px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 .tv-notify-title {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 600;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
+    color: #ffffff;
 }
 .tv-notify-list {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-height: 80px;
+    max-height: 280px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 152, 0, 0.3) transparent;
 }
+
+/* Webkit 瀏覽器的捲軸樣式 */
+.tv-notify-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tv-notify-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tv-notify-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 152, 0, 0.3);
+    border-radius: 3px;
+}
+
 .tv-notify-item {
-    background: #ffa07a;
+    background: linear-gradient(135deg, #ff9800, #f57c00);
     border-radius: 24px;
     min-height: 60px;
-    box-shadow: 0 2px 12px 0 rgba(255,160,122,0.13);
+    max-height: 80px;
+    box-shadow: 0 2px 12px 0 rgba(255, 152, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    font-size: 1.15rem;
-    color: #fff;
+    font-size: 1.2rem;
+    color: #ffffff;
     font-weight: 500;
     padding: 16px 20px;
     word-break: break-all;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .tv-orange-card {
@@ -151,9 +185,9 @@ html, body {
     height: 100%;
 }
 .tv-main-display {
-    background: #fff;
+    background: #ffffff;
     border-radius: 32px;
-    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.07);
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
     width: 100%;
     height: 100%;
     min-height: 380px;
@@ -162,7 +196,7 @@ html, body {
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: #bbb;
+    color: #9e9e9e;
 }
 
 /* 右側 */
@@ -174,9 +208,9 @@ html, body {
     justify-content: flex-start;
 }
 .tv-price-card {
-    background: #fff;
+    background: linear-gradient(135deg, #2196F3, #1976D2);
     border-radius: 32px;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07);
+    box-shadow: 0 4px 24px 0 rgba(33, 150, 243, 0.15);
     padding: 32px 0 32px 0;
     display: flex;
     flex-direction: column;
@@ -185,23 +219,25 @@ html, body {
     min-height: 120px;
 }
 .tv-price-label {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: #222;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
     margin-bottom: 12px;
+    letter-spacing: 0.5px;
 }
 .tv-price-value {
-    font-size: 2.1rem;
+    font-size: 2.2rem;
     font-weight: 700;
-    color: #1a237e;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 /* 下方資訊列 */
 .tv-bottom-bar {
     width: 100%;
-    background: #fff;
+    background: linear-gradient(135deg, #1a237e, #283593);
     border-radius: 32px;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07);
+    box-shadow: 0 4px 24px 0 rgba(26, 35, 126, 0.15);
     margin: 24px auto 0 auto;
     padding: 18px 48px;
     display: flex;
@@ -215,21 +251,25 @@ html, body {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 500;
+    letter-spacing: 0.5px;
 }
 .tv-bottom-icon {
-    font-size: 2rem;
-    margin-right: 6px;
+    font-size: 2.2rem;
+    margin-right: 8px;
+    color: #ffffff;
 }
 .tv-bottom-label {
-    color: #222;
-    margin-right: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-right: 8px;
+    font-weight: 600;
 }
 .tv-bottom-value {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    color: #1a237e;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 /* 陰影 hover 效果（可選） */
@@ -660,10 +700,12 @@ img, svg, video {
 .video-container {
     position: relative;
     width: 100%;
-    height: 100%;
-    min-height: 380px;
+    height: 200px;
+    min-height: 200px;
     overflow: hidden;
     border-radius: 32px;
+    background: #000000;
+    margin: 0 auto;
 }
 
 .video-container #player {
@@ -867,25 +909,6 @@ body {
         transform: translateX(0);
         opacity: 1;
     }
-}
-
-/* 影片容器樣式 */
-.video-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    min-height: 380px;
-    overflow: hidden;
-    border-radius: 32px;
-}
-
-.video-container #player {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
 }
 
 /* 確保影片在響應式設計中正確顯示 */
