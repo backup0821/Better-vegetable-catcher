@@ -13,15 +13,20 @@
         <!-- 頁首區域 -->
         <header>
             <div class="header-content">
-                <h1>農產品交易資料分析系統</h1>
-                <div class="market-info">
-                    <span id="marketName">載入中...</span>
-                    <div class="timestamp" id="currentTime">--:--:--</div>
+                <div class="title-section">
+                    <h1>農產品交易資料分析系統</h1>
+                    <div class="subtitle">資料來源：農業部資料開放平台</div>
                 </div>
-            </div>
-            <div class="subtitle">
-                <span>資料來源：農業部資料開放平台</span>
-                <span>製作單位：鹿中創客</span>
+                <div class="info-section">
+                    <div class="market-info">
+                        <span class="info-label">市場：</span>
+                        <span id="marketName" class="info-value">載入中...</span>
+                    </div>
+                    <div class="time-info">
+                        <div class="clock" id="currentTime">--:--:--</div>
+                        <div class="date" id="currentDate">----/--/--</div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -29,55 +34,65 @@
         <main class="main-layout">
             <!-- 左側面板 -->
             <aside class="left-panel">
-                <div class="clock-card">
-                    <div class="clock-icon">🕒</div>
-                    <div class="clock-time" id="clockTime">--:--:--</div>
-                </div>
-                <div class="notification-card">
-                    <div class="notification-header">
-                        <span class="notification-icon">🔔</span>
-                        <span class="notification-title">即時通知</span>
-                    </div>
+                <div class="panel-section">
+                    <h2 class="section-title">即時通知</h2>
                     <div class="notification-list" id="notificationList"></div>
+                </div>
+                <div class="panel-section">
+                    <h2 class="section-title">市場資訊</h2>
+                    <div class="market-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">今日交易量</span>
+                            <span class="stat-value" id="todayVolume">--</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">平均價格</span>
+                            <span class="stat-value" id="avgPrice">--</span>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
             <!-- 中央面板 -->
             <section class="center-panel">
-                <div class="display-mode" id="displayMode">
-                    <div class="mode-indicator">
+                <div class="display-header">
+                    <div class="crop-info">
+                        <h2 id="cropName">作物名稱</h2>
+                        <div class="crop-code" id="cropCode">代碼：--</div>
+                    </div>
+                    <div class="display-mode" id="displayMode">
                         <span class="mode-icon">📊</span>
                         <span class="mode-text">價格趨勢</span>
                     </div>
                 </div>
-                <div class="chart-area" id="chartArea"></div>
-                <div class="price-display" id="priceDisplay"></div>
+                <div class="chart-container">
+                    <div class="chart-area" id="chartArea"></div>
+                </div>
+                <div class="price-trend">
+                    <div class="trend-item">
+                        <span class="trend-label">最高價</span>
+                        <span class="trend-value" id="maxPrice">--</span>
+                    </div>
+                    <div class="trend-item">
+                        <span class="trend-label">最低價</span>
+                        <span class="trend-value" id="minPrice">--</span>
+                    </div>
+                    <div class="trend-item">
+                        <span class="trend-label">漲跌幅</span>
+                        <span class="trend-value" id="priceChange">--</span>
+                    </div>
+                </div>
             </section>
 
             <!-- 右側面板 -->
             <aside class="right-panel">
-                <div class="info-cards">
-                    <div class="info-card" id="cropNameCard">
-                        <div class="card-icon">🌱</div>
-                        <div class="card-content">
-                            <div class="card-title">作物名稱</div>
-                            <div class="card-value" id="cropName">--</div>
-                        </div>
-                    </div>
-                    <div class="info-card" id="tradeVolumeCard">
-                        <div class="card-icon">📦</div>
-                        <div class="card-content">
-                            <div class="card-title">交易量</div>
-                            <div class="card-value" id="tradeVolume">--</div>
-                        </div>
-                    </div>
-                    <div class="info-card" id="avgPriceCard">
-                        <div class="card-icon">💰</div>
-                        <div class="card-content">
-                            <div class="card-title">平均價</div>
-                            <div class="card-value" id="avgPrice">--</div>
-                        </div>
-                    </div>
+                <div class="panel-section">
+                    <h2 class="section-title">交易排行</h2>
+                    <div class="ranking-list" id="rankingList"></div>
+                </div>
+                <div class="panel-section">
+                    <h2 class="section-title">市場公告</h2>
+                    <div class="announcement-list" id="announcementList"></div>
                 </div>
             </aside>
         </main>
@@ -85,13 +100,12 @@
         <!-- 頁尾區域 -->
         <footer>
             <div class="footer-content">
-                <div class="refresh-info">
-                    <span class="refresh-icon">🔄</span>
-                    <span id="lastUpdateTime">最後更新：--:--:--</span>
+                <div class="system-info">
+                    <span class="info-item">系統版本：v2.4</span>
+                    <span class="info-item">更新時間：<span id="lastUpdateTime">--:--:--</span></span>
                 </div>
                 <div class="device-info">
-                    <span class="device-icon">📺</span>
-                    <span id="deviceId">裝置ID：--</span>
+                    <span class="device-id">裝置ID：<span id="deviceId">--</span></span>
                     <button id="resetDevice" class="reset-button">重設裝置</button>
                 </div>
             </div>
