@@ -517,4 +517,198 @@ html, body {
     .device-setup-dialog h2 {
         font-size: 1.1rem;
     }
+}
+
+/* 全局樣式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Noto Sans TC', sans-serif;
+}
+
+body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    overflow: hidden;
+}
+
+/* 電視牆容器 */
+.tv-container {
+    width: 100vw;
+    height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 頁首樣式 */
+.tv-header {
+    background: linear-gradient(90deg, #2c3e50, #3498db);
+    padding: 15px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tv-title {
+    font-size: 2.5em;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.tv-subtitle {
+    font-size: 1.2em;
+    opacity: 0.8;
+}
+
+/* 主要佈局 */
+.tv-main-layout {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+}
+
+/* 左側面板 */
+.tv-left-panel {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.tv-clock-card {
+    background: #2c3e50;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.tv-clock-icon {
+    font-size: 2em;
+}
+
+.tv-clock-datetime {
+    display: flex;
+    flex-direction: column;
+}
+
+.tv-date {
+    font-size: 1.2em;
+    opacity: 0.8;
+}
+
+.tv-time {
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.tv-notify-card {
+    background: #2c3e50;
+    padding: 20px;
+    border-radius: 10px;
+    flex: 1;
+}
+
+.tv-notify-title {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+}
+
+.tv-notify-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* 中央面板 */
+.tv-center-panel {
+    flex: 1;
+    background: #2c3e50;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.tv-main-display {
+    width: 100%;
+    height: 100%;
+}
+
+/* 右側面板 */
+.tv-right-panel {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.tv-price-card {
+    background: #2c3e50;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.tv-price-label {
+    font-size: 1.2em;
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
+
+.tv-price-value {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #2ecc71;
+}
+
+/* 底部資訊列 */
+.tv-bottom-bar {
+    background: #2c3e50;
+    padding: 15px 30px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.tv-bottom-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tv-bottom-icon {
+    font-size: 1.5em;
+}
+
+.tv-bottom-label {
+    font-size: 1.2em;
+    opacity: 0.8;
+}
+
+.tv-bottom-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #2ecc71;
+}
+
+/* 通知項目樣式 */
+.notification-item {
+    background: #e67e22;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 1.1em;
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 } 
