@@ -238,48 +238,176 @@ html, body {
 }
 
 /* 響應式設計 */
-@media (max-width: 1200px) {
+/* 大型螢幕 (1440px 以上) */
+@media (min-width: 1441px) {
     .tv-main-layout {
-        grid-template-columns: 220px 1fr 160px;
-        grid-gap: 16px;
+        grid-template-columns: 320px 1fr 220px;
+        grid-gap: 32px;
+        padding: 0 32px;
     }
-    .tv-header, .tv-bottom-bar {
-        padding-left: 18px;
-        padding-right: 18px;
+    
+    .tv-title {
+        font-size: 2.4rem;
     }
-}
-@media (max-width: 900px) {
-    .tv-main-layout {
-        grid-template-columns: 1fr;
-        grid-gap: 0;
-    }
-    .tv-left-panel, .tv-right-panel {
-        display: none;
-    }
-    .tv-center-panel {
-        min-width: 0;
-    }
-    .tv-main-display {
-        min-width: 0;
-    }
+    
     .tv-bottom-bar {
-        flex-direction: column;
-        gap: 18px;
-        padding: 12px 8px;
+        gap: 48px;
     }
 }
-@media (max-width: 600px) {
-    .tv-header, .tv-bottom-bar {
-        border-radius: 16px;
-        padding: 8px 4px;
-    }
+
+/* 中型螢幕 (1024px - 1440px) */
+@media (max-width: 1440px) {
     .tv-main-layout {
-        grid-gap: 4px;
+        grid-template-columns: 280px 1fr 200px;
+        grid-gap: 24px;
+        padding: 0 24px;
     }
-    .tv-main-display {
-        border-radius: 16px;
+    
+    .tv-title {
+        font-size: 2rem;
+    }
+    
+    .tv-clock-card {
+        padding: 20px;
+    }
+    
+    .tv-bottom-bar {
+        gap: 32px;
+        padding: 16px 32px;
+    }
+    
+    .tv-bottom-item {
+        font-size: 1.1rem;
+    }
+}
+
+/* 平板 (768px - 1023px) */
+@media (max-width: 1023px) {
+    .tv-main-layout {
+        grid-template-columns: 220px 1fr 180px;
+        grid-gap: 16px;
+        padding: 0 16px;
+    }
+    
+    .tv-header {
+        padding: 16px 24px;
+    }
+    
+    .tv-title {
+        font-size: 1.8rem;
+    }
+    
+    .tv-subtitle {
         font-size: 1rem;
     }
+    
+    .tv-clock-card {
+        padding: 16px;
+    }
+    
+    .tv-clock-icon {
+        font-size: 2.2rem;
+    }
+    
+    .tv-time {
+        font-size: 1.5rem;
+    }
+    
+    .tv-bottom-bar {
+        gap: 24px;
+        padding: 12px 24px;
+    }
+}
+
+/* 手機橫向 (576px - 767px) */
+@media (max-width: 767px) {
+    .tv-main-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        padding: 0 12px;
+    }
+    
+    .tv-left-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .tv-right-panel {
+        flex-direction: row;
+        gap: 12px;
+    }
+    
+    .tv-header {
+        padding: 12px 16px;
+    }
+    
+    .tv-title {
+        font-size: 1.5rem;
+    }
+    
+    .tv-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .tv-bottom-bar {
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 12px 16px;
+    }
+    
+    .tv-bottom-item {
+        font-size: 1rem;
+    }
+}
+
+/* 手機直向 (575px 以下) */
+@media (max-width: 575px) {
+    .tv-left-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    .tv-right-panel {
+        flex-direction: column;
+    }
+    
+    .tv-header {
+        padding: 10px 12px;
+    }
+    
+    .tv-title {
+        font-size: 1.3rem;
+    }
+    
+    .tv-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .tv-bottom-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+    }
+    
+    .tv-bottom-item {
+        justify-content: space-between;
+    }
+    
+    .tv-price-card {
+        padding: 16px 0;
+    }
+}
+
+/* 確保內容不會溢出容器 */
+* {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+img, svg, video {
+    max-width: 100%;
+    height: auto;
 }
 
 /* ===== 開發者模式面板 ===== */
@@ -710,5 +838,37 @@ body {
     to {
         transform: translateX(0);
         opacity: 1;
+    }
+}
+
+/* 影片容器樣式 */
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 380px;
+    overflow: hidden;
+    border-radius: 32px;
+}
+
+.video-container #player {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+}
+
+/* 確保影片在響應式設計中正確顯示 */
+@media (max-width: 767px) {
+    .video-container {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 575px) {
+    .video-container {
+        min-height: 250px;
     }
 } 
