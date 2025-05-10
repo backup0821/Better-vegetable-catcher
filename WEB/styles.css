@@ -109,23 +109,44 @@ h2 {
     border-bottom: 2px solid #eee;
 }
 
-.search-box, .crop-select {
+.search-section {
     margin-bottom: 20px;
 }
 
-input, select {
+.search-box, .crop-select, .market-select {
+    margin-bottom: 15px;
+}
+
+.search-box input, .crop-select select, .market-select select {
     width: 100%;
     padding: 12px;
-    margin-bottom: 10px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 16px;
     transition: border-color 0.3s;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
 }
 
-input:focus, select:focus {
+.search-box input:focus, .crop-select select:focus, .market-select select:focus {
     border-color: #1a73e8;
     outline: none;
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.crop-select select:hover, .market-select select:hover {
+    border-color: #1a73e8;
+}
+
+.crop-select select optgroup, .market-select select optgroup {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.crop-select select option, .market-select select option {
+    padding: 8px;
+    color: #333;
 }
 
 .analysis-buttons {
@@ -1565,4 +1586,89 @@ th {
 .dev-settings-dialog .dev-settings-content {
     max-width: 600px;
     width: 90%;
+}
+
+.market-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.market-section h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.market-select select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 1em;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.market-select select:hover {
+    border-color: #4CAF50;
+}
+
+.market-select select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.market-select select optgroup {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.market-select select option {
+    padding: 8px;
+    color: #333;
+}
+
+.market-select select[multiple] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    font-size: 1em;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+    height: auto;
+    min-height: 200px;
+}
+
+.market-select select[multiple] option {
+    padding: 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+}
+
+.market-select select[multiple] option:checked {
+    background-color: #1a73e8;
+    color: white;
+}
+
+.market-select select[multiple] optgroup {
+    font-weight: bold;
+    color: #2c3e50;
+    background-color: #f8f9fa;
+    padding: 8px 0;
+}
+
+.market-select-hint {
+    margin-top: 8px;
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
 } 
