@@ -243,28 +243,49 @@ async function checkDeviceId() {
 
 // 顯示裝置設定對話框
 function showDeviceSetupDialog() {
+    if (document.querySelector('.device-setup-dialog')) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'device-setup-overlay';
+    
     const dialog = document.createElement('div');
     dialog.className = 'device-setup-dialog';
     dialog.innerHTML = `
-        <div class="dialog-content">
-            <h2>設定裝置識別碼</h2>
-            <p>請輸入裝置識別碼以識別市場</p>
-            <input type="text" id="deviceIdInput" placeholder="例如：drvice-Taipai01">
-            <div class="dialog-buttons">
-                <button id="confirmDeviceId">確認</button>
-            </div>
-        </div>
+        <h2>請輸入裝置識別碼</h2>
+        <input type="text" id="deviceIdInput" placeholder="請輸入裝置識別碼">
+        <button id="confirmDeviceId">確認</button>
+        <div id="deviceError" class="error-message"></div>
     `;
+
+    document.body.appendChild(overlay);
     document.body.appendChild(dialog);
 
-    document.getElementById('confirmDeviceId').addEventListener('click', async () => {
-        const input = document.getElementById('deviceIdInput');
+    const input = dialog.querySelector('#deviceIdInput');
+    const confirmBtn = dialog.querySelector('#confirmDeviceId');
+    const errorDiv = dialog.querySelector('#deviceError');
+
+    confirmBtn.addEventListener('click', async () => {
         const newDeviceId = input.value.trim();
-        if (newDeviceId) {
-            deviceId = newDeviceId;
-            localStorage.setItem('deviceId', deviceId);
-            await verifyDeviceId();
+        if (!newDeviceId) {
+            errorDiv.textContent = '請輸入裝置識別碼';
+            return;
+        }
+
+        deviceId = newDeviceId;
+        localStorage.setItem('deviceId', deviceId);
+
+        if (await verifyDeviceId()) {
+            overlay.remove();
             dialog.remove();
+            location.reload();
+        } else {
+            errorDiv.textContent = '無效的裝置識別碼';
+        }
+    });
+
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            confirmBtn.click();
         }
     });
 }
@@ -272,22 +293,23 @@ function showDeviceSetupDialog() {
 // 驗證裝置識別碼
 async function verifyDeviceId() {
     try {
-        const response = await fetch(MARKET_API);
-        const devices = await response.json();
-        const device = devices.find(d => d.devicesID === deviceId);
-        
-        if (device) {
-            marketName = device.market_name;
-            updateMarketInfo();
-            initDisplay();
-        } else {
+        const response = await safeFetch(MARKET_API);
+        if (!response) return false;
+
+        const device = response.find(d => d.deviceId === deviceId);
+        if (!device) {
+            showError('無效的裝置識別碼');
             localStorage.removeItem('deviceId');
-            deviceId = null;
-            showDeviceSetupDialog();
+            return false;
         }
+
+        marketName = device.marketName;
+        document.getElementById('marketName').textContent = marketName;
+        return true;
     } catch (error) {
         console.error('驗證裝置識別碼時發生錯誤:', error);
-        showError('無法連接到伺服器，請稍後再試');
+        showError('驗證裝置識別碼失敗');
+        return false;
     }
 }
 
@@ -522,67 +544,44 @@ function drawChart(cropData) {
 
 // 主程式
 async function main() {
-    await checkDeviceId();
+    try {
+        // 啟動時鐘
+        startClock();
+
+        // 檢查裝置識別碼
+        if (!deviceId) {
+            showDeviceSetupDialog();
+            return;
+        }
+
+        // 驗證裝置識別碼
+        if (!await verifyDeviceId()) {
+            showDeviceSetupDialog();
+            return;
+        }
+
+        // 初始化顯示
+        await initDisplay();
+
+        // 開始輪播
+        startDisplayRotation();
+        startCropRotation();
+
+        // 顯示通知
+        showNotifications([
+            '系統已成功啟動',
+            '資料每5分鐘自動更新一次',
+            '如需協助請聯繫系統管理員'
+        ]);
+
+    } catch (error) {
+        console.error('系統初始化失敗:', error);
+        showError('系統初始化失敗，請重新整理頁面');
+    }
 }
 
-// 啟動程式
-main();
-
-window.addEventListener('load', main);
-
-// 主程序
-document.addEventListener('DOMContentLoaded', () => {
-    // 禁用所有觸控事件
-    document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-    document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-
-    // 初始化顯示
-    Display.init();
-
-    // 監聽重設裝置按鈕
-    document.getElementById('resetDevice').addEventListener('click', () => {
-        if (confirm('確定要重設裝置識別碼嗎？')) {
-            Utils.storage.remove(CONFIG.STORAGE_KEYS.DEVICE_ID);
-            Display.showDeviceSetupDialog();
-        }
-    });
-
-    // 監聽視窗大小變化
-    window.addEventListener('resize', Utils.debounce(() => {
-        if (Display.state.currentMode === 'chart') {
-            Chart.clearChart('chartArea');
-            Display.updateChartDisplay();
-        }
-    }, 250));
-
-    // 監聽錯誤
-    window.addEventListener('error', (event) => {
-        console.error('應用程序錯誤:', event.error);
-        Utils.showError('應用程序發生錯誤，請重新整理頁面');
-    });
-
-    // 監聽離線狀態
-    window.addEventListener('offline', () => {
-        Utils.showNotification('網路連線已中斷', 'error');
-    });
-
-    window.addEventListener('online', () => {
-        Utils.showNotification('網路連線已恢復', 'success');
-        Display.checkDataUpdate();
-    });
-
-    // 範例通知
-    showNotifications([
-        '今日市場交易正常',
-        '部分蔬菜價格波動較大'
-    ]);
-
-    // 範例主區域
-    showMainChartAndStats('番茄', {
-        x: ['2024/5/1','2024/5/2','2024/5/3','2024/5/4','2024/5/5'],
-        y: [25, 28, 27, 30, 29]
-    }, '12,345 公斤', '28.2 元/公斤');
-});
+// 頁面載入完成後啟動
+document.addEventListener('DOMContentLoaded', main);
 
 // ===== 通知動態產生（橘色卡片） =====
 function showNotifications(notifications) {
@@ -686,40 +685,81 @@ function showCurrentCrop() {
     document.getElementById('avgPrice').textContent = latest.平均價 ? `${Number(latest.平均價).toFixed(2)} 元/公斤` : '--';
 }
 
-// ====== 裝置識別碼輸入與市場綁定 ======
-async function ensureDeviceIdAndMarket() {
-    deviceId = localStorage.getItem('deviceId');
-    if (!deviceId) {
-        showDeviceSetupDialog();
-        return false;
-    }
-    // 查詢 marketName
-    const res = await fetch(MARKET_API);
-    const list = await res.json();
-    const found = list.find(d => d.devicesID === deviceId);
-    if (found) {
-        marketName = found.market_name;
-        document.getElementById('marketName').textContent = marketName;
-        return true;
-    } else {
-        showDeviceSetupDialog();
-        return false;
-    }
-}
-
-// ====== 時鐘功能 ======
+// ====== 時鐘功能（修正版）======
 function startClock() {
     function updateClock() {
         const now = new Date();
-        document.getElementById('clockTime').textContent =
-            now.toLocaleString('zh-TW', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateStr = now.toLocaleDateString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).replace(/\//g, '/');
+        const timeStr = now.toLocaleTimeString('zh-TW', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        
+        const dateElement = document.getElementById('currentDate');
+        const timeElement = document.getElementById('currentTime');
+        
+        if (dateElement) dateElement.textContent = dateStr;
+        if (timeElement) timeElement.textContent = timeStr;
     }
+
+    // 立即更新一次
     updateClock();
-    setInterval(updateClock, 1000);
+    // 每秒更新一次
+    return setInterval(updateClock, 1000);
 }
 
-// ====== 啟動 ======
-window.addEventListener('DOMContentLoaded', () => {
-    startClock();
-    fetchAndStartCropRotation();
-}); 
+// ====== 啟動流程修正 ======
+window.addEventListener('DOMContentLoaded', async () => {
+    deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+        showDeviceSetupDialog();
+        return;
+    }
+    // 檢查 deviceId 是否有效
+    try {
+        const res = await fetch(MARKET_API);
+        const list = await res.json();
+        const found = list.find(d => d.devicesID === deviceId);
+        if (!found) {
+            showDeviceSetupDialog();
+            return;
+        }
+        marketName = found.market_name;
+        document.getElementById('marketName').textContent = marketName;
+        startClock();
+        fetchAndStartCropRotation();
+    } catch (e) {
+        showNotifications(['無法取得市場對照表，請檢查網路']);
+    }
+});
+
+// 錯誤處理函數
+function handleApiError(error, apiName) {
+    console.error(`${apiName} 連線錯誤:`, error);
+    showError(`${apiName} 連線失敗，請檢查網路連線`);
+    return null;
+}
+
+// 安全的 API 呼叫函數
+async function safeFetch(url, options = {}) {
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        handleApiError(error, url);
+        return null;
+    }
+}
