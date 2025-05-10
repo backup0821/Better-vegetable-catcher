@@ -1,114 +1,90 @@
 // 工具函數
 const Utils = {
-    // 日期時間格式化
-    formatDateTime(date) {
-        return date.toLocaleString('zh-TW', {
+    // 格式化日期
+    formatDate(date) {
+        return date.toLocaleDateString('zh-TW', {
             year: 'numeric',
             month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
+            day: '2-digit'
         });
     },
 
-    // 格式化數字（添加千分位）
+    // 格式化時間
+    formatTime(date) {
+        return date.toLocaleTimeString('zh-TW', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    },
+
+    // 格式化數字（加入千分位）
     formatNumber(number) {
-        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return number.toLocaleString('zh-TW');
     },
 
-    // 格式化價格
+    // 格式化價格（保留兩位小數）
     formatPrice(price) {
-        return `NT$ ${this.formatNumber(price)}`;
+        return Number(price).toFixed(2);
     },
 
-    // 格式化交易量
-    formatVolume(volume) {
-        return `${this.formatNumber(volume)} 公斤`;
+    // 計算漲跌幅
+    calculatePriceChange(currentPrice, previousPrice) {
+        if (!previousPrice) return 0;
+        return ((currentPrice - previousPrice) / previousPrice * 100).toFixed(2);
     },
 
     // 獲取最新日期
     getLatestDate(data) {
-        if (!data || data.length === 0) return null;
-        return new Date(Math.max(...data.map(item => new Date(item.交易日期))));
+        return Math.max(...data.map(item => new Date(item.交易日期)));
     },
 
-    // 過濾市場數據
-    filterMarketData(data, marketName) {
-        if (!data || !marketName) return [];
-        return data.filter(item => item.市場名稱 === marketName);
+    // 過濾今日數據
+    filterTodayData(data, marketName) {
+        const latestDate = this.getLatestDate(data);
+        return data.filter(item => 
+            item.交易日期 === latestDate && 
+            item.市場名稱 === marketName
+        );
     },
 
-    // 排序價格數據
-    sortPriceData(data) {
-        if (!data) return [];
-        return [...data].sort((a, b) => Number(b.平均價) - Number(a.平均價));
+    // 計算市場統計
+    calculateMarketStats(data) {
+        const totalVolume = data.reduce((sum, item) => sum + Number(item.交易量), 0);
+        const avgPrice = data.reduce((sum, item) => sum + Number(item.平均價), 0) / data.length;
+        
+        return {
+            totalVolume,
+            avgPrice: this.formatPrice(avgPrice)
+        };
     },
 
-    // 顯示錯誤訊息
-    showError(message, duration = 3000) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = message;
-        document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), duration);
-    },
-
-    // 顯示通知
-    showNotification(message, type = 'info') {
-        const notificationList = document.getElementById('notificationList');
-        if (!notificationList) return;
-
+    // 生成通知項目
+    createNotificationItem(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification-item ${type}`;
         notification.textContent = message;
-
-        notificationList.appendChild(notification);
-        
-        // 限制通知數量
-        while (notificationList.children.length > CONFIG.DISPLAY.MAX_NOTIFICATIONS) {
-            notificationList.removeChild(notificationList.firstChild);
-        }
-
-        // 自動移除通知
-        setTimeout(() => {
-            notification.classList.add('fade-out');
-            setTimeout(() => notification.remove(), 500);
-        }, CONFIG.DISPLAY.NOTIFICATION_DURATION);
+        return notification;
     },
 
-    // 本地存儲操作
-    storage: {
-        get(key) {
-            try {
-                const value = localStorage.getItem(key);
-                return value ? JSON.parse(value) : null;
-            } catch (error) {
-                console.error('讀取本地存儲失敗:', error);
-                return null;
-            }
-        },
+    // 生成排行項目
+    createRankingItem(rank, cropName, volume) {
+        const rankItem = document.createElement('div');
+        rankItem.className = 'ranking-item';
+        rankItem.innerHTML = `
+            <span class="rank-number">${rank}</span>
+            <span class="crop-name">${cropName}</span>
+            <span class="trade-volume">${this.formatNumber(volume)} 公斤</span>
+        `;
+        return rankItem;
+    },
 
-        set(key, value) {
-            try {
-                localStorage.setItem(key, JSON.stringify(value));
-                return true;
-            } catch (error) {
-                console.error('寫入本地存儲失敗:', error);
-                return false;
-            }
-        },
-
-        remove(key) {
-            try {
-                localStorage.removeItem(key);
-                return true;
-            } catch (error) {
-                console.error('刪除本地存儲失敗:', error);
-                return false;
-            }
-        }
+    // 生成公告項目
+    createAnnouncementItem(message, type = 'info') {
+        const announcement = document.createElement('div');
+        announcement.className = `announcement-item ${type}`;
+        announcement.textContent = message;
+        return announcement;
     },
 
     // 防抖函數
@@ -134,5 +110,43 @@ const Utils = {
                 setTimeout(() => inThrottle = false, limit);
             }
         };
+    },
+
+    // 檢查瀏覽器支援
+    checkBrowserSupport() {
+        const features = {
+            flexbox: 'flex' in document.documentElement.style,
+            grid: 'grid' in document.documentElement.style,
+            webp: false
+        };
+
+        // 檢查 WebP 支援
+        const webpImage = new Image();
+        webpImage.onload = function() {
+            features.webp = (webpImage.width > 0) && (webpImage.height > 0);
+        };
+        webpImage.onerror = function() {
+            features.webp = false;
+        };
+        webpImage.src = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=';
+
+        return features;
+    },
+
+    // 檢查網路狀態
+    checkNetworkStatus() {
+        return navigator.onLine;
+    },
+
+    // 生成唯一ID
+    generateUniqueId() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
     }
-}; 
+};
+
+// 導出工具函數
+export default Utils; 

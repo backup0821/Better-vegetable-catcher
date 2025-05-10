@@ -3,6 +3,10 @@ const Chart = {
     // 圖表實例緩存
     chartInstances: {},
 
+    // 圖表相關功能
+    selectedCrop: null,
+    cropData: [],
+
     // 初始化圖表
     initChart(containerId) {
         const container = document.getElementById(containerId);
@@ -241,5 +245,141 @@ const Chart = {
             Plotly.purge(containerId);
             delete this.chartInstances[containerId];
         }
+    },
+
+    // 初始化圖表
+    init() {
+        const chartArea = document.getElementById('chartArea');
+        chartArea.style.display = 'none';
+    },
+
+    // 顯示價格趨勢圖
+    showPriceTrend() {
+        if (!this.selectedCrop || !this.cropData.length) return;
+        
+        const chartArea = document.getElementById('chartArea');
+        chartArea.style.display = 'block';
+        
+        const cropData = this.getCropData(this.selectedCrop);
+        this.drawChart(cropData);
+    },
+
+    // 獲取作物數據
+    getCropData(cropName) {
+        return this.cropData
+            .filter(item => item.作物名稱 === cropName)
+            .sort((a, b) => new Date(a.交易日期) - new Date(b.交易日期));
+    },
+
+    // 繪製圖表
+    drawChart(data) {
+        const dates = data.map(item => item.交易日期);
+        const prices = data.map(item => Number(item.平均價));
+        const volumes = data.map(item => Number(item.交易量));
+        
+        const trace1 = {
+            x: dates,
+            y: prices,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: '價格',
+            line: { 
+                color: '#1a237e',
+                width: 3
+            },
+            marker: {
+                size: 8,
+                color: '#1a237e'
+            }
+        };
+        
+        const trace2 = {
+            x: dates,
+            y: volumes,
+            type: 'bar',
+            name: '交易量',
+            yaxis: 'y2',
+            marker: { 
+                color: '#4caf50',
+                opacity: 0.7
+            }
+        };
+        
+        const layout = {
+            title: {
+                text: `${data[0].作物名稱} 價格趨勢`,
+                font: {
+                    family: 'Noto Sans TC, Microsoft JhengHei, sans-serif',
+                    size: 24
+                }
+            },
+            xaxis: {
+                title: '日期',
+                tickangle: -45,
+                font: {
+                    family: 'Noto Sans TC, Microsoft JhengHei, sans-serif',
+                    size: 14
+                }
+            },
+            yaxis: {
+                title: '價格 (元/公斤)',
+                font: {
+                    family: 'Noto Sans TC, Microsoft JhengHei, sans-serif',
+                    size: 14
+                }
+            },
+            yaxis2: {
+                title: '交易量 (公斤)',
+                overlaying: 'y',
+                side: 'right',
+                font: {
+                    family: 'Noto Sans TC, Microsoft JhengHei, sans-serif',
+                    size: 14
+                }
+            },
+            showlegend: true,
+            legend: {
+                x: 1,
+                y: 1,
+                font: {
+                    family: 'Noto Sans TC, Microsoft JhengHei, sans-serif',
+                    size: 14
+                }
+            },
+            margin: {
+                t: 60,
+                l: 60,
+                r: 60,
+                b: 60
+            },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        };
+        
+        const config = {
+            responsive: true,
+            displayModeBar: false
+        };
+        
+        Plotly.newPlot('chartArea', [trace1, trace2], layout, config);
+    },
+
+    // 更新圖表數據
+    updateChartData(newData) {
+        this.cropData = newData;
+        if (this.selectedCrop) {
+            this.showPriceTrend();
+        }
+    },
+
+    // 選擇作物
+    selectCrop(cropName) {
+        this.selectedCrop = cropName;
+        this.showPriceTrend();
     }
+};
+
+// 導出函數
+export {
+    Chart
 }; 
