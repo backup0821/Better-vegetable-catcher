@@ -761,692 +761,203 @@ footer {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1001;
+    z-index: 1000;
 }
 
 .dialog-content {
-    background: var(--background-color, #2d2d2d);
-    border-radius: 8px;
+    background-color: white;
     padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    min-width: 300px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     max-width: 90%;
     max-height: 90vh;
     overflow-y: auto;
+    width: 500px;
 }
 
-.dialog-content h3 {
+.dialog h3 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: var(--text-color, #ffffff);
+    color: #333;
 }
 
-/* 環境設定樣式 */
-.env-options {
-    margin-bottom: 20px;
-}
-
-.env-option {
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-.env-option:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.env-option input[type="radio"] {
-    margin-right: 10px;
-}
-
-.env-option label {
-    color: var(--text-color, #ffffff);
-    cursor: pointer;
-    flex: 1;
-}
-
-.env-actions {
+.dialog-buttons {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color, #444);
 }
 
-.env-actions button {
+.dialog button {
     padding: 8px 16px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    transition: all 0.3s;
 }
 
-.env-actions button:first-child {
-    background-color: var(--primary-color, #1a73e8);
+.dialog .save-btn {
+    background-color: #4CAF50;
     color: white;
 }
 
-.env-actions button:first-child:hover {
-    background-color: var(--primary-color-dark, #1557b0);
-}
-
-.env-actions button:not(:first-child) {
-    background-color: #555;
+.dialog .cancel-btn {
+    background-color: #f44336;
     color: white;
 }
 
-.env-actions button:not(:first-child):hover {
-    background-color: #666;
-}
-
-/* 開發者模式區段樣式 */
-.dev-mode-section {
-    margin-bottom: 20px;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
-}
-
-.dev-mode-section h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: var(--text-color, #ffffff);
-    font-size: 1.1em;
-}
-
-.dev-mode-section button {
-    display: block;
-    width: 100%;
-    margin-bottom: 8px;
-    padding: 8px 12px;
-    background-color: var(--primary-color, #1a73e8);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.dev-mode-section button:hover {
-    background-color: var(--primary-color-dark, #1557b0);
-}
-
-.dev-mode-section button:last-child {
-    margin-bottom: 0;
-}
-
-/* 資料庫查看器 */
-.db-viewer {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--background-color);
-    border-radius: 8px;
-    padding: 20px;
-    width: 90%;
-    max-width: 1200px;
-    max-height: 90vh;
-    overflow-y: auto;
-    z-index: 10000;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.db-viewer-header {
+/* 環境設定樣式 */
+.environment-options {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.db-viewer-header h3 {
-    margin: 0;
-    color: var(--primary-color);
-    font-size: 1.5em;
-}
-
-.db-viewer-controls {
-    display: flex;
+    flex-direction: column;
     gap: 10px;
-    margin-left: 20px;
 }
 
-.db-viewer-controls input,
-.db-viewer-controls select {
-    padding: 8px;
-    border: 1px solid var(--primary-color);
-    border-radius: 4px;
-    background-color: var(--background-color);
-    color: var(--text-color);
-}
-
-.db-viewer-controls input {
-    width: 200px;
-}
-
-.db-viewer-controls select {
-    min-width: 150px;
-}
-
-.db-table-container {
-    overflow-x: auto;
-    margin-bottom: 20px;
-    background-color: var(--background-color);
+.option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-.db-table-container table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 0;
+.option label {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
 }
 
-.db-table-container th,
-.db-table-container td {
-    padding: 12px;
-    border: 1px solid var(--primary-color);
-    text-align: left;
-    white-space: nowrap;
-}
-
-.db-table-container th {
-    background-color: var(--primary-color);
-    color: white;
+.option .label {
     font-weight: bold;
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
 
-.db-table-container tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.05);
+.option .description {
+    font-size: 12px;
+    color: #666;
 }
 
-.db-table-container tr:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.db-pagination {
+/* 功能開關樣式 */
+.feature-sections {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-top: 20px;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.db-pagination button {
-    padding: 8px 16px;
-    border: 1px solid var(--primary-color);
+.feature-section h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.feature-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
     border-radius: 4px;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.db-pagination button:hover:not(:disabled) {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.db-pagination button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-#pageInfo {
-    color: var(--text-color);
-    font-size: 0.9em;
-}
-
-.close-button {
-    position: absolute;
-    right: 0;
-    top: 0;
-    background: none;
-    border: none;
-    color: var(--text-color);
-    font-size: 24px;
-    cursor: pointer;
-    padding: 5px;
-    line-height: 1;
-    transition: color 0.3s ease;
-}
-
-.close-button:hover {
-    color: var(--primary-color);
-}
-
-/* 備份對話框樣式 */
-.backup-dialog {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-}
-
-.backup-dialog-content {
-    background: #2d2d2d;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-}
-
-.backup-dialog-content h3 {
-    color: #4CAF50;
-    margin: 0 0 20px 0;
-    text-align: center;
-}
-
-.backup-options {
-    margin-bottom: 20px;
-}
-
-.backup-option {
-    display: flex;
-    align-items: center;
     margin-bottom: 10px;
 }
 
-.backup-option input[type="checkbox"] {
-    margin-right: 10px;
-}
-
-.backup-option label {
-    color: #fff;
-}
-
-.backup-actions {
+.feature-option label {
     display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-
-.backup-actions button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
+    flex-direction: column;
     cursor: pointer;
-    transition: background-color 0.3s;
 }
 
-#startBackup {
-    background: #4CAF50;
-    color: white;
+.feature-option .label {
+    font-weight: bold;
 }
 
-#startBackup:hover {
-    background: #45a049;
+.feature-option .description {
+    font-size: 12px;
+    color: #666;
 }
 
-#cancelBackup {
-    background: #666;
-    color: white;
-}
-
-#cancelBackup:hover {
-    background: #555;
-}
-
-/* 確認對話框樣式 */
-.confirm-dialog {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+/* 主題設定樣式 */
+.theme-sections {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-}
-
-.confirm-dialog-content {
-    background: #2d2d2d;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-}
-
-.confirm-dialog-content h3 {
-    color: #4CAF50;
-    margin: 0 0 15px 0;
-}
-
-.confirm-dialog-content p {
-    color: #fff;
-    margin-bottom: 20px;
-}
-
-.confirm-actions {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-
-.confirm-actions button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-#confirmRestore {
-    background: #4CAF50;
-    color: white;
-}
-
-#confirmRestore:hover {
-    background: #45a049;
-}
-
-#cancelRestore {
-    background: #666;
-    color: white;
-}
-
-#cancelRestore:hover {
-    background: #555;
-}
-
-/* 系統診斷工具樣式 */
-.diagnostic-section {
-    background-color: var(--background-color);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.status-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.error-log {
-    max-height: 200px;
-    overflow-y: auto;
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 1rem;
-    border-radius: 4px;
-    font-family: monospace;
-}
-
-/* 進階資料分析工具樣式 */
-.analysis-section {
-    background-color: var(--background-color);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.export-options,
-.filter-options,
-.visualization-templates {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.filter-options input,
-.filter-options select {
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid var(--border-color);
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text-color);
-}
-
-/* 效能優化工具樣式 */
-.performance-section {
-    background-color: var(--background-color);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.optimization-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.performance-metrics {
-    margin-top: 1rem;
-}
-
-.metric {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-}
-
-/* 測試工具樣式 */
-.test-section {
-    background-color: var(--background-color);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.api-test {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.compatibility-test,
-.automation-test {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-/* 安全性工具樣式 */
-.security-section {
-    background-color: var(--background-color);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.permission-list {
-    display: grid;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.permission-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.encryption-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.security-log {
-    max-height: 200px;
-    overflow-y: auto;
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 1rem;
-    border-radius: 4px;
-    font-family: monospace;
-    margin-top: 1rem;
-}
-
-/* 通用按鈕樣式 */
-button {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    background-color: var(--primary-color);
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: var(--secondary-color);
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-/* 環境操作按鈕樣式 */
-.env-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.price-up {
-    color: red;
-}
-
-.price-down {
-    color: green;
-}
-
-/* 主題設定相關樣式 */
-.theme-section {
-    margin-bottom: var(--spacing-unit) * 2;
-    padding: var(--spacing-unit);
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--border-radius);
+    flex-direction: column;
+    gap: 20px;
 }
 
 .theme-section h4 {
-    margin-bottom: var(--spacing-unit);
-    color: var(--text-color);
-    font-size: 1.1em;
+    margin-bottom: 10px;
+    color: #333;
 }
 
-.color-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-unit);
+.theme-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
 }
 
-.color-item {
+.theme-option label {
     display: flex;
     flex-direction: column;
-    gap: calc(var(--spacing-unit) / 2);
-}
-
-.color-item label {
-    color: var(--text-color);
-    font-size: 0.9em;
-}
-
-.color-item input[type="color"] {
-    width: 100%;
-    height: 40px;
-    padding: 2px;
-    border: 2px solid var(--primary-color);
-    border-radius: var(--border-radius);
-    background: var(--background-color);
     cursor: pointer;
 }
 
-.font-group,
-.spacing-group,
-.animation-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-unit);
+.theme-option .label {
+    font-weight: bold;
 }
 
-.font-item,
-.spacing-item,
-.animation-item {
+.theme-option .description {
+    font-size: 12px;
+    color: #666;
+}
+
+.color-picker {
     display: flex;
-    flex-direction: column;
-    gap: calc(var(--spacing-unit) / 2);
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
-.font-item label,
-.spacing-item label,
-.animation-item label {
-    color: var(--text-color);
-    font-size: 0.9em;
+.color-picker label {
+    min-width: 100px;
 }
 
-.font-item select,
-.font-item input,
-.spacing-item input,
-.animation-item input,
-.animation-item select {
-    padding: calc(var(--spacing-unit) / 2);
-    border: 2px solid var(--primary-color);
-    border-radius: var(--border-radius);
-    background: var(--background-color);
-    color: var(--text-color);
-    font-family: var(--font-family);
-}
-
-.preset-group {
-    display: flex;
-    gap: var(--spacing-unit);
-    flex-wrap: wrap;
-}
-
-.preset-btn {
-    padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
-    border: 2px solid var(--primary-color);
-    border-radius: var(--border-radius);
-    background: var(--background-color);
-    color: var(--text-color);
+.color-picker input[type="color"] {
+    width: 50px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all var(--animation-duration) var(--animation-curve);
 }
 
-.preset-btn:hover {
-    background: var(--primary-color);
-    color: var(--background-color);
+/* 深色主題 */
+.dark-theme {
+    --primary-color: #4CAF50;
+    --secondary-color: #2196F3;
+    --background-color: #1a1a1a;
+    --text-color: #ffffff;
+}
+
+.dark-theme .dialog-content {
+    background-color: #2d2d2d;
+    color: #ffffff;
+}
+
+.dark-theme .option,
+.dark-theme .feature-option,
+.dark-theme .theme-option {
+    border-color: #444;
+}
+
+.dark-theme .option .description,
+.dark-theme .feature-option .description,
+.dark-theme .theme-option .description {
+    color: #aaa;
 }
 
 /* 主題變數 */
@@ -1640,4 +1151,301 @@ th {
     font-size: 0.9em;
     color: #666;
     font-style: italic;
+}
+
+/* 主題設定樣式 */
+.theme-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.theme-category {
+    background: var(--background-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.theme-category h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-color);
+    font-size: 1.1em;
+}
+
+.theme-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.theme-option {
+    position: relative;
+}
+
+.theme-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+.theme-option label {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.theme-option input[type="radio"]:checked + label {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.theme-preview {
+    height: 100px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-theme {
+    background: linear-gradient(45deg, #ffffff, #f5f5f5);
+}
+
+.dark-theme {
+    background: linear-gradient(45deg, #333333, #1a1a1a);
+}
+
+.system-theme {
+    background: linear-gradient(45deg, #ffffff 50%, #333333 50%);
+}
+
+.theme-info {
+    text-align: center;
+}
+
+.theme-label {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.theme-desc {
+    font-size: 0.9em;
+    color: var(--text-color-secondary);
+}
+
+.theme-customization {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.color-picker, .font-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.color-picker label, .font-settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.color-picker input[type="color"] {
+    width: 100%;
+    height: 40px;
+    padding: 2px;
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    background: var(--background-color);
+    cursor: pointer;
+}
+
+.font-settings select {
+    padding: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    background: var(--background-color);
+    color: var(--text-color);
+}
+
+/* 功能開關樣式 */
+.feature-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.feature-category {
+    background: var(--background-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.feature-category h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-color);
+    font-size: 1.1em;
+}
+
+.feature-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.feature-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.feature-info {
+    flex: 1;
+}
+
+.feature-label {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.feature-desc {
+    font-size: 0.9em;
+    color: var(--text-color-secondary);
+}
+
+/* 按鈕樣式 */
+.primary-button, .secondary-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.primary-button {
+    background: var(--primary-color);
+    color: white;
+}
+
+.primary-button:hover {
+    background: var(--primary-color-dark);
+}
+
+.secondary-button {
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--text-color);
+}
+
+.secondary-button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* 對話框樣式 */
+.dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-content {
+    background: var(--background-color);
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.dialog-content h3 {
+    margin: 0 0 20px 0;
+    color: var(--text-color);
+}
+
+/* 通知樣式 */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 } 

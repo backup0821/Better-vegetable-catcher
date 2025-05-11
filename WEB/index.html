@@ -193,12 +193,51 @@
         </div>
         <div class="dev-mode-content">
             <div class="dev-mode-section">
+                <h3>環境設定</h3>
+                <div class="environment-options">
+                    <div class="option">
+                        <input type="radio" id="env-prod" name="environment" value="production">
+                        <label for="env-prod">
+                            <div class="label">正式環境</div>
+                            <div class="description">用於正式營運的環境</div>
+                        </label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="env-test" name="environment" value="testing">
+                        <label for="env-test">
+                            <div class="label">測試環境</div>
+                            <div class="description">用於功能測試的環境</div>
+                        </label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="env-test2" name="environment" value="testing2">
+                        <label for="env-test2">
+                            <div class="label">測試環境 2</div>
+                            <div class="description">用於進階測試的環境</div>
+                        </label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="env-dev" name="environment" value="development">
+                        <label for="env-dev">
+                            <div class="label">開發環境</div>
+                            <div class="description">用於開發新功能的環境</div>
+                        </label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="env-staging" name="environment" value="staging">
+                        <label for="env-staging">
+                            <div class="label">預備環境</div>
+                            <div class="description">用於發布前的預備環境</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="dev-mode-section">
                 <h3>資料庫操作</h3>
                 <button id="viewDatabase">查看資料庫</button>
             </div>
             <div class="dev-mode-section">
-                <h3>開發者設定</h3>
-                <button id="switchEnvironment">環境設定</button>
+                <h3>功能設定</h3>
                 <button id="featureToggle">功能開關</button>
                 <button id="customTheme">主題設定</button>
             </div>

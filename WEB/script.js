@@ -2226,10 +2226,12 @@ function initDevMode() {
     }
 
     // 關閉按鈕事件
-    closeDevModeBtn.addEventListener('click', () => {
-        devModePanel.style.display = 'none';
-        isDevModeActive = false;
-    });
+    if (closeDevModeBtn) {
+        closeDevModeBtn.addEventListener('click', () => {
+            devModePanel.style.display = 'none';
+            isDevModeActive = false;
+        });
+    }
 
     // 點擊外部區域關閉
     document.addEventListener('click', (e) => {
@@ -2247,8 +2249,62 @@ function initDevMode() {
         }
     });
 
-    // 初始化所有開發者模式功能
+    // 初始化環境設定
+    initEnvironmentSettings();
+    
+    // 初始化其他開發者模式功能
     initDevModeFeatures();
+}
+
+// 初始化環境設定
+function initEnvironmentSettings() {
+    const environmentRadios = document.querySelectorAll('input[name="environment"]');
+    
+    // 載入已儲存的環境設定
+    const savedEnv = localStorage.getItem('environment') || 'production';
+    document.querySelector(`#env-${savedEnv}`).checked = true;
+    
+    // 監聽環境變更
+    environmentRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const selectedEnv = e.target.value;
+            localStorage.setItem('environment', selectedEnv);
+            document.title = `農產品交易資料分析系統 - ${selectedEnv}`;
+            console.log(`環境已切換至：${selectedEnv}`);
+        });
+    });
+}
+
+// 初始化開發者模式功能
+function initDevModeFeatures() {
+    console.log('初始化開發者模式功能');
+    
+    // 資料庫操作按鈕
+    const viewDatabaseBtn = document.getElementById('viewDatabase');
+    if (viewDatabaseBtn) {
+        console.log('綁定查看資料庫按鈕');
+        viewDatabaseBtn.addEventListener('click', viewDatabase);
+    }
+
+    // 功能設定按鈕
+    const featureToggleBtn = document.getElementById('featureToggle');
+    const customThemeBtn = document.getElementById('customTheme');
+
+    if (featureToggleBtn) {
+        console.log('綁定功能開關按鈕');
+        featureToggleBtn.addEventListener('click', () => {
+            console.log('點擊功能開關按鈕');
+            showFeatureSettings();
+        });
+    }
+
+    if (customThemeBtn) {
+        console.log('綁定主題設定按鈕');
+        customThemeBtn.addEventListener('click', () => {
+            console.log('點擊主題設定按鈕');
+            showThemeSettings();
+        });
+    }
 }
 
 // 啟動開發者模式
@@ -2261,92 +2317,9 @@ function activateDevMode() {
         devModePanel.style.display = 'block';
         devModePanel.classList.add('active');
         console.log('開發者模式已啟動');
-    }
-}
-
-// 初始化所有功能
-function initAllFeatures() {
-    // 資料庫操作
-    const viewDatabaseBtn = document.getElementById('viewDatabase');
-    if (viewDatabaseBtn) {
-        viewDatabaseBtn.addEventListener('click', () => {
-            console.log('點擊查看資料庫');
-            viewDatabase();
-        });
-    }
-
-    // 開發者設定
-    const switchEnvironmentBtn = document.getElementById('switchEnvironment');
-    if (switchEnvironmentBtn) {
-        switchEnvironmentBtn.addEventListener('click', () => {
-            console.log('點擊環境設定');
-            showEnvironmentSettings();
-        });
-    }
-
-    const adjustParametersBtn = document.getElementById('adjustParameters');
-    if (adjustParametersBtn) {
-        adjustParametersBtn.addEventListener('click', () => {
-            console.log('點擊參數調整');
-            showParameterSettings();
-        });
-    }
-
-    const customThemeBtn = document.getElementById('customTheme');
-    if (customThemeBtn) {
-        customThemeBtn.addEventListener('click', () => {
-            console.log('點擊主題設定');
-            showThemeSettings();
-        });
-    }
-
-    const featureToggleBtn = document.getElementById('featureToggle');
-    if (featureToggleBtn) {
-        featureToggleBtn.addEventListener('click', () => {
-            console.log('點擊功能開關');
-            showFeatureSettings();
-        });
-    }
-
-    // 進階工具
-    const systemDiagnosticsBtn = document.getElementById('systemDiagnostics');
-    if (systemDiagnosticsBtn) {
-        systemDiagnosticsBtn.addEventListener('click', () => {
-            console.log('點擊系統診斷');
-            showSystemDiagnostics();
-        });
-    }
-
-    const advancedAnalysisBtn = document.getElementById('advancedAnalysis');
-    if (advancedAnalysisBtn) {
-        advancedAnalysisBtn.addEventListener('click', () => {
-            console.log('點擊進階分析');
-            showAdvancedAnalysis();
-        });
-    }
-
-    const performanceToolsBtn = document.getElementById('performanceTools');
-    if (performanceToolsBtn) {
-        performanceToolsBtn.addEventListener('click', () => {
-            console.log('點擊效能優化');
-            showPerformanceTools();
-        });
-    }
-
-    const testToolsBtn = document.getElementById('testTools');
-    if (testToolsBtn) {
-        testToolsBtn.addEventListener('click', () => {
-            console.log('點擊測試工具');
-            showTestTools();
-        });
-    }
-
-    const securityToolsBtn = document.getElementById('securityTools');
-    if (securityToolsBtn) {
-        securityToolsBtn.addEventListener('click', () => {
-            console.log('點擊安全性工具');
-            showSecurityTools();
-        });
+        
+        // 確保功能按鈕事件被綁定
+        initDevModeFeatures();
     }
 }
 
@@ -2781,15 +2754,24 @@ function showEnvironmentSettings() {
             <div class="env-options">
                 <div class="env-option">
                     <input type="radio" id="envProduction" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
-                    <label for="envProduction">正式版環境</label>
+                    <label for="envProduction">
+                        <div class="env-label">正式版環境</div>
+                        <div class="env-desc">用於正式營運環境，具有完整的錯誤處理和日誌記錄</div>
+                    </label>
                 </div>
                 <div class="env-option">
                     <input type="radio" id="envTesting" name="environment" value="testing" ${window.ENV_DEFAULT_CONFIGS.environment === 'testing' ? 'checked' : ''}>
-                    <label for="envTesting">測試版環境</label>
+                    <label for="envTesting">
+                        <div class="env-label">測試版環境</div>
+                        <div class="env-desc">用於功能測試，具有詳細的除錯資訊</div>
+                    </label>
                 </div>
                 <div class="env-option">
                     <input type="radio" id="envTesting2" name="environment" value="testing2" ${window.ENV_DEFAULT_CONFIGS.environment === 'testing2' ? 'checked' : ''}>
-                    <label for="envTesting2">測試版環境 2</label>
+                    <label for="envTesting2">
+                        <div class="env-label">測試版環境 2</div>
+                        <div class="env-desc">用於進階測試，具有效能監控功能</div>
+                    </label>
                 </div>
                 <div class="env-option">
                     <input type="radio" id="envDevelopment" name="environment" value="development" ${window.ENV_DEFAULT_CONFIGS.environment === 'development' ? 'checked' : ''}>
@@ -2866,100 +2848,189 @@ function showParameterSettings() {
 
 function showThemeSettings() {
     const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
+    dialog.className = 'dialog';
     dialog.innerHTML = `
-        <div class="dev-settings-content">
+        <div class="dialog-content">
             <h3>主題設定</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closeThemeDialog">關閉</button></div>
+            <div class="theme-categories">
+                <div class="theme-category">
+                    <h4>預設主題</h4>
+                    <div class="theme-options">
+                        <div class="theme-option">
+                            <input type="radio" id="themeLight" name="theme" value="light" checked>
+                            <label for="themeLight">
+                                <div class="theme-preview light-theme"></div>
+                                <div class="theme-info">
+                                    <div class="theme-label">淺色主題</div>
+                                    <div class="theme-desc">明亮的配色方案，適合日間使用</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="theme-option">
+                            <input type="radio" id="themeDark" name="theme" value="dark">
+                            <label for="themeDark">
+                                <div class="theme-preview dark-theme"></div>
+                                <div class="theme-info">
+                                    <div class="theme-label">深色主題</div>
+                                    <div class="theme-desc">暗色配色方案，適合夜間使用</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="theme-option">
+                            <input type="radio" id="themeSystem" name="theme" value="system">
+                            <label for="themeSystem">
+                                <div class="theme-preview system-theme"></div>
+                                <div class="theme-info">
+                                    <div class="theme-label">跟隨系統</div>
+                                    <div class="theme-desc">自動跟隨系統的主題設定</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="theme-category">
+                    <h4>自訂主題</h4>
+                    <div class="theme-customization">
+                        <div class="color-picker">
+                            <label>
+                                <span>主要顏色</span>
+                                <input type="color" id="primaryColor" value="#4CAF50">
+                            </label>
+                            <label>
+                                <span>次要顏色</span>
+                                <input type="color" id="secondaryColor" value="#2196F3">
+                            </label>
+                            <label>
+                                <span>背景顏色</span>
+                                <input type="color" id="backgroundColor" value="#FFFFFF">
+                            </label>
+                            <label>
+                                <span>文字顏色</span>
+                                <input type="color" id="textColor" value="#333333">
+                            </label>
+                        </div>
+                        <div class="font-settings">
+                            <label>
+                                <span>字體大小</span>
+                                <select id="fontSize">
+                                    <option value="small">小</option>
+                                    <option value="medium" selected>中</option>
+                                    <option value="large">大</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>字體樣式</span>
+                                <select id="fontFamily">
+                                    <option value="system">系統預設</option>
+                                    <option value="sans-serif">無襯線</option>
+                                    <option value="serif">襯線</option>
+                                    <option value="monospace">等寬</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-actions">
+                <button id="saveTheme" class="primary-button">儲存設定</button>
+                <button id="resetTheme" class="secondary-button">重設為預設值</button>
+                <button id="closeThemeDialog" class="secondary-button">取消</button>
+            </div>
         </div>
     `;
     document.body.appendChild(dialog);
-    document.getElementById('closeThemeDialog').onclick = () => dialog.remove();
+
+    // 載入已儲存的設定
+    const savedTheme = JSON.parse(localStorage.getItem('themeSettings') || '{}');
+    if (savedTheme.theme) {
+        document.querySelector(`input[name="theme"][value="${savedTheme.theme}"]`).checked = true;
+    }
+    if (savedTheme.colors) {
+        document.getElementById('primaryColor').value = savedTheme.colors.primary || '#4CAF50';
+        document.getElementById('secondaryColor').value = savedTheme.colors.secondary || '#2196F3';
+        document.getElementById('backgroundColor').value = savedTheme.colors.background || '#FFFFFF';
+        document.getElementById('textColor').value = savedTheme.colors.text || '#333333';
+    }
+    if (savedTheme.font) {
+        document.getElementById('fontSize').value = savedTheme.font.size || 'medium';
+        document.getElementById('fontFamily').value = savedTheme.font.family || 'system';
+    }
+
+    // 點擊外部區域關閉
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            dialog.remove();
+        }
+    });
+
+    // ESC 鍵關閉
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dialog.remove();
+        }
+    });
+
+    // 儲存設定
+    document.getElementById('saveTheme').addEventListener('click', () => {
+        const themeSettings = {
+            theme: document.querySelector('input[name="theme"]:checked').value,
+            colors: {
+                primary: document.getElementById('primaryColor').value,
+                secondary: document.getElementById('secondaryColor').value,
+                background: document.getElementById('backgroundColor').value,
+                text: document.getElementById('textColor').value
+            },
+            font: {
+                size: document.getElementById('fontSize').value,
+                family: document.getElementById('fontFamily').value
+            }
+        };
+
+        localStorage.setItem('themeSettings', JSON.stringify(themeSettings));
+        applyTheme(themeSettings);
+        dialog.remove();
+        showNotification('主題設定已更新');
+    });
+
+    // 重設為預設值
+    document.getElementById('resetTheme').addEventListener('click', () => {
+        if (confirm('確定要重設所有主題設定為預設值嗎？')) {
+            document.getElementById('themeLight').checked = true;
+            document.getElementById('primaryColor').value = '#4CAF50';
+            document.getElementById('secondaryColor').value = '#2196F3';
+            document.getElementById('backgroundColor').value = '#FFFFFF';
+            document.getElementById('textColor').value = '#333333';
+            document.getElementById('fontSize').value = 'medium';
+            document.getElementById('fontFamily').value = 'system';
+        }
+    });
+
+    // 關閉對話框
+    document.getElementById('closeThemeDialog').addEventListener('click', () => {
+        dialog.remove();
+    });
 }
 
-function showFeatureSettings() {
-    const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
-    dialog.innerHTML = `
-        <div class="dev-settings-content">
-            <h3>功能開關</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closeFeatureDialog">關閉</button></div>
-        </div>
-    `;
-    document.body.appendChild(dialog);
-    document.getElementById('closeFeatureDialog').onclick = () => dialog.remove();
-}
+function applyTheme(themeSettings) {
+    const root = document.documentElement;
+    
+    // 設定主題
+    if (themeSettings.theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else {
+        root.setAttribute('data-theme', themeSettings.theme);
+    }
 
-function showSystemDiagnostics() {
-    const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
-    dialog.innerHTML = `
-        <div class="dev-settings-content">
-            <h3>系統診斷</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closeSysDiagDialog">關閉</button></div>
-        </div>
-    `;
-    document.body.appendChild(dialog);
-    document.getElementById('closeSysDiagDialog').onclick = () => dialog.remove();
-}
+    // 設定顏色
+    root.style.setProperty('--primary-color', themeSettings.colors.primary);
+    root.style.setProperty('--secondary-color', themeSettings.colors.secondary);
+    root.style.setProperty('--background-color', themeSettings.colors.background);
+    root.style.setProperty('--text-color', themeSettings.colors.text);
 
-function showAdvancedAnalysis() {
-    const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
-    dialog.innerHTML = `
-        <div class="dev-settings-content">
-            <h3>進階分析</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closeAdvAnalysisDialog">關閉</button></div>
-        </div>
-    `;
-    document.body.appendChild(dialog);
-    document.getElementById('closeAdvAnalysisDialog').onclick = () => dialog.remove();
-}
-
-function showPerformanceTools() {
-    const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
-    dialog.innerHTML = `
-        <div class="dev-settings-content">
-            <h3>效能優化</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closePerfDialog">關閉</button></div>
-        </div>
-    `;
-    document.body.appendChild(dialog);
-    document.getElementById('closePerfDialog').onclick = () => dialog.remove();
-}
-
-function showTestTools() {
-    const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
-    dialog.innerHTML = `
-        <div class="dev-settings-content">
-            <h3>測試工具</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closeTestDialog">關閉</button></div>
-        </div>
-    `;
-    document.body.appendChild(dialog);
-    document.getElementById('closeTestDialog').onclick = () => dialog.remove();
-}
-
-function showSecurityTools() {
-    const dialog = document.createElement('div');
-    dialog.className = 'dev-settings-dialog';
-    dialog.innerHTML = `
-        <div class="dev-settings-content">
-            <h3>安全性工具</h3>
-            <div style="margin-bottom: 20px;">此功能尚未實作，請待後續更新。</div>
-            <div class="env-actions"><button id="closeSecDialog">關閉</button></div>
-        </div>
-    `;
-    document.body.appendChild(dialog);
-    document.getElementById('closeSecDialog').onclick = () => dialog.remove();
+    // 設定字體
+    root.style.setProperty('--font-size', themeSettings.font.size);
+    root.style.setProperty('--font-family', themeSettings.font.family);
 }
 
 // ... existing code ...
@@ -2975,41 +3046,7 @@ function deactivateDevMode() {
     }
 }
 
-// 初始化開發者模式功能
-function initDevModeFeatures() {
-    // 資料庫操作按鈕
-    const viewDatabaseBtn = document.getElementById('viewDatabase');
-    if (viewDatabaseBtn) {
-        viewDatabaseBtn.addEventListener('click', () => {
-            viewDatabase();
-        });
-    }
-
-    // 開發者設定按鈕
-    const switchEnvironmentBtn = document.getElementById('switchEnvironment');
-    const featureToggleBtn = document.getElementById('featureToggle');
-    const customThemeBtn = document.getElementById('customTheme');
-
-    if (switchEnvironmentBtn) {
-        switchEnvironmentBtn.addEventListener('click', () => {
-            showEnvironmentSettings();
-        });
-    }
-
-    if (featureToggleBtn) {
-        featureToggleBtn.addEventListener('click', () => {
-            showFeatureSettings();
-        });
-    }
-
-    if (customThemeBtn) {
-        customThemeBtn.addEventListener('click', () => {
-            showThemeSettings();
-        });
-    }
-}
-
-// ... existing code ... 
+// ... existing code ...
 
 // 假設有一個函數用於更新表格資料
 function updateDetailTable(data) {
