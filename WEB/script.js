@@ -2271,6 +2271,12 @@ function initEnvironmentSettings() {
             localStorage.setItem('environment', selectedEnv);
             document.title = `農產品交易資料分析系統 - ${selectedEnv}`;
             console.log(`環境已切換至：${selectedEnv}`);
+            
+            // 更新抓取更多資料按鈕的顯示狀態
+            const fetchMoreDataBtn = document.getElementById('fetchMoreData');
+            if (fetchMoreDataBtn) {
+                fetchMoreDataBtn.style.display = selectedEnv === 'development' ? 'inline-block' : 'none';
+            }
         });
     });
 }
@@ -2305,6 +2311,236 @@ function initDevModeFeatures() {
             showThemeSettings();
         });
     }
+
+    // 初始化環境設定
+    initEnvironmentSettings();
+
+    // 初始化抓取更多資料按鈕
+    initFetchMoreDataButton();
+}
+
+// 初始化抓取更多資料按鈕
+function initFetchMoreDataButton() {
+    const fetchMoreDataBtn = document.getElementById('fetchMoreData');
+    if (fetchMoreDataBtn) {
+        // 只在開發環境中顯示按鈕
+        const currentEnv = localStorage.getItem('environment') || 'production';
+        if (currentEnv === 'development') {
+            fetchMoreDataBtn.style.display = 'inline-block';
+            fetchMoreDataBtn.addEventListener('click', fetchMoreData);
+        } else {
+            fetchMoreDataBtn.style.display = 'none';
+        }
+    }
+}
+
+// 抓取更多資料
+async function fetchMoreData() {
+    try {
+        // 檢查是否有選擇作物
+        if (!selectedCrop) {
+            showNotification('提示', '請先選擇作物');
+            return;
+        }
+
+        // 顯示載入中提示
+        showNotification('系統訊息', '正在檢查資料可用性...');
+        
+        // 顯示載入動畫
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'flex';
+        }
+
+        // 獲取當前作物的資料
+        const currentData = await getCropData(selectedCrop);
+        if (!currentData || currentData.length === 0) {
+            showNotification('提示', '目前沒有該作物的資料');
+            return;
+        }
+
+        // 分析資料可用性
+        const dataAvailability = analyzeDataAvailability(currentData);
+        
+        // 顯示資料可用性通知
+        showDataAvailabilityNotification(dataAvailability);
+
+        // 如果沒有可用的新資料，直接返回
+        if (!dataAvailability.hasNewData) {
+            showNotification('提示', '目前沒有可用的新資料');
+            return;
+        }
+
+        // 顯示載入中提示
+        showNotification('系統訊息', '開始抓取更多資料...');
+
+        // 模擬抓取資料的過程
+        const response = await fetch('https://api.example.com/more-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                timestamp: new Date().toISOString(),
+                environment: localStorage.getItem('environment'),
+                crop: selectedCrop,
+                availableDates: dataAvailability.availableDates
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('抓取資料失敗');
+        }
+
+        const data = await response.json();
+        
+        // 更新資料庫
+        await updateDatabase(data);
+        
+        // 更新 UI
+        updateUIWithNewData(data);
+        
+        // 顯示成功訊息
+        showNotification('系統訊息', '成功抓取更多資料！');
+    } catch (error) {
+        console.error('抓取資料時發生錯誤:', error);
+        showNotification('錯誤', '抓取資料失敗，請稍後再試。');
+    } finally {
+        // 隱藏載入動畫
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'none';
+        }
+    }
+}
+
+// 分析資料可用性
+function analyzeDataAvailability(data) {
+    // 獲取當前日期
+    const today = new Date();
+    const lastDate = new Date(Math.max(...data.map(item => new Date(item.date))));
+    
+    // 計算可用的日期範圍
+    const availableDates = [];
+    const currentDate = new Date(lastDate);
+    currentDate.setDate(currentDate.getDate() + 1); // 從最後一筆資料的隔天開始
+
+    while (currentDate <= today) {
+        // 檢查是否為週末
+        const dayOfWeek = currentDate.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 是週日，6 是週六
+            availableDates.push(new Date(currentDate));
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return {
+        hasNewData: availableDates.length > 0,
+        availableDates: availableDates,
+        lastUpdateDate: lastDate,
+        totalAvailableDays: availableDates.length
+    };
+}
+
+// 顯示資料可用性通知
+function showDataAvailabilityNotification(availability) {
+    const notificationArea = document.getElementById('notificationArea');
+    const notification = document.createElement('div');
+    notification.className = 'notification data-availability';
+    
+    // 格式化日期
+    const formatDate = (date) => {
+        return date.toLocaleDateString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    };
+
+    // 建立通知內容
+    let content = `
+        <h4>資料可用性分析</h4>
+        <p>最後更新日期：${formatDate(availability.lastUpdateDate)}</p>
+        <p>可抓取資料天數：${availability.totalAvailableDays} 天</p>
+    `;
+
+    if (availability.hasNewData) {
+        content += `
+            <p>可抓取日期範圍：</p>
+            <ul>
+                <li>開始：${formatDate(availability.availableDates[0])}</li>
+                <li>結束：${formatDate(availability.availableDates[availability.availableDates.length - 1])}</li>
+            </ul>
+            <p>是否要抓取這些資料？</p>
+            <div class="notification-actions">
+                <button onclick="confirmFetchData()" class="confirm-btn">確認抓取</button>
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" class="cancel-btn">取消</button>
+            </div>
+        `;
+    } else {
+        content += '<p>目前沒有可用的新資料</p>';
+    }
+
+    notification.innerHTML = content;
+    notificationArea.appendChild(notification);
+
+    // 5秒後自動移除通知（如果沒有新資料）
+    if (!availability.hasNewData) {
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+}
+
+// 確認抓取資料
+async function confirmFetchData() {
+    // 移除通知
+    const notification = document.querySelector('.data-availability');
+    if (notification) {
+        notification.remove();
+    }
+    
+    // 繼續抓取資料的流程
+    await fetchMoreData();
+}
+
+// 更新資料庫
+async function updateDatabase(newData) {
+    try {
+        const db = await openDatabase();
+        const transaction = db.transaction(['cropData'], 'readwrite');
+        const store = transaction.objectStore('cropData');
+
+        // 更新資料
+        for (const item of newData) {
+            await store.put(item);
+        }
+
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        });
+    } catch (error) {
+        console.error('更新資料庫時發生錯誤:', error);
+        throw error;
+    }
+}
+
+// 更新 UI 顯示新資料
+function updateUIWithNewData(data) {
+    // 更新圖表
+    if (selectedCrop) {
+        const cropData = getCropData(selectedCrop);
+        if (cropData) {
+            showPriceTrend();
+            showVolumeDistribution();
+            showPriceDistribution();
+            showSeasonalAnalysis();
+        }
+    }
+
+    // 更新詳細資料表格
+    updateDetailTable(data);
 }
 
 // 啟動開發者模式
