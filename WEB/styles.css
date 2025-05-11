@@ -703,28 +703,21 @@ footer {
     --text-color: #ffffff;
 }
 
-/* 開發者模式面板 */
+/* 開發者模式面板樣式 */
 .dev-mode-panel {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: var(--background-color);
-    border: 1px solid var(--primary-color);
+    background: var(--background-color, #2d2d2d);
     border-radius: 8px;
     padding: 20px;
-    width: 80%;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     z-index: 1000;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    display: none;
-    color: var(--text-color);
-}
-
-.dev-mode-panel.active {
-    display: block;
+    min-width: 300px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .dev-mode-header {
@@ -733,187 +726,163 @@ footer {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--primary-color);
+    border-bottom: 1px solid var(--border-color, #444);
 }
 
 .dev-mode-header h2 {
     margin: 0;
-    color: var(--primary-color);
+    color: var(--text-color, #ffffff);
 }
 
 .close-button {
     background: none;
     border: none;
+    color: var(--text-color, #ffffff);
     font-size: 24px;
-    color: var(--text-color);
     cursor: pointer;
     padding: 0;
-    line-height: 1;
-    transition: color 0.3s ease;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s;
 }
 
 .close-button:hover {
-    color: var(--primary-color);
-}
-
-.dev-mode-section {
-    margin-bottom: 20px;
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 6px;
-}
-
-.dev-mode-section h3 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
-    font-size: 1.2em;
-}
-
-.dev-mode-section button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
     background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--primary-color);
-    border-radius: 4px;
-    color: var(--text-color);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1em;
 }
 
-.dev-mode-section button:hover {
-    background-color: var(--primary-color);
-    color: white;
-    transform: translateY(-2px);
-}
-
-.dev-mode-section button:active {
-    transform: translateY(0);
-}
-
-/* 開發者設定對話框樣式 */
-.dev-settings-dialog {
+/* 對話框樣式 */
+.dialog {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1001;
 }
 
-.dev-settings-content {
-    background-color: var(--background-color, #2d2d2d);
-    padding: 20px;
+.dialog-content {
+    background: var(--background-color, #2d2d2d);
     border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     min-width: 300px;
     max-width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    color: var(--text-color, #ffffff);
 }
 
-.dev-settings-content h3 {
+.dialog-content h3 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: var(--primary-color, #1a73e8);
+    color: var(--text-color, #ffffff);
 }
 
 /* 環境設定樣式 */
-.env-options,
-.params-options,
-.theme-options,
-.features-options {
+.env-options {
     margin-bottom: 20px;
 }
 
-.env-option,
-.param-option,
-.theme-option,
-.feature-option {
-    margin-bottom: 10px;
+.env-option {
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-}
-
-.env-option label,
-.param-option label,
-.theme-option label,
-.feature-option label {
-    margin-left: 8px;
-    color: var(--text-color, #ffffff);
-}
-
-/* 參數設定樣式 */
-.param-option input[type="number"] {
-    width: 60px;
-    padding: 4px;
-    margin-left: 8px;
-    background-color: #3d3d3d;
-    border: 1px solid #555;
-    color: var(--text-color, #ffffff);
+    padding: 8px;
     border-radius: 4px;
+    transition: background-color 0.3s;
 }
 
-/* 主題設定樣式 */
-.theme-option input[type="color"] {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    margin-left: 8px;
+.env-option:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.env-option input[type="radio"] {
+    margin-right: 10px;
+}
+
+.env-option label {
+    color: var(--text-color, #ffffff);
     cursor: pointer;
+    flex: 1;
 }
 
-/* 按鈕樣式 */
-.env-actions,
-.params-actions,
-.theme-actions,
-.features-actions {
+.env-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color, #444);
 }
 
-.env-actions button,
-.params-actions button,
-.theme-actions button,
-.features-actions button {
+.env-actions button {
     padding: 8px 16px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.3s;
+    transition: all 0.3s;
 }
 
-.env-actions button:first-child,
-.params-actions button:first-child,
-.theme-actions button:first-child,
-.features-actions button:first-child {
+.env-actions button:first-child {
     background-color: var(--primary-color, #1a73e8);
     color: white;
 }
 
-.env-actions button:not(:first-child),
-.params-actions button:not(:first-child),
-.theme-actions button:not(:first-child),
-.features-actions button:not(:first-child) {
+.env-actions button:first-child:hover {
+    background-color: var(--primary-color-dark, #1557b0);
+}
+
+.env-actions button:not(:first-child) {
     background-color: #555;
     color: white;
 }
 
-.env-actions button:hover,
-.params-actions button:hover,
-.theme-actions button:hover,
-.features-actions button:hover {
-    opacity: 0.9;
+.env-actions button:not(:first-child):hover {
+    background-color: #666;
+}
+
+/* 開發者模式區段樣式 */
+.dev-mode-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+}
+
+.dev-mode-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--text-color, #ffffff);
+    font-size: 1.1em;
+}
+
+.dev-mode-section button {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background-color: var(--primary-color, #1a73e8);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.dev-mode-section button:hover {
+    background-color: var(--primary-color-dark, #1557b0);
+}
+
+.dev-mode-section button:last-child {
+    margin-bottom: 0;
 }
 
 /* 資料庫查看器 */

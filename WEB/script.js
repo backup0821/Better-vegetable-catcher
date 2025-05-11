@@ -2179,66 +2179,76 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 開發者模式相關變數
-let devModeClickCount = {
-    topLeft: 0,
-    topRight: 0
-};
-let devModeTimeout = null;
+let devModeClickCount = 0;
+let lastClickTime = 0;
 let isDevModeActive = false;
+const CLICK_THRESHOLD = 5; // 需要點擊的次數
+const CLICK_TIMEOUT = 2000; // 點擊超時時間（毫秒）
 
 // 初始化開發者模式
 document.addEventListener('DOMContentLoaded', () => {
+    const devModePanel = document.getElementById('devModePanel');
+    if (devModePanel) {
+        devModePanel.style.display = 'none'; // 預設隱藏開發者模式面板
+    }
     initDevMode();
-    initDevModeFeatures();
     console.log('開發者模式初始化完成');
 });
 
 // 開發者模式觸發邏輯
 function initDevMode() {
-    // 監聽搜尋欄輸入
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            if (e.target.value.toLowerCase() === 'dev') {
-                checkDevModeTrigger();
+    const devModePanel = document.getElementById('devModePanel');
+    const closeDevModeBtn = document.getElementById('closeDevMode');
+    
+    // 監聽頁面標題點擊事件
+    const header = document.querySelector('header h1');
+    if (header) {
+        header.addEventListener('click', (e) => {
+            const currentTime = Date.now();
+            
+            // 如果超過超時時間，重置計數
+            if (currentTime - lastClickTime > CLICK_TIMEOUT) {
+                devModeClickCount = 0;
+            }
+            
+            // 更新最後點擊時間
+            lastClickTime = currentTime;
+            
+            // 增加點擊計數
+            devModeClickCount++;
+            
+            // 檢查是否達到觸發條件
+            if (devModeClickCount >= CLICK_THRESHOLD) {
+                activateDevMode();
+                devModeClickCount = 0; // 重置計數
             }
         });
     }
 
-    // 監聽左上角點擊
+    // 關閉按鈕事件
+    closeDevModeBtn.addEventListener('click', () => {
+        devModePanel.style.display = 'none';
+        isDevModeActive = false;
+    });
+
+    // 點擊外部區域關閉
     document.addEventListener('click', (e) => {
-        if (e.clientX < 50 && e.clientY < 50) {
-            devModeClickCount.topLeft++;
-            console.log('左上角點擊次數：', devModeClickCount.topLeft);
-            checkDevModeTrigger();
+        if (e.target === devModePanel) {
+            devModePanel.style.display = 'none';
+            isDevModeActive = false;
         }
     });
 
-    // 監聽右上角點擊
-    document.addEventListener('click', (e) => {
-        if (e.clientX > window.innerWidth - 50 && e.clientY < 50) {
-            devModeClickCount.topRight++;
-            console.log('右上角點擊次數：', devModeClickCount.topRight);
-            checkDevModeTrigger();
+    // ESC 鍵關閉
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && devModePanel.style.display === 'block') {
+            devModePanel.style.display = 'none';
+            isDevModeActive = false;
         }
     });
 
-    // 重置點擊計數
-    setInterval(() => {
-        devModeClickCount.topLeft = 0;
-        devModeClickCount.topRight = 0;
-    }, 5000);
-}
-
-// 檢查是否觸發開發者模式
-function checkDevModeTrigger() {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput && searchInput.value.toLowerCase() === 'dev' && 
-        devModeClickCount.topLeft >= 5 && 
-        devModeClickCount.topRight >= 5) {
-        console.log('觸發開發者模式');
-        activateDevMode();
-    }
+    // 初始化所有開發者模式功能
+    initDevModeFeatures();
 }
 
 // 啟動開發者模式
@@ -2251,9 +2261,6 @@ function activateDevMode() {
         devModePanel.style.display = 'block';
         devModePanel.classList.add('active');
         console.log('開發者模式已啟動');
-        
-        // 初始化所有功能按鈕
-        initAllFeatures();
     }
 }
 
@@ -2621,6 +2628,53 @@ const ENV_DEFAULT_CONFIGS = {
             sound: true
         }
     },
+    testing2: {
+        environment: 'testing2',
+        appMode: 'debug',
+        api: {
+            baseUrl: 'https://test2-api.example.com',
+            version: 'v2',
+            key: '',
+            timeout: 10000,
+            retries: 7
+        },
+        database: {
+            type: 'indexeddb',
+            version: '2.0',
+            sizeLimit: 75
+        },
+        cache: {
+            enabled: true,
+            duration: 10,
+            strategy: 'hybrid',
+            maxSize: 100
+        },
+        logging: {
+            level: 'debug',
+            outputs: {
+                console: true,
+                file: true,
+                remote: true
+            },
+            retentionDays: 15
+        },
+        performance: {
+            monitoring: true,
+            samplingInterval: 3,
+            optimization: true
+        },
+        security: {
+            https: true,
+            csp: true,
+            xssProtection: true,
+            csrfProtection: true
+        },
+        notifications: {
+            push: true,
+            priority: 'high',
+            sound: true
+        }
+    },
     development: {
         environment: 'development',
         appMode: 'debug',
@@ -2726,13 +2780,24 @@ function showEnvironmentSettings() {
             <h3>環境設定</h3>
             <div class="env-options">
                 <div class="env-option">
-                    <input type="radio" id="env-prod" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
                     <input type="radio" id="envProduction" name="environment" value="production" ${window.ENV_DEFAULT_CONFIGS.environment === 'production' ? 'checked' : ''}>
                     <label for="envProduction">正式版環境</label>
                 </div>
                 <div class="env-option">
                     <input type="radio" id="envTesting" name="environment" value="testing" ${window.ENV_DEFAULT_CONFIGS.environment === 'testing' ? 'checked' : ''}>
                     <label for="envTesting">測試版環境</label>
+                </div>
+                <div class="env-option">
+                    <input type="radio" id="envTesting2" name="environment" value="testing2" ${window.ENV_DEFAULT_CONFIGS.environment === 'testing2' ? 'checked' : ''}>
+                    <label for="envTesting2">測試版環境 2</label>
+                </div>
+                <div class="env-option">
+                    <input type="radio" id="envDevelopment" name="environment" value="development" ${window.ENV_DEFAULT_CONFIGS.environment === 'development' ? 'checked' : ''}>
+                    <label for="envDevelopment">開發版環境</label>
+                </div>
+                <div class="env-option">
+                    <input type="radio" id="envStaging" name="environment" value="staging" ${window.ENV_DEFAULT_CONFIGS.environment === 'staging' ? 'checked' : ''}>
+                    <label for="envStaging">預備版環境</label>
                 </div>
             </div>
             <div class="env-actions">
@@ -2743,19 +2808,35 @@ function showEnvironmentSettings() {
     `;
     document.body.appendChild(dialog);
 
+    // 點擊外部區域關閉
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            dialog.remove();
+        }
+    });
+
+    // ESC 鍵關閉
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dialog.remove();
+        }
+    });
+
     // 儲存設定
     document.getElementById('saveEnv').addEventListener('click', () => {
         const selectedEnv = document.querySelector('input[name="environment"]:checked').value;
         window.ENV_DEFAULT_CONFIGS.environment = selectedEnv;
         
-        // 如果是測試版環境，將版本號改為 test
+        // 根據環境設定版本號
         if (selectedEnv === 'testing') {
             document.title = document.title.replace(/v\d+\.\d+\.\d+/, 'vtest');
+        } else if (selectedEnv === 'testing2') {
+            document.title = document.title.replace(/v\d+\.\d+\.\d+/, 'vtest2');
         } else {
             window.ENV_DEFAULT_CONFIGS.appMode = 'normal';
             // 恢復原始版本號
             const originalVersion = 'v1.0.0'; // 這裡可以根據實際情況修改
-            document.title = document.title.replace(/vtest|v\d+\.\d+\.\d+/, originalVersion);
+            document.title = document.title.replace(/vtest|vtest2|v\d+\.\d+\.\d+/, originalVersion);
         }
         
         localStorage.setItem('environment', selectedEnv);
@@ -2896,12 +2977,34 @@ function deactivateDevMode() {
 
 // 初始化開發者模式功能
 function initDevModeFeatures() {
-    // 關閉按鈕
-    const closeButton = document.getElementById('closeDevMode');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            console.log('點擊關閉開發者模式');
-            deactivateDevMode();
+    // 資料庫操作按鈕
+    const viewDatabaseBtn = document.getElementById('viewDatabase');
+    if (viewDatabaseBtn) {
+        viewDatabaseBtn.addEventListener('click', () => {
+            viewDatabase();
+        });
+    }
+
+    // 開發者設定按鈕
+    const switchEnvironmentBtn = document.getElementById('switchEnvironment');
+    const featureToggleBtn = document.getElementById('featureToggle');
+    const customThemeBtn = document.getElementById('customTheme');
+
+    if (switchEnvironmentBtn) {
+        switchEnvironmentBtn.addEventListener('click', () => {
+            showEnvironmentSettings();
+        });
+    }
+
+    if (featureToggleBtn) {
+        featureToggleBtn.addEventListener('click', () => {
+            showFeatureSettings();
+        });
+    }
+
+    if (customThemeBtn) {
+        customThemeBtn.addEventListener('click', () => {
+            showThemeSettings();
         });
     }
 }
