@@ -114,11 +114,15 @@
                     'showinfo': 0,
                     'mute': 1,  // 自動播放需要靜音
                     'loop': 1,  // 循環播放
-                    'playlist': videos.join(',')  // 播放清單
+                    'playsinline': 1,  // 在 iOS 上內嵌播放
+                    'enablejsapi': 1,  // 啟用 JavaScript API
+                    'origin': window.location.origin,  // 設定來源
+                    'widget_referrer': window.location.href  // 設定引用來源
                 },
                 events: {
                     'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
                 }
             });
         }
@@ -134,6 +138,13 @@
                 currentVideoIndex = (currentVideoIndex + 1) % videos.length;
                 player.loadVideoById(videos[currentVideoIndex]);
             }
+        }
+
+        function onPlayerError(event) {
+            console.error('播放器錯誤:', event.data);
+            // 如果發生錯誤，嘗試播放下一個影片
+            currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+            player.loadVideoById(videos[currentVideoIndex]);
         }
     </script>
 </body>
