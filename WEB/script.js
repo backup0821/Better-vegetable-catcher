@@ -674,104 +674,21 @@ document.getElementById('exportCSV').addEventListener('click', () => exportData(
 
 // 通知相關功能
 async function checkNotifications() {
+    console.log('開始檢查通知...');
     try {
-        console.log('開始檢查通知...');
-        let allNotifications = [];
+        const response = await fetch(MAINTENANCE_CHECK_URL);
+        console.log('通知 API 回應:', response.status);
+        const data = await response.json();
+        console.log('收到的通知:', data);
         
-        // 從本地檔案讀取通知
-        try {
-            const localResponse = await fetch('./notfiy.json', {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            if (localResponse.ok) {
-                const localNotifications = await localResponse.json();
-                console.log('從本地檔案獲取到的通知:', localNotifications);
-                allNotifications = allNotifications.concat(localNotifications);
-            }
-        } catch (error) {
-            console.error('讀取本地通知檔案失敗:', error);
-        }
-        
-        // 從 API 讀取通知
-        try {
-            const apiResponse = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/notfiy.json', {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            if (apiResponse.ok) {
-                const apiNotifications = await apiResponse.json();
-                console.log('從 API 獲取到的通知:', apiNotifications);
-                allNotifications = allNotifications.concat(apiNotifications);
-            }
-        } catch (error) {
-            console.error('讀取 API 通知失敗:', error);
-        }
-        
-        const now = new Date();
-        console.log('當前時間:', now);
-        
-        // 收集所有需要顯示的通知
-        let notificationsToShow = [];
-        
-        allNotifications.forEach(notification => {
-            console.log('處理通知:', notification);
-            
-            // 只處理公開通知
-            if (!notification.public) {
-                console.log('此通知不是公開通知');
-                return;
-            }
-            
-            // 檢查是否為特定裝置的通知
-            const isTargetedDevice = notification.targetDevices && notification.targetDevices.length > 0;
-            const isForEveryone = notification.targetDevices && notification.targetDevices.includes('everyone');
-            
-            if (isTargetedDevice && !isForEveryone && !notification.targetDevices.includes(deviceId)) {
-                console.log('此通知不是針對當前裝置的');
-                return;
-            }
-            
-            // 解析時間範圍
-            const [startTime, endTime] = notification.time.split(' ~ ');
-            const startDate = new Date(startTime);
-            const endDate = new Date(endTime);
-            
-            console.log('通知時間範圍:', {
-                start: startDate,
-                end: endDate,
-                current: now
-            });
-            
-            // 檢查通知是否過期
-            if (now > endDate) {
-                console.log('此通知已過期');
-                return;
-            }
-            
-            // 檢查當前時間是否在通知時間範圍內
-            if (now >= startDate && now <= endDate) {
-                console.log('符合時間範圍，準備顯示通知');
-                notificationsToShow.push({
-                    ...notification,
-                    isTargetedDevice: isTargetedDevice && !isForEveryone,
-                    isPublic: true,
-                    isExpired: false
-                });
-            }
-        });
-        
-        // 顯示所有符合條件的通知
-        if (notificationsToShow.length > 0) {
+        if (data.notifications && data.notifications.length > 0) {
             console.log('顯示通知');
-            showPageNotifications(notificationsToShow);
+            showPageNotifications(data.notifications);
         } else {
-            console.log('目前沒有需要顯示的通知');
+            console.log('目前沒有通知');
         }
     } catch (error) {
-        console.error('獲取通知失敗:', error);
+        console.error('檢查通知失敗:', error);
     }
 }
 
@@ -4225,15 +4142,22 @@ function initDevModeFeatures() {
 
 // 檢查維護狀態
 async function checkMaintenanceStatus() {
+    console.log('開始檢查維護狀態...');
     try {
-        const response = await fetch(MAINTENANCE_CHECK_URL);
+        const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json');
+        console.log('維護狀態 API 回應:', response.status);
         const data = await response.json();
+        console.log('收到的維護資訊:', data);
         
         if (data.maintenanceInfo && data.maintenanceInfo.isActive) {
+            console.log('顯示維護橫幅');
             showMaintenanceBanner(data.maintenanceInfo);
             if (data.maintenanceInfo.stopService) {
+                console.log('顯示維護對話框');
                 showMaintenanceDialog(data.maintenanceInfo);
             }
+        } else {
+            console.log('目前沒有維護公告');
         }
     } catch (error) {
         console.error('檢查維護狀態失敗:', error);
@@ -4242,6 +4166,13 @@ async function checkMaintenanceStatus() {
 
 // 顯示維護橫幅
 function showMaintenanceBanner(maintenanceInfo) {
+    console.log('準備顯示維護橫幅:', maintenanceInfo);
+    // 移除現有的維護橫幅（如果有的話）
+    const existingBanner = document.querySelector('.maintenance-banner');
+    if (existingBanner) {
+        existingBanner.remove();
+    }
+
     const banner = document.createElement('div');
     banner.className = `maintenance-banner ${maintenanceInfo.severity || 'medium'}-severity`;
     banner.innerHTML = `
@@ -4251,10 +4182,18 @@ function showMaintenanceBanner(maintenanceInfo) {
         </div>
     `;
     document.body.insertBefore(banner, document.body.firstChild);
+    console.log('維護橫幅已顯示');
 }
 
 // 顯示維護對話框
 function showMaintenanceDialog(maintenanceInfo) {
+    console.log('準備顯示維護對話框:', maintenanceInfo);
+    // 移除現有的維護對話框（如果有的話）
+    const existingOverlay = document.querySelector('.maintenance-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+
     // 創建遮罩層
     const overlay = document.createElement('div');
     overlay.className = 'maintenance-overlay';
@@ -4310,6 +4249,7 @@ function showMaintenanceDialog(maintenanceInfo) {
 
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
+    console.log('維護對話框已顯示');
 
     // 禁用所有互動元素
     const interactiveElements = document.querySelectorAll('button, input, select, a');
@@ -4319,10 +4259,19 @@ function showMaintenanceDialog(maintenanceInfo) {
     });
 }
 
-// 在頁面載入時檢查維護狀態
-document.addEventListener('DOMContentLoaded', () => {
+// 確保在頁面完全載入後檢查維護狀態和通知
+window.addEventListener('load', () => {
+    console.log('頁面已完全載入，開始檢查維護狀態和通知');
     checkMaintenanceStatus();
+    checkNotifications();
 });
+
+// 每5分鐘檢查一次維護狀態和通知
+setInterval(() => {
+    console.log('定期檢查維護狀態和通知');
+    checkMaintenanceStatus();
+    checkNotifications();
+}, 5 * 60 * 1000);
 
 // ... existing code ...
 
