@@ -1374,17 +1374,29 @@ input:checked + .slider:before {
 }
 
 .maintenance-dialog {
-    background-color: white;
-    padding: 30px;
+    background-color: #fff5f5 !important;
+    color: #c62828 !important;
+    border: 2px solid #c62828 !important;
     border-radius: 10px;
-    max-width: 90%;
-    width: 500px;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    position: relative;
-    transform: scale(0.9);
-    opacity: 0;
-    animation: dialogIn 0.3s forwards;
+    box-shadow: 0 4px 20px rgba(198, 40, 40, 0.15);
+}
+
+.maintenance-dialog h2 {
+    color: #c62828 !important;
+    font-weight: bold;
+}
+
+.maintenance-dialog p {
+    color: #c62828 !important;
+}
+
+.maintenance-dialog a {
+    color: #c62828 !important;
+    text-decoration: underline;
+}
+
+.maintenance-dialog hr {
+    border-color: #c62828 !important;
 }
 
 .maintenance-dialog button {
@@ -1420,17 +1432,6 @@ input:checked + .slider:before {
 @keyframes fadeIn {
     from { background-color: rgba(0, 0, 0, 0); }
     to { background-color: rgba(0, 0, 0, 0.8); }
-}
-
-@keyframes dialogIn {
-    from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
 }
 
 /* 維護公告主題樣式 */
@@ -1653,4 +1654,14 @@ input:checked + .slider:before {
 
 .staff-logout-button {
     animation: pulse 2s infinite;
-} 
+}
+
+.stats-area,
+.stats-area h3,
+.stats-cards,
+.stat-card,
+.stat-label,
+.stat-value,
+.stat-unit {
+    color: #111 !important;
+}

@@ -4223,15 +4223,10 @@ function showMaintenanceDialog(maintenanceInfo) {
 
     // 創建對話框
     const dialog = document.createElement('div');
-    dialog.className = `maintenance-dialog ${maintenanceInfo.severity || 'medium'}-severity`;
+    dialog.className = 'maintenance-dialog'; // 移除嚴重性等級 class
 
     const startTime = maintenanceInfo.startTime ? new Date(maintenanceInfo.startTime).toLocaleString('zh-TW') : '未定';
     const endTime = maintenanceInfo.endTime ? new Date(maintenanceInfo.endTime).toLocaleString('zh-TW') : '未定';
-    const severityText = {
-        'high': '高',
-        'medium': '中',
-        'low': '低'
-    }[maintenanceInfo.severity] || '中';
 
     // 如果不是停用服務，添加關閉按鈕
     if (!maintenanceInfo.stopService) {
@@ -4258,9 +4253,8 @@ function showMaintenanceDialog(maintenanceInfo) {
     timeInfo.textContent = `維護時間：${startTime} ~ ${endTime}`;
     dialog.appendChild(timeInfo);
 
-    const severityInfo = document.createElement('p');
-    severityInfo.textContent = `嚴重性等級：${severityText}`;
-    dialog.appendChild(severityInfo);
+    // 不再顯示嚴重性等級
+    // if (maintenanceInfo.severity) { ... }
 
     if (maintenanceInfo.contact) {
         const contactInfo = document.createElement('p');
