@@ -795,159 +795,160 @@ if ('serviceWorker' in navigator) {
 function showPageNotifications(notifications) {
     console.log('開始顯示通知:', notifications);
     
-    // 移除現有的通知（如果有的話）
-    const existingNotification = document.getElementById('page-notification');
-    const existingOverlay = document.querySelector('.notification-overlay');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-    if (existingOverlay) {
-        existingOverlay.remove();
-    }
+    try {
+        // 移除現有的通知（如果有的話）
+        const existingNotification = document.getElementById('page-notification');
+        const existingOverlay = document.querySelector('.notification-overlay');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
 
-    // 創建遮罩層
-    const overlay = document.createElement('div');
-    overlay.className = 'notification-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    `;
-
-    // 創建通知容器
-    const notificationContainer = document.createElement('div');
-    notificationContainer.id = 'page-notification';
-    notificationContainer.className = 'notification-window';
-    notificationContainer.style.cssText = `
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        max-width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    `;
-
-    // 通知標題
-    const title = document.createElement('div');
-    title.className = 'notification-title';
-    title.textContent = '系統通知';
-    title.style.cssText = `
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        color: #333;
-    `;
-    notificationContainer.appendChild(title);
-
-    // 通知列表
-    const notificationList = document.createElement('div');
-    notificationList.className = 'notification-list';
-    notificationList.style.cssText = `
-        margin-bottom: 20px;
-    `;
-
-    notifications.forEach((notification, index) => {
-        const notificationItem = document.createElement('div');
-        notificationItem.className = 'notification-item';
-        notificationItem.style.cssText = `
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            background-color: ${notification.isMarketRest ? '#fff3cd' : '#f8f9fa'};
-            border: 1px solid ${notification.isMarketRest ? '#ffeeba' : '#e9ecef'};
+        // 創建遮罩層
+        const overlay = document.createElement('div');
+        overlay.className = 'notification-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         `;
-        
-        // 如果是市場休市通知，添加特殊樣式
-        if (notification.isMarketRest) {
-            notificationItem.classList.add('market-rest-notification');
-        }
+        document.body.appendChild(overlay);
 
-        // 計算剩餘時間
-        const [startTime, endTime] = notification.time.split(' ~ ');
-        const endDate = new Date(endTime);
-        const now = new Date();
-        const timeLeft = endDate - now;
-        const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-        const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        
-        let timeLeftText = '';
-        if (daysLeft > 0) {
-            timeLeftText = `剩餘 ${daysLeft} 天`;
-        } else if (hoursLeft > 0) {
-            timeLeftText = `剩餘 ${hoursLeft} 小時`;
-        } else {
-            timeLeftText = '即將過期';
-        }
-
-        notificationItem.innerHTML = `
-            <div class="notification-icon" style="font-size: 24px; margin-right: 10px; float: left;">
-                ${notification.isMarketRest ? '🏪' : '📢'}
-            </div>
-            <div class="notification-content" style="margin-left: 40px;">
-                <div class="notification-title" style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
-                    ${notification.title}
-                </div>
-                <div class="notification-message" style="margin-bottom: 5px;">
-                    ${notification.messenge}
-                </div>
-                <div class="notification-time" style="color: #666; font-size: 14px; margin-bottom: 5px;">
-                    通知時間：${new Date(startTime).toLocaleString('zh-TW')}
-                </div>
-                <div class="notification-time-left" style="color: #666; font-size: 14px;">
-                    ${timeLeftText}
-                </div>
-                <div class="notification-tag" style="margin-top: 5px;">
-                    ${notification.isMarketRest ? 
-                        '<span style="background-color: #ffeeba; padding: 2px 8px; border-radius: 3px; font-size: 12px;">🏪 市場休市通知</span>' : 
-                        '<span style="background-color: #e9ecef; padding: 2px 8px; border-radius: 3px; font-size: 12px;">📢 公開通知</span>'
-                    }
-                </div>
-            </div>
-            <div style="clear: both;"></div>
+        // 創建通知容器
+        const notificationContainer = document.createElement('div');
+        notificationContainer.id = 'page-notification';
+        notificationContainer.className = 'notification-window';
+        notificationContainer.style.cssText = `
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         `;
-        notificationList.appendChild(notificationItem);
-    });
 
-    notificationContainer.appendChild(notificationList);
+        // 通知標題
+        const title = document.createElement('div');
+        title.className = 'notification-title';
+        title.textContent = '系統通知';
+        title.style.cssText = `
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        `;
+        notificationContainer.appendChild(title);
 
-    // 確認按鈕
-    const confirmButton = document.createElement('button');
-    confirmButton.className = 'notification-button';
-    confirmButton.textContent = '確定';
-    confirmButton.style.cssText = `
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        margin-top: 10px;
-    `;
-    confirmButton.onclick = () => {
-        const currentOverlay = document.querySelector('.notification-overlay');
-        const currentNotification = document.getElementById('page-notification');
-        if (currentOverlay) {
-            currentOverlay.remove();
-        }
-        if (currentNotification) {
-            currentNotification.remove();
-        }
-    };
+        // 通知列表
+        const notificationList = document.createElement('div');
+        notificationList.className = 'notification-list';
+        notificationList.style.cssText = `
+            margin-bottom: 20px;
+        `;
 
-    notificationContainer.appendChild(confirmButton);
-    overlay.appendChild(notificationContainer);
-    document.body.appendChild(overlay);
-    
-    console.log('通知已顯示');
+        notifications.forEach((notification, index) => {
+            console.log('處理通知項目:', notification);
+            const notificationItem = document.createElement('div');
+            notificationItem.className = 'notification-item';
+            notificationItem.style.cssText = `
+                padding: 15px;
+                margin-bottom: 10px;
+                border-radius: 5px;
+                background-color: ${notification.isMarketRest ? '#fff3cd' : '#f8f9fa'};
+                border: 1px solid ${notification.isMarketRest ? '#ffeeba' : '#e9ecef'};
+            `;
+            
+            // 如果是市場休市通知，添加特殊樣式
+            if (notification.isMarketRest) {
+                notificationItem.classList.add('market-rest-notification');
+            }
+
+            // 計算剩餘時間
+            const [startTime, endTime] = notification.time.split(' ~ ');
+            const endDate = new Date(endTime);
+            const now = new Date();
+            const timeLeft = endDate - now;
+            const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            let timeLeftText = '';
+            if (daysLeft > 0) {
+                timeLeftText = `剩餘 ${daysLeft} 天`;
+            } else if (hoursLeft > 0) {
+                timeLeftText = `剩餘 ${hoursLeft} 小時`;
+            } else {
+                timeLeftText = '即將過期';
+            }
+
+            notificationItem.innerHTML = `
+                <div class="notification-icon" style="font-size: 24px; margin-right: 10px; float: left;">
+                    ${notification.isMarketRest ? '🏪' : '📢'}
+                </div>
+                <div class="notification-content" style="margin-left: 40px;">
+                    <div class="notification-title" style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                        ${notification.title}
+                    </div>
+                    <div class="notification-message" style="margin-bottom: 5px;">
+                        ${notification.messenge}
+                    </div>
+                    <div class="notification-time" style="color: #666; font-size: 14px; margin-bottom: 5px;">
+                        通知時間：${new Date(startTime).toLocaleString('zh-TW')}
+                    </div>
+                    <div class="notification-time-left" style="color: #666; font-size: 14px;">
+                        ${timeLeftText}
+                    </div>
+                    <div class="notification-tag" style="margin-top: 5px;">
+                        ${notification.isMarketRest ? 
+                            '<span style="background-color: #ffeeba; padding: 2px 8px; border-radius: 3px; font-size: 12px;">🏪 市場休市通知</span>' : 
+                            '<span style="background-color: #e9ecef; padding: 2px 8px; border-radius: 3px; font-size: 12px;">📢 公開通知</span>'
+                        }
+                    </div>
+                </div>
+                <div style="clear: both;"></div>
+            `;
+            notificationList.appendChild(notificationItem);
+        });
+
+        notificationContainer.appendChild(notificationList);
+
+        // 確認按鈕
+        const confirmButton = document.createElement('button');
+        confirmButton.className = 'notification-button';
+        confirmButton.textContent = '確定';
+        confirmButton.style.cssText = `
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 15px;
+        `;
+        confirmButton.addEventListener('click', () => {
+            overlay.remove();
+            notificationContainer.remove();
+        });
+        notificationContainer.appendChild(confirmButton);
+
+        // 將通知容器添加到遮罩層
+        overlay.appendChild(notificationContainer);
+        console.log('通知已添加到頁面');
+    } catch (error) {
+        console.error('顯示通知時發生錯誤:', error);
+    }
 }
 
 // 初始化通知檢查
@@ -4248,17 +4249,32 @@ async function checkMaintenanceStatus() {
 
 // 顯示維護通知
 function showMaintenanceNotification(maintenanceInfo) {
-    const notification = {
-        id: 'maintenance-notification',
-        title: maintenanceInfo.title,
-        messenge: maintenanceInfo.description,
-        time: `${maintenanceInfo.startTime} ~ ${maintenanceInfo.endTime}`,
-        public: true,
-        targetDevices: ['everyone'],
-        severity: maintenanceInfo.severity
-    };
+    console.log('準備顯示維護通知:', maintenanceInfo);
     
-    showPageNotifications([notification]);
+    try {
+        const notification = {
+            id: 'maintenance-notification',
+            title: maintenanceInfo.title,
+            messenge: maintenanceInfo.description,
+            time: `${maintenanceInfo.startTime} ~ ${maintenanceInfo.endTime}`,
+            public: true,
+            targetDevices: ['everyone'],
+            severity: maintenanceInfo.severity
+        };
+        
+        console.log('創建的通知物件:', notification);
+        showPageNotifications([notification]);
+        
+        // 如果維護等級為高，添加特殊樣式
+        if (maintenanceInfo.severity === 'high') {
+            const notificationElement = document.querySelector('.notification-item');
+            if (notificationElement) {
+                notificationElement.classList.add('high-severity');
+            }
+        }
+    } catch (error) {
+        console.error('顯示維護通知時發生錯誤:', error);
+    }
 }
 
 // 停用服務
@@ -4281,3 +4297,29 @@ function disableService() {
         </div>
     `;
 }
+
+// ... existing code ...
+// 在頁面載入時初始化
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('頁面載入完成，開始初始化各項功能');
+    
+    // 初始化更新檢查
+    initUpdateCheck();
+    
+    // 檢查維護狀態
+    checkMaintenanceStatus();
+    // 每5分鐘檢查一次維護狀態
+    setInterval(checkMaintenanceStatus, 5 * 60 * 1000);
+    
+    // 初始化通知檢查
+    initNotificationCheck();
+    
+    // 初始化市場休市檢查
+    initMarketRestCheck();
+    
+    // 初始化更新通知檢查
+    initUpdateNotificationCheck();
+    
+    // 檢查環境設定並顯示農業氣象影片
+    showAgriculturalWeatherVideo();
+});
