@@ -4175,12 +4175,46 @@ function showMaintenanceBanner(maintenanceInfo) {
 
     const banner = document.createElement('div');
     banner.className = `maintenance-banner ${maintenanceInfo.severity || 'medium'}-severity`;
-    banner.innerHTML = `
-        <div class="banner-content">
-            <span class="banner-icon">⚠️</span>
-            <span class="banner-text">${maintenanceInfo.title}</span>
-        </div>
-    `;
+    
+    const bannerContent = document.createElement('div');
+    bannerContent.className = 'banner-content';
+    bannerContent.style.cursor = 'pointer';
+    bannerContent.onclick = () => showMaintenanceDialog(maintenanceInfo);
+    
+    const icon = document.createElement('span');
+    icon.className = 'banner-icon';
+    icon.textContent = '⚠️';
+    
+    const text = document.createElement('span');
+    text.className = 'banner-text';
+    text.textContent = maintenanceInfo.title;
+    
+    bannerContent.appendChild(icon);
+    bannerContent.appendChild(text);
+    
+    // 如果不是停用服務，添加關閉按鈕
+    if (!maintenanceInfo.stopService) {
+        const closeButton = document.createElement('button');
+        closeButton.textContent = '關閉';
+        closeButton.style.cssText = `
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid currentColor;
+            color: inherit;
+            cursor: pointer;
+            margin-left: 15px;
+            padding: 2px 8px;
+            font-size: 1em;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        `;
+        closeButton.onclick = (e) => {
+            e.stopPropagation();
+            banner.remove();
+        };
+        bannerContent.appendChild(closeButton);
+    }
+    
+    banner.appendChild(bannerContent);
     document.body.insertBefore(banner, document.body.firstChild);
     console.log('維護橫幅已顯示');
 }
@@ -4221,6 +4255,7 @@ function showMaintenanceDialog(maintenanceInfo) {
         width: 500px;
         text-align: center;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        position: relative;
     `;
 
     const startTime = maintenanceInfo.startTime ? new Date(maintenanceInfo.startTime).toLocaleString('zh-TW') : '未定';
@@ -4231,32 +4266,66 @@ function showMaintenanceDialog(maintenanceInfo) {
         'low': '低'
     }[maintenanceInfo.severity] || '中';
 
-    dialog.innerHTML = `
-        <h2 style="color: #dc3545; margin-bottom: 20px;">${maintenanceInfo.title}</h2>
-        <p style="margin-bottom: 20px; line-height: 1.6;">${maintenanceInfo.description || ''}</p>
-        <p style="color: #666; font-size: 0.9em;">
-            維護時間：${startTime} ~ ${endTime}
-        </p>
-        <p style="color: #666; font-size: 0.9em;">
-            嚴重性等級：${severityText}
-        </p>
-        ${maintenanceInfo.contact ? `
-            <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
-                聯絡方式：${maintenanceInfo.contact.email ? `<a href="mailto:${maintenanceInfo.contact.email}">${maintenanceInfo.contact.email}</a>` : '無'}
+    // 如果不是停用服務，添加關閉按鈕
+    if (!maintenanceInfo.stopService) {
+        dialog.innerHTML = `
+            <button onclick="this.parentElement.parentElement.remove()" style="
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                font-size: 1em;
+                cursor: pointer;
+                color: #495057;
+                padding: 5px 10px;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+            ">關閉</button>
+            <h2 style="color: #dc3545; margin-bottom: 20px;">${maintenanceInfo.title}</h2>
+            <p style="margin-bottom: 20px; line-height: 1.6;">${maintenanceInfo.description || ''}</p>
+            <p style="color: #666; font-size: 0.9em;">
+                維護時間：${startTime} ~ ${endTime}
             </p>
-        ` : ''}
-    `;
+            <p style="color: #666; font-size: 0.9em;">
+                嚴重性等級：${severityText}
+            </p>
+            ${maintenanceInfo.contact ? `
+                <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+                    聯絡方式：${maintenanceInfo.contact.email ? `<a href="mailto:${maintenanceInfo.contact.email}">${maintenanceInfo.contact.email}</a>` : '無'}
+                </p>
+            ` : ''}
+        `;
+    } else {
+        dialog.innerHTML = `
+            <h2 style="color: #dc3545; margin-bottom: 20px;">${maintenanceInfo.title}</h2>
+            <p style="margin-bottom: 20px; line-height: 1.6;">${maintenanceInfo.description || ''}</p>
+            <p style="color: #666; font-size: 0.9em;">
+                維護時間：${startTime} ~ ${endTime}
+            </p>
+            <p style="color: #666; font-size: 0.9em;">
+                嚴重性等級：${severityText}
+            </p>
+            ${maintenanceInfo.contact ? `
+                <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+                    聯絡方式：${maintenanceInfo.contact.email ? `<a href="mailto:${maintenanceInfo.contact.email}">${maintenanceInfo.contact.email}</a>` : '無'}
+                </p>
+            ` : ''}
+        `;
+    }
 
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
     console.log('維護對話框已顯示');
 
-    // 禁用所有互動元素
-    const interactiveElements = document.querySelectorAll('button, input, select, a');
-    interactiveElements.forEach(element => {
-        element.style.pointerEvents = 'none';
-        element.style.opacity = '0.5';
-    });
+    // 如果是停用服務，禁用所有互動元素
+    if (maintenanceInfo.stopService) {
+        const interactiveElements = document.querySelectorAll('button, input, select, a');
+        interactiveElements.forEach(element => {
+            element.style.pointerEvents = 'none';
+            element.style.opacity = '0.5';
+        });
+    }
 }
 
 // 確保在頁面完全載入後檢查維護狀態和通知
