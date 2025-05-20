@@ -4225,7 +4225,7 @@ function initDevModeFeatures() {
 // 檢查維護狀態
 async function checkMaintenanceStatus() {
     try {
-        const response = await fetch(MAINTENANCE_CHECK_URL);
+        const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json');
         if (!response.ok) throw new Error('無法檢查維護狀態');
         const data = await response.json();
         
