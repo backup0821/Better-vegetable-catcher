@@ -4352,3 +4352,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // 檢查環境設定並顯示農業氣象影片
     showAgriculturalWeatherVideo();
 });
+
+// ... existing code ...
+
+// 初始化主題設定
+function initThemeSettings() {
+    // 檢查本地存儲中的主題設定
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // 創建主題切換按鈕
+    const themeButton = document.createElement('button');
+    themeButton.className = 'theme-toggle-btn';
+    themeButton.innerHTML = savedTheme === 'dark' ? '☀️' : '🌙';
+    
+    themeButton.onclick = () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        themeButton.innerHTML = newTheme === 'dark' ? '☀️' : '🌙';
+        
+        // 添加切換動畫
+        themeButton.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+            themeButton.style.transform = 'scale(1)';
+        }, 200);
+    };
+    
+    document.body.appendChild(themeButton);
+}
+
+// 在頁面載入時初始化主題設定
+document.addEventListener('DOMContentLoaded', () => {
+    initThemeSettings();
+});
+
+// ... existing code ...

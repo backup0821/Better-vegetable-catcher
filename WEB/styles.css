@@ -697,10 +697,25 @@ footer {
 
 /* 設定主題變數 */
 :root {
+    /* 亮色主題 */
     --primary-color: #1a73e8;
     --secondary-color: #34a853;
-    --background-color: #2d2d2d;
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #e0e0e0;
+    --card-background: #ffffff;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    /* 暗色主題 */
+    --primary-color: #4CAF50;
+    --secondary-color: #2196F3;
+    --background-color: #1a1a1a;
     --text-color: #ffffff;
+    --border-color: #333333;
+    --card-background: #2d2d2d;
+    --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 /* 開發者模式面板樣式 */
@@ -935,38 +950,13 @@ footer {
     cursor: pointer;
 }
 
-/* 深色主題 */
-.dark-theme {
-    --primary-color: #4CAF50;
-    --secondary-color: #2196F3;
-    --background-color: #1a1a1a;
-    --text-color: #ffffff;
-}
-
-.dark-theme .dialog-content {
-    background-color: #2d2d2d;
-    color: #ffffff;
-}
-
-.dark-theme .option,
-.dark-theme .feature-option,
-.dark-theme .theme-option {
-    border-color: #444;
-}
-
-.dark-theme .option .description,
-.dark-theme .feature-option .description,
-.dark-theme .theme-option .description {
-    color: #aaa;
-}
-
 /* 主題變數 */
 :root {
     /* 顏色 */
     --primary-color: #1a73e8;
     --secondary-color: #34a853;
-    --background-color: #2d2d2d;
-    --text-color: #ffffff;
+    --background-color: #ffffff;
+    --text-color: #333333;
     --accent-color: #fbbc05;
     --error-color: #ea4335;
 
@@ -1725,4 +1715,94 @@ input:checked + .slider:before {
 
 .maintenance-dialog.low-severity h2 {
     color: #17a2b8;
+}
+
+/* 主題切換按鈕 */
+.theme-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--text-color);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.9);
+}
+
+/* 全局主題樣式 */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.container {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+}
+
+header {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+}
+
+.control-panel, .display-panel {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+}
+
+button {
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+input, select, textarea {
+    background-color: var(--card-background);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+/* 維護公告主題樣式 */
+.maintenance-banner {
+    background-color: var(--card-background);
+    color: var(--text-color);
+}
+
+.maintenance-dialog {
+    background-color: var(--card-background);
+    color: var(--text-color);
+}
+
+/* 嚴重性等級樣式 */
+.maintenance-banner.high-severity {
+    background-color: #dc3545;
+    color: white;
+}
+
+.maintenance-banner.medium-severity {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.maintenance-banner.low-severity {
+    background-color: #17a2b8;
+    color: white;
 } 
