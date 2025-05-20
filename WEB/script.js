@@ -4389,3 +4389,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ... existing code ...
+
+// 顯示退出按鈕
+function showStaffLogout() {
+    document.body.classList.add('maintenance-mode');
+}
+
+// 隱藏退出按鈕
+function hideStaffLogout() {
+    document.body.classList.remove('maintenance-mode');
+}
+
+// 顯示退出確認對話框
+function showLogoutDialog() {
+    document.querySelector('.staff-logout-dialog').style.display = 'block';
+}
+
+// 隱藏退出確認對話框
+function hideLogoutDialog() {
+    document.querySelector('.staff-logout-dialog').style.display = 'none';
+}
+
+// 處理退出確認
+function handleLogout() {
+    // 在這裡添加退出邏輯
+    hideLogoutDialog();
+    // 其他退出相關操作
+}

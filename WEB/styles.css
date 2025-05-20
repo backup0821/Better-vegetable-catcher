@@ -15,15 +15,18 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
 }
 
 header {
     text-align: center;
     margin-bottom: 30px;
     padding: 20px;
-    background-color: #fff;
+    background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
 }
 
 header h1 {
@@ -88,18 +91,20 @@ main {
 
 .control-panel {
     flex: 1;
-    background-color: #fff;
+    background-color: #ffffff;
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
 }
 
 .display-panel {
     flex: 2;
-    background-color: #fff;
+    background-color: #ffffff;
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
 }
 
 h2 {
@@ -697,261 +702,6 @@ footer {
 
 /* 設定主題變數 */
 :root {
-    /* 亮色主題 */
-    --primary-color: #1a73e8;
-    --secondary-color: #34a853;
-    --background-color: #ffffff;
-    --text-color: #333333;
-    --border-color: #e0e0e0;
-    --card-background: #ffffff;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="dark"] {
-    /* 暗色主題 */
-    --primary-color: #4CAF50;
-    --secondary-color: #2196F3;
-    --background-color: #1a1a1a;
-    --text-color: #ffffff;
-    --border-color: #333333;
-    --card-background: #2d2d2d;
-    --shadow-color: rgba(0, 0, 0, 0.3);
-}
-
-/* 開發者模式面板樣式 */
-.dev-mode-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--background-color, #2d2d2d);
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    min-width: 300px;
-    max-width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.dev-mode-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color, #444);
-}
-
-.dev-mode-header h2 {
-    margin: 0;
-    color: var(--text-color, #ffffff);
-}
-
-.close-button {
-    background: none;
-    border: none;
-    color: var(--text-color, #ffffff);
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.3s;
-}
-
-.close-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* 對話框樣式 */
-.dialog {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.dialog-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    max-width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    width: 500px;
-}
-
-.dialog h3 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-.dialog-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.dialog button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.dialog .save-btn {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.dialog .cancel-btn {
-    background-color: #f44336;
-    color: white;
-}
-
-/* 環境設定樣式 */
-.environment-options {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.option label {
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-}
-
-.option .label {
-    font-weight: bold;
-}
-
-.option .description {
-    font-size: 12px;
-    color: #666;
-}
-
-/* 功能開關樣式 */
-.feature-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.feature-section h4 {
-    margin-bottom: 10px;
-    color: #333;
-}
-
-.feature-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 10px;
-}
-
-.feature-option label {
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-}
-
-.feature-option .label {
-    font-weight: bold;
-}
-
-.feature-option .description {
-    font-size: 12px;
-    color: #666;
-}
-
-/* 主題設定樣式 */
-.theme-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.theme-section h4 {
-    margin-bottom: 10px;
-    color: #333;
-}
-
-.theme-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 10px;
-}
-
-.theme-option label {
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-}
-
-.theme-option .label {
-    font-weight: bold;
-}
-
-.theme-option .description {
-    font-size: 12px;
-    color: #666;
-}
-
-.color-picker {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.color-picker label {
-    min-width: 100px;
-}
-
-.color-picker input[type="color"] {
-    width: 50px;
-    height: 30px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* 主題變數 */
-:root {
     /* 顏色 */
     --primary-color: #1a73e8;
     --secondary-color: #34a853;
@@ -1504,18 +1254,6 @@ input:checked + .slider:before {
     background-color: #da190b;
 }
 
-/* 深色主題支援 */
-[data-theme="dark"] .data-availability {
-    background-color: #2d2d2d;
-    border-left-color: #4CAF50;
-}
-
-[data-theme="dark"] .data-availability h4,
-[data-theme="dark"] .data-availability p,
-[data-theme="dark"] .data-availability li {
-    color: #ecf0f1;
-}
-
 /* 維護通知樣式 */
 .maintenance-message {
     background-color: #fff3cd;
@@ -1539,13 +1277,19 @@ input:checked + .slider:before {
 
 /* 高嚴重性維護通知樣式 */
 .maintenance-message.high-severity {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    color: #721c24;
+    background-color: #ffebee;
+    border-color: #ffcdd2;
+    color: #c62828;
+    border-left: 4px solid #c62828;
 }
 
 .maintenance-message.high-severity h2 {
-    color: #721c24;
+    color: #c62828;
+    font-weight: bold;
+}
+
+.maintenance-message.high-severity p {
+    color: #c62828;
 }
 
 /* 中嚴重性維護通知樣式 */
@@ -1689,32 +1433,45 @@ input:checked + .slider:before {
     }
 }
 
-/* 嚴重性等級樣式 */
+/* 維護公告主題樣式 */
+.maintenance-banner {
+    background-color: #ffffff;
+    color: #333333;
+}
+
+.maintenance-dialog {
+    background-color: #ffffff;
+    color: #333333;
+}
+
+/* 維護公告主題樣式 */
 .maintenance-banner.high-severity {
-    background-color: #dc3545;
-    color: white;
+    background-color: #c62828;
+    color: #ffffff;
+    border-bottom: 3px solid #8e0000;
 }
 
-.maintenance-banner.medium-severity {
-    background-color: #ffc107;
-    color: #000;
+.maintenance-banner.high-severity .banner-icon {
+    color: #ffcdd2;
 }
 
-.maintenance-banner.low-severity {
-    background-color: #17a2b8;
-    color: white;
+.maintenance-banner.high-severity button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid #ffffff;
+    color: #ffffff;
+}
+
+.maintenance-banner.high-severity button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.maintenance-dialog.high-severity {
+    border: 2px solid #c62828;
 }
 
 .maintenance-dialog.high-severity h2 {
-    color: #dc3545;
-}
-
-.maintenance-dialog.medium-severity h2 {
-    color: #ffc107;
-}
-
-.maintenance-dialog.low-severity h2 {
-    color: #17a2b8;
+    color: #c62828;
+    font-weight: bold;
 }
 
 /* 主題切換按鈕 */
@@ -1746,49 +1503,15 @@ input:checked + .slider:before {
     transform: scale(0.9);
 }
 
-/* 全局主題樣式 */
-body {
-    background-color: var(--background-color);
-    color: var(--text-color);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.container {
-    background-color: var(--card-background);
-    border: 1px solid var(--border-color);
-}
-
-header {
-    background-color: var(--card-background);
-    border: 1px solid var(--border-color);
-}
-
-.control-panel, .display-panel {
-    background-color: var(--card-background);
-    border: 1px solid var(--border-color);
-}
-
-button {
-    background-color: var(--primary-color);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-}
-
-input, select, textarea {
-    background-color: var(--card-background);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-}
-
 /* 維護公告主題樣式 */
 .maintenance-banner {
-    background-color: var(--card-background);
-    color: var(--text-color);
+    background-color: #ffffff;
+    color: #333333;
 }
 
 .maintenance-dialog {
-    background-color: var(--card-background);
-    color: var(--text-color);
+    background-color: #ffffff;
+    color: #333333;
 }
 
 /* 嚴重性等級樣式 */
@@ -1805,4 +1528,129 @@ input, select, textarea {
 .maintenance-banner.low-severity {
     background-color: #17a2b8;
     color: white;
+}
+
+/* 工作人員退出功能樣式 */
+.staff-logout-section {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    display: none; /* 預設隱藏，只在維護模式時顯示 */
+}
+
+.staff-logout-button {
+    background-color: #c62828;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.staff-logout-button:hover {
+    background-color: #b71c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.staff-logout-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.staff-logout-button .icon {
+    font-size: 16px;
+}
+
+.staff-logout-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    width: 300px;
+    display: none;
+}
+
+.staff-logout-dialog h3 {
+    color: #c62828;
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-align: center;
+}
+
+.staff-logout-dialog p {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.staff-logout-dialog .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.staff-logout-dialog .confirm-btn {
+    background-color: #c62828;
+    color: #ffffff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.staff-logout-dialog .confirm-btn:hover {
+    background-color: #b71c1c;
+}
+
+.staff-logout-dialog .cancel-btn {
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.staff-logout-dialog .cancel-btn:hover {
+    background-color: #d5d5d5;
+}
+
+/* 當系統處於維護模式時顯示工作人員退出按鈕 */
+.maintenance-mode .staff-logout-section {
+    display: block;
+}
+
+/* 工作人員退出按鈕的動畫效果 */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(198, 40, 40, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(198, 40, 40, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(198, 40, 40, 0);
+    }
+}
+
+.staff-logout-button {
+    animation: pulse 2s infinite;
 } 
