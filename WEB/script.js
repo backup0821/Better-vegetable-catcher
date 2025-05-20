@@ -4226,73 +4226,105 @@ function initDevModeFeatures() {
 // 檢查維護狀態
 async function checkMaintenanceStatus() {
     try {
-        const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json');
-        if (!response.ok) throw new Error('無法檢查維護狀態');
+        const response = await fetch(MAINTENANCE_CHECK_URL);
         const data = await response.json();
         
-        if (data.maintenanceInfo.isActive) {
-            const startTime = new Date(data.maintenanceInfo.startTime);
-            const endTime = new Date(data.maintenanceInfo.endTime);
-            const now = new Date();
-            
-            if (now >= startTime && now <= endTime) {
-                showMaintenanceNotification(data.maintenanceInfo);
-                if (data.maintenanceInfo.stopService) {
-                    disableService();
-                }
+        if (data.maintenanceInfo && data.maintenanceInfo.isActive) {
+            showMaintenanceBanner(data.maintenanceInfo);
+            if (data.maintenanceInfo.stopService) {
+                showMaintenanceDialog(data.maintenanceInfo);
             }
         }
     } catch (error) {
-        console.error('檢查維護狀態時發生錯誤:', error);
+        console.error('檢查維護狀態失敗:', error);
     }
 }
 
-// 顯示維護通知
-function showMaintenanceNotification(maintenanceInfo) {
-    console.log('[維護通知] 準備顯示:', maintenanceInfo);
-
-    // 先移除現有通知
-    document.querySelectorAll('.notification-overlay, #page-notification').forEach(e => e.remove());
-
-    // 遮罩層
-    const overlay = document.createElement('div');
-    overlay.className = 'notification-overlay';
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center;
+// 顯示維護橫幅
+function showMaintenanceBanner(maintenanceInfo) {
+    const banner = document.createElement('div');
+    banner.className = `maintenance-banner ${maintenanceInfo.severity || 'medium'}-severity`;
+    banner.innerHTML = `
+        <div class="banner-content">
+            <span class="banner-icon">⚠️</span>
+            <span class="banner-text">${maintenanceInfo.title}</span>
+        </div>
     `;
-
-    // 通知內容
-    const box = document.createElement('div');
-    box.id = 'page-notification';
-    box.className = 'notification-window';
-    box.style.cssText = `
-        background: #fff3cd; color: #856404; padding: 32px 24px; border-radius: 12px; max-width: 90vw; text-align: center; box-shadow: 0 2px 16px rgba(0,0,0,0.2);
-    `;
-
-    // 完全對應 API 格式
-    box.innerHTML = `
-        <h2 style="color:#721c24;">${maintenanceInfo.title || '系統維護通知'}</h2>
-        <p style="font-size:1.2em;margin:16px 0;">${maintenanceInfo.description || ''}</p>
-        <p>
-            <b>維護狀態：</b> ${maintenanceInfo.isActive ? '進行中' : '未啟動'}<br>
-            <b>維護等級：</b> ${maintenanceInfo.severity || '無'}<br>
-            <b>維護時間：</b><br>
-            ${maintenanceInfo.startTime ? new Date(maintenanceInfo.startTime).toLocaleString('zh-TW') : ''} ~ 
-            ${maintenanceInfo.endTime ? new Date(maintenanceInfo.endTime).toLocaleString('zh-TW') : ''}
-        </p>
-        <p>
-            <b>聯絡方式：</b> 
-            ${maintenanceInfo.contact && maintenanceInfo.contact.email ? `<a href="mailto:${maintenanceInfo.contact.email}">${maintenanceInfo.contact.email}</a>` : '無'}
-        </p>
-        <p>
-            <b>是否停用服務：</b> ${maintenanceInfo.stopService ? '是' : '否'}
-        </p>
-        <button style="margin-top:24px;padding:10px 32px;font-size:1.1em;background:#721c24;color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="location.reload()">重新整理</button>
-    `;
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
+    document.body.insertBefore(banner, document.body.firstChild);
 }
+
+// 顯示維護對話框
+function showMaintenanceDialog(maintenanceInfo) {
+    // 創建遮罩層
+    const overlay = document.createElement('div');
+    overlay.className = 'maintenance-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    `;
+
+    // 創建對話框
+    const dialog = document.createElement('div');
+    dialog.className = `maintenance-dialog ${maintenanceInfo.severity || 'medium'}-severity`;
+    dialog.style.cssText = `
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        max-width: 90%;
+        width: 500px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    `;
+
+    const startTime = maintenanceInfo.startTime ? new Date(maintenanceInfo.startTime).toLocaleString('zh-TW') : '未定';
+    const endTime = maintenanceInfo.endTime ? new Date(maintenanceInfo.endTime).toLocaleString('zh-TW') : '未定';
+    const severityText = {
+        'high': '高',
+        'medium': '中',
+        'low': '低'
+    }[maintenanceInfo.severity] || '中';
+
+    dialog.innerHTML = `
+        <h2 style="color: #dc3545; margin-bottom: 20px;">${maintenanceInfo.title}</h2>
+        <p style="margin-bottom: 20px; line-height: 1.6;">${maintenanceInfo.description || ''}</p>
+        <p style="color: #666; font-size: 0.9em;">
+            維護時間：${startTime} ~ ${endTime}
+        </p>
+        <p style="color: #666; font-size: 0.9em;">
+            嚴重性等級：${severityText}
+        </p>
+        ${maintenanceInfo.contact ? `
+            <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+                聯絡方式：${maintenanceInfo.contact.email ? `<a href="mailto:${maintenanceInfo.contact.email}">${maintenanceInfo.contact.email}</a>` : '無'}
+            </p>
+        ` : ''}
+    `;
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    // 禁用所有互動元素
+    const interactiveElements = document.querySelectorAll('button, input, select, a');
+    interactiveElements.forEach(element => {
+        element.style.pointerEvents = 'none';
+        element.style.opacity = '0.5';
+    });
+}
+
+// 在頁面載入時檢查維護狀態
+document.addEventListener('DOMContentLoaded', () => {
+    checkMaintenanceStatus();
+});
+
+// ... existing code ...
 
 // 停用服務
 function disableService() {
