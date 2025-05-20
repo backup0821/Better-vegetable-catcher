@@ -4249,32 +4249,49 @@ async function checkMaintenanceStatus() {
 
 // 顯示維護通知
 function showMaintenanceNotification(maintenanceInfo) {
-    console.log('準備顯示維護通知:', maintenanceInfo);
-    
-    try {
-        const notification = {
-            id: 'maintenance-notification',
-            title: maintenanceInfo.title,
-            messenge: maintenanceInfo.description,
-            time: `${maintenanceInfo.startTime} ~ ${maintenanceInfo.endTime}`,
-            public: true,
-            targetDevices: ['everyone'],
-            severity: maintenanceInfo.severity
-        };
-        
-        console.log('創建的通知物件:', notification);
-        showPageNotifications([notification]);
-        
-        // 如果維護等級為高，添加特殊樣式
-        if (maintenanceInfo.severity === 'high') {
-            const notificationElement = document.querySelector('.notification-item');
-            if (notificationElement) {
-                notificationElement.classList.add('high-severity');
-            }
-        }
-    } catch (error) {
-        console.error('顯示維護通知時發生錯誤:', error);
-    }
+    console.log('[維護通知] 準備顯示:', maintenanceInfo);
+
+    // 先移除現有通知
+    document.querySelectorAll('.notification-overlay, #page-notification').forEach(e => e.remove());
+
+    // 遮罩層
+    const overlay = document.createElement('div');
+    overlay.className = 'notification-overlay';
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center;
+    `;
+
+    // 通知內容
+    const box = document.createElement('div');
+    box.id = 'page-notification';
+    box.className = 'notification-window';
+    box.style.cssText = `
+        background: #fff3cd; color: #856404; padding: 32px 24px; border-radius: 12px; max-width: 90vw; text-align: center; box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+    `;
+
+    // 完全對應 API 格式
+    box.innerHTML = `
+        <h2 style="color:#721c24;">${maintenanceInfo.title || '系統維護通知'}</h2>
+        <p style="font-size:1.2em;margin:16px 0;">${maintenanceInfo.description || ''}</p>
+        <p>
+            <b>維護狀態：</b> ${maintenanceInfo.isActive ? '進行中' : '未啟動'}<br>
+            <b>維護等級：</b> ${maintenanceInfo.severity || '無'}<br>
+            <b>維護時間：</b><br>
+            ${maintenanceInfo.startTime ? new Date(maintenanceInfo.startTime).toLocaleString('zh-TW') : ''} ~ 
+            ${maintenanceInfo.endTime ? new Date(maintenanceInfo.endTime).toLocaleString('zh-TW') : ''}
+        </p>
+        <p>
+            <b>聯絡方式：</b> 
+            ${maintenanceInfo.contact && maintenanceInfo.contact.email ? `<a href="mailto:${maintenanceInfo.contact.email}">${maintenanceInfo.contact.email}</a>` : '無'}
+        </p>
+        <p>
+            <b>是否停用服務：</b> ${maintenanceInfo.stopService ? '是' : '否'}
+        </p>
+        <button style="margin-top:24px;padding:10px 32px;font-size:1.1em;background:#721c24;color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="location.reload()">重新整理</button>
+    `;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
 }
 
 // 停用服務
