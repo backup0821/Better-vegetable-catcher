@@ -2,6 +2,7 @@
 const VERSION = 'v2.4.web.1';
 console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
+const MAINTENANCE_CHECK_URL = 'https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json';
 
 // 裝置識別碼
 let deviceId = localStorage.getItem('deviceId');
@@ -116,6 +117,11 @@ function initUpdateCheck() {
 // 在頁面載入時初始化更新檢查
 document.addEventListener('DOMContentLoaded', () => {
     initUpdateCheck();
+    
+    // 檢查維護狀態
+    checkMaintenanceStatus();
+    // 每5分鐘檢查一次維護狀態
+    setInterval(checkMaintenanceStatus, 5 * 60 * 1000);
     
     // 檢查環境設定並顯示農業氣象影片
     showAgriculturalWeatherVideo();
@@ -4215,3 +4221,63 @@ function initDevModeFeatures() {
 }
 
 // ... existing code ...
+
+// 檢查維護狀態
+async function checkMaintenanceStatus() {
+    try {
+        const response = await fetch(MAINTENANCE_CHECK_URL);
+        if (!response.ok) throw new Error('無法檢查維護狀態');
+        const data = await response.json();
+        
+        if (data.maintenanceInfo.isActive) {
+            const startTime = new Date(data.maintenanceInfo.startTime);
+            const endTime = new Date(data.maintenanceInfo.endTime);
+            const now = new Date();
+            
+            if (now >= startTime && now <= endTime) {
+                showMaintenanceNotification(data.maintenanceInfo);
+                if (data.maintenanceInfo.stopService) {
+                    disableService();
+                }
+            }
+        }
+    } catch (error) {
+        console.error('檢查維護狀態時發生錯誤:', error);
+    }
+}
+
+// 顯示維護通知
+function showMaintenanceNotification(maintenanceInfo) {
+    const notification = {
+        id: 'maintenance-notification',
+        title: maintenanceInfo.title,
+        messenge: maintenanceInfo.description,
+        time: `${maintenanceInfo.startTime} ~ ${maintenanceInfo.endTime}`,
+        public: true,
+        targetDevices: ['everyone'],
+        severity: maintenanceInfo.severity
+    };
+    
+    showPageNotifications([notification]);
+}
+
+// 停用服務
+function disableService() {
+    // 停用所有主要功能
+    document.getElementById('searchInput').disabled = true;
+    document.getElementById('cropSelect').disabled = true;
+    document.getElementById('showPriceTrend').disabled = true;
+    document.getElementById('showVolumeDist').disabled = true;
+    document.getElementById('showPriceDist').disabled = true;
+    document.getElementById('showSeasonal').disabled = true;
+    
+    // 顯示維護中訊息
+    resultArea.innerHTML = `
+        <div class="maintenance-message">
+            <h2>${maintenanceInfo.title}</h2>
+            <p>${maintenanceInfo.description}</p>
+            <p>維護時間：${new Date(maintenanceInfo.startTime).toLocaleString('zh-TW')} ~ ${new Date(maintenanceInfo.endTime).toLocaleString('zh-TW')}</p>
+            <p>如有任何問題，請聯繫：${maintenanceInfo.contact.email}</p>
+        </div>
+    `;
+}

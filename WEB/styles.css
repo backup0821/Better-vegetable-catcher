@@ -1524,4 +1524,50 @@ input:checked + .slider:before {
 [data-theme="dark"] .data-availability p,
 [data-theme="dark"] .data-availability li {
     color: #ecf0f1;
+}
+
+/* 維護通知樣式 */
+.maintenance-message {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.maintenance-message h2 {
+    color: #856404;
+    margin-bottom: 15px;
+}
+
+.maintenance-message p {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+/* 高嚴重性維護通知樣式 */
+.maintenance-message.high-severity {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.maintenance-message.high-severity h2 {
+    color: #721c24;
+}
+
+/* 中嚴重性維護通知樣式 */
+.maintenance-message.medium-severity {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+}
+
+/* 低嚴重性維護通知樣式 */
+.maintenance-message.low-severity {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
 } 
