@@ -104,19 +104,19 @@ self.addEventListener('push', (event) => {
         const data = event.data.json();
         const options = {
             body: data.body,
-            icon: '/image/png/icon-192.png',
-            badge: '/image/png/icon-192.png',
+            icon: '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
+            badge: '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
             data: data.data || {},
             actions: [
                 {
                     action: 'explore',
                     title: '查看詳情',
-                    icon: '/image/png/icon-192.png'
+                    icon: '/Better-vegetable-catcher/WEB/image/png/icon-192.png'
                 },
                 {
                     action: 'close',
                     title: '關閉',
-                    icon: '/image/png/icon-192.png'
+                    icon: '/Better-vegetable-catcher/WEB/image/png/icon-192.png'
                 }
             ]
         };
@@ -133,7 +133,7 @@ self.addEventListener('notificationclick', (event) => {
 
     if (event.action === 'explore') {
         event.waitUntil(
-            clients.openWindow('/')
+            clients.openWindow('/Better-vegetable-catcher/WEB/')
         );
     }
 });

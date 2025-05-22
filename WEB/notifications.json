@@ -1,0 +1,25 @@
+{
+    "notifications": [
+        {
+            "id": "notify-001",
+            "title": "系統更新通知",
+            "message": "農產品交易資料分析系統已更新至最新版本",
+            "startTime": "2024-03-21T00:00:00.000Z",
+            "endTime": "2024-03-28T23:59:59.000Z",
+            "priority": 3,
+            "public": true,
+            "targetDevices": ["everyone"]
+        },
+        {
+            "id": "notify-002",
+            "title": "市場休市通知",
+            "message": "台北第一果菜批發市場將於明日休市",
+            "startTime": "2024-03-21T00:00:00.000Z",
+            "endTime": "2024-03-22T23:59:59.000Z",
+            "priority": 2,
+            "public": true,
+            "targetDevices": ["everyone"]
+        }
+    ],
+    "lastUpdated": "2024-03-21T10:00:00.000Z"
+} 

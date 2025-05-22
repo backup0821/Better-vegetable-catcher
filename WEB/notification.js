@@ -157,14 +157,14 @@ async function requestNotificationPermission() {
             // 獲取推播訂閱
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array('YOUR_PUBLIC_VAPID_KEY')
+                applicationServerKey: urlBase64ToUint8Array('BO-QjkYMehAHI8suojRy1dBmOsrn0dwtgwt7rL4gWz_SbUqtN84VxcNiUn44xWRUAi7gmC-b9_MsbZfolV6UKuw')
             });
             
             // 儲存訂閱資訊
             localStorage.setItem('pushSubscription', JSON.stringify(subscription));
             
-            // 發送訂閱資訊到後端
-            await sendSubscriptionToServer(subscription);
+            // 發送訂閱資訊到 API
+            await sendSubscriptionToAPI(subscription);
             
             console.log('推播通知已啟用');
             return true;
@@ -194,17 +194,18 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
-// 發送訂閱資訊到後端
-async function sendSubscriptionToServer(subscription) {
+// 發送訂閱資訊到 API
+async function sendSubscriptionToAPI(subscription) {
     try {
-        const response = await fetch('YOUR_BACKEND_API/subscribe', {
+        const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/subscribe.json', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 subscription: subscription,
-                deviceId: localStorage.getItem('deviceId')
+                deviceId: localStorage.getItem('deviceId'),
+                timestamp: new Date().toISOString()
             })
         });
         
@@ -212,9 +213,9 @@ async function sendSubscriptionToServer(subscription) {
             throw new Error('發送訂閱資訊失敗');
         }
         
-        console.log('訂閱資訊已成功發送到後端');
+        console.log('訂閱資訊已成功發送到 API');
     } catch (error) {
-        console.error('發送訂閱資訊到後端時發生錯誤:', error);
+        console.error('發送訂閱資訊到 API 時發生錯誤:', error);
     }
 }
 
