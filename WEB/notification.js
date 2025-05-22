@@ -151,16 +151,20 @@ async function requestNotificationPermission() {
     try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-            // 獲取 FCM token
-            const token = await messaging.getToken({
-                vapidKey: 'YOUR_VAPID_KEY'
+            // 註冊 Service Worker
+            const registration = await navigator.serviceWorker.register('/Better-vegetable-catcher/WEB/service-worker.js');
+            
+            // 獲取推播訂閱
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array('YOUR_PUBLIC_VAPID_KEY')
             });
             
-            // 儲存 token
-            localStorage.setItem('fcmToken', token);
+            // 儲存訂閱資訊
+            localStorage.setItem('pushSubscription', JSON.stringify(subscription));
             
-            // 可以將 token 發送到後端
-            await sendTokenToServer(token);
+            // 發送訂閱資訊到後端
+            await sendSubscriptionToServer(subscription);
             
             console.log('推播通知已啟用');
             return true;
@@ -174,67 +178,94 @@ async function requestNotificationPermission() {
     }
 }
 
-// 發送 token 到後端
-async function sendTokenToServer(token) {
+// 將 VAPID 公鑰轉換為 Uint8Array
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// 發送訂閱資訊到後端
+async function sendSubscriptionToServer(subscription) {
     try {
-        const response = await fetch('YOUR_BACKEND_API/token', {
+        const response = await fetch('YOUR_BACKEND_API/subscribe', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                token: token,
+                subscription: subscription,
                 deviceId: localStorage.getItem('deviceId')
             })
         });
         
         if (!response.ok) {
-            throw new Error('發送 token 失敗');
+            throw new Error('發送訂閱資訊失敗');
         }
         
-        console.log('Token 已成功發送到後端');
+        console.log('訂閱資訊已成功發送到後端');
     } catch (error) {
-        console.error('發送 token 到後端時發生錯誤:', error);
+        console.error('發送訂閱資訊到後端時發生錯誤:', error);
     }
 }
 
-// 監聽推播通知
-messaging.onMessage((payload) => {
-    console.log('收到推播通知:', payload);
-    
-    // 顯示通知
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-        icon: '/image/png/icon-192.png',
-        badge: '/image/png/icon-192.png',
-        data: payload.data
-    };
-    
-    // 顯示網頁通知
-    new Notification(notificationTitle, notificationOptions);
-});
-
-// 監聽 token 更新
-messaging.onTokenRefresh(async () => {
+// 取消訂閱推播通知
+async function unsubscribeFromPush() {
     try {
-        const newToken = await messaging.getToken();
-        localStorage.setItem('fcmToken', newToken);
-        await sendTokenToServer(newToken);
-        console.log('Token 已更新');
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+            await subscription.unsubscribe();
+            localStorage.removeItem('pushSubscription');
+            console.log('已取消訂閱推播通知');
+            return true;
+        }
+        return false;
     } catch (error) {
-        console.error('更新 token 時發生錯誤:', error);
+        console.error('取消訂閱時發生錯誤:', error);
+        return false;
     }
-});
+}
 
-// 在頁面載入時請求通知權限
+// 檢查推播通知狀態
+async function checkPushNotificationStatus() {
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+            console.log('已訂閱推播通知');
+            return true;
+        } else {
+            console.log('未訂閱推播通知');
+            return false;
+        }
+    } catch (error) {
+        console.error('檢查推播通知狀態時發生錯誤:', error);
+        return false;
+    }
+}
+
+// 在頁面載入時檢查並請求通知權限
 window.addEventListener('load', async () => {
     // 檢查是否支援推播通知
     if ('Notification' in window && 'serviceWorker' in navigator) {
-        const permission = await requestNotificationPermission();
-        if (permission) {
-            // 顯示已啟用通知的提示
-            showNotification('推播通知已啟用', '您將收到重要的系統通知');
+        const isSubscribed = await checkPushNotificationStatus();
+        if (!isSubscribed) {
+            const permission = await requestNotificationPermission();
+            if (permission) {
+                showNotification('推播通知已啟用', '您將收到重要的系統通知');
+            }
         }
     }
 });

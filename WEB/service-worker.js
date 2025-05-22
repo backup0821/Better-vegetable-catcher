@@ -1,14 +1,14 @@
 const CACHE_NAME = 'vegetable-catcher-v1';
 const ASSETS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/script.js',
-    '/notification.js',
-    '/manifest.json',
-    '/image/png/icon-192.png',
-    '/image/png/icon-512.png',
-    '/image/png/favicon.ico'
+    '/Better-vegetable-catcher/WEB/',
+    '/Better-vegetable-catcher/WEB/index.html',
+    '/Better-vegetable-catcher/WEB/styles.css',
+    '/Better-vegetable-catcher/WEB/script.js',
+    '/Better-vegetable-catcher/WEB/notification.js',
+    '/Better-vegetable-catcher/WEB/manifest.json',
+    '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
+    '/Better-vegetable-catcher/WEB/image/png/icon-512.png',
+    '/Better-vegetable-catcher/WEB/image/png/favicon.ico'
 ];
 
 // 背景通知檢查間隔（每5分鐘檢查一次）
@@ -92,40 +92,39 @@ self.addEventListener('fetch', (event) => {
                     })
                     .catch(() => {
                         // 如果網路請求失敗，返回離線頁面
-                        return caches.match('/offline.html');
+                        return caches.match('/Better-vegetable-catcher/WEB/offline.html');
                     });
             })
     );
 });
 
-// 處理推播通知
+// 處理推播事件
 self.addEventListener('push', (event) => {
-    const options = {
-        body: event.data.text(),
-        icon: '/image/png/icon-192.png',
-        badge: '/image/png/icon-192.png',
-        vibrate: [100, 50, 100],
-        data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1
-        },
-        actions: [
-            {
-                action: 'explore',
-                title: '查看詳情',
-                icon: '/image/png/icon-192.png'
-            },
-            {
-                action: 'close',
-                title: '關閉',
-                icon: '/image/png/icon-192.png'
-            }
-        ]
-    };
+    if (event.data) {
+        const data = event.data.json();
+        const options = {
+            body: data.body,
+            icon: '/image/png/icon-192.png',
+            badge: '/image/png/icon-192.png',
+            data: data.data || {},
+            actions: [
+                {
+                    action: 'explore',
+                    title: '查看詳情',
+                    icon: '/image/png/icon-192.png'
+                },
+                {
+                    action: 'close',
+                    title: '關閉',
+                    icon: '/image/png/icon-192.png'
+                }
+            ]
+        };
 
-    event.waitUntil(
-        self.registration.showNotification('農產品交易資料分析系統', options)
-    );
+        event.waitUntil(
+            self.registration.showNotification(data.title, options)
+        );
+    }
 });
 
 // 處理通知點擊
