@@ -1,12 +1,14 @@
-const CACHE_NAME = 'vegetable-catcher-cache-v1';
-const urlsToCache = [
-  './',
-  './index.html',
-  './styles.css',
-  './script.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+const CACHE_NAME = 'vegetable-catcher-v1';
+const ASSETS_TO_CACHE = [
+    '/',
+    '/index.html',
+    '/styles.css',
+    '/script.js',
+    '/notification.js',
+    '/manifest.json',
+    '/image/png/icon-192.png',
+    '/image/png/icon-512.png',
+    '/image/png/favicon.ico'
 ];
 
 // 背景通知檢查間隔（每5分鐘檢查一次）
@@ -34,53 +36,107 @@ const messaging = firebase.messaging();
 
 // 安裝 Service Worker
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-  );
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then((cache) => {
+                console.log('快取已開啟');
+                return cache.addAll(ASSETS_TO_CACHE);
+            })
+    );
 });
 
-// 啟用 Service Worker
+// 啟動 Service Worker
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('刪除舊快取：', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
         })
-      );
-    })
-  );
+    );
 });
 
-// 處理 fetch 請求
+// 處理請求
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request)
-          .then((response) => {
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+    event.respondWith(
+        caches.match(event.request)
+            .then((response) => {
+                // 如果在快取中找到回應，則返回快取的回應
+                if (response) {
+                    return response;
+                }
+
+                // 否則從網路獲取
+                return fetch(event.request)
+                    .then((response) => {
+                        // 檢查是否收到有效的回應
+                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                            return response;
+                        }
+
+                        // 複製回應，因為回應是串流，只能使用一次
+                        const responseToCache = response.clone();
+
+                        // 將新的回應加入快取
+                        caches.open(CACHE_NAME)
+                            .then((cache) => {
+                                cache.put(event.request, responseToCache);
+                            });
+
+                        return response;
+                    })
+                    .catch(() => {
+                        // 如果網路請求失敗，返回離線頁面
+                        return caches.match('/offline.html');
+                    });
+            })
+    );
+});
+
+// 處理推播通知
+self.addEventListener('push', (event) => {
+    const options = {
+        body: event.data.text(),
+        icon: '/image/png/icon-192.png',
+        badge: '/image/png/icon-192.png',
+        vibrate: [100, 50, 100],
+        data: {
+            dateOfArrival: Date.now(),
+            primaryKey: 1
+        },
+        actions: [
+            {
+                action: 'explore',
+                title: '查看詳情',
+                icon: '/image/png/icon-192.png'
+            },
+            {
+                action: 'close',
+                title: '關閉',
+                icon: '/image/png/icon-192.png'
             }
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-            return response;
-          });
-      })
-  );
+        ]
+    };
+
+    event.waitUntil(
+        self.registration.showNotification('農產品交易資料分析系統', options)
+    );
+});
+
+// 處理通知點擊
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    if (event.action === 'explore') {
+        event.waitUntil(
+            clients.openWindow('/')
+        );
+    }
 });
 
 // 處理背景訊息
@@ -96,27 +152,6 @@ messaging.onBackgroundMessage((payload) => {
   };
 
   return self.registration.showNotification(notificationTitle, notificationOptions);
-});
-
-// 處理通知點擊事件
-self.addEventListener('notificationclick', (event) => {
-  console.log('通知被點擊:', event);
-  
-  event.notification.close();
-  
-  // 開啟或聚焦到應用程式
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow('/');
-      }
-    })
-  );
 });
 
 // 背景通知檢查函數
