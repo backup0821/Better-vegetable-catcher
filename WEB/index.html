@@ -102,10 +102,108 @@
         .close-notification-btn:hover {
             background-color: #45a049;
         }
+
+        /* 添加測試按鈕樣式 */
+        .test-notification-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            min-width: 120px;
+        }
+
+        .test-notification-btn:hover {
+            background-color: #45a049;
+        }
+
+        .check-update-btn,
+        .tv-version-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .check-update-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .tv-version-btn {
+            background-color: #FF9800;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .version-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* 添加通知測試區域的樣式 */
+        .notification-test-area {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-notification-btn {
+            display: block;
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .test-notification-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .test-notification-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- 新增固定的通知測試區域 -->
+        <div class="notification-test-area">
+            <button id="testNotificationBtn" class="test-notification-btn">測試推播通知</button>
+        </div>
+
         <!-- 新增通知介面 -->
         <div id="notificationModal" class="notification-modal" style="display: none;">
             <div class="notification-modal-content">
@@ -121,8 +219,11 @@
             <div class="version-info">
                 <p class="version">版本：<span id="versionNumber">v2.3.web</span></p>
                 <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
-                <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
-                <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
+                <div class="button-group">
+                    <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
+                    <button id="testNotificationBtn" class="test-notification-btn">測試推播通知</button>
+                    <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
+                </div>
             </div>
         </header>
 
@@ -386,6 +487,17 @@
             
             document.body.appendChild(installButton);
         }
+
+        // 測試推播通知按鈕
+        document.getElementById('testNotificationBtn').addEventListener('click', async () => {
+            console.log('開始測試推播通知...');
+            const result = await tester.testSubscription();
+            if (result) {
+                alert('測試通知已發送，請查看系統通知');
+            } else {
+                alert('測試失敗，請檢查瀏覽器控制台以獲取詳細資訊');
+            }
+        });
     </script>
     <!-- 工作人員退出按鈕 -->
     <div class="staff-logout-section">

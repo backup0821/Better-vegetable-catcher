@@ -19,6 +19,16 @@
             "priority": 2,
             "public": true,
             "targetDevices": ["everyone"]
+        },
+        {
+            "id": "notify-003",
+            "title": "測試通知",
+            "message": "這是一則測試通知，用於驗證推播功能是否正常運作",
+            "startTime": "2024-03-21T00:00:00.000Z",
+            "endTime": "2024-03-21T23:59:59.000Z",
+            "priority": 1,
+            "public": true,
+            "targetDevices": ["everyone"]
         }
     ],
     "lastUpdated": "2024-03-21T10:00:00.000Z"
