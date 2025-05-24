@@ -103,24 +103,6 @@
             background-color: #45a049;
         }
 
-        /* 添加測試按鈕樣式 */
-        .test-notification-btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
-            min-width: 120px;
-        }
-
-        .test-notification-btn:hover {
-            background-color: #45a049;
-        }
-
         .check-update-btn,
         .tv-version-btn {
             padding: 10px 20px;
@@ -199,11 +181,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- 新增固定的通知測試區域 -->
-        <div class="notification-test-area" style="display: none;">
-            <button id="testNotificationBtn" class="test-notification-btn">測試推播通知</button>
-        </div>
-
         <!-- 新增通知介面 -->
         <div id="notificationModal" class="notification-modal" style="display: none;">
             <div class="notification-modal-content">
@@ -221,7 +198,6 @@
                 <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
                 <div class="button-group">
                     <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
-                    <button id="testNotificationBtn" class="test-notification-btn">測試推播通知</button>
                     <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
                 </div>
             </div>
@@ -495,17 +471,6 @@
             
             document.body.appendChild(installButton);
         }
-
-        // 測試推播通知按鈕
-        document.getElementById('testNotificationBtn').addEventListener('click', async () => {
-            console.log('開始測試推播通知...');
-            const result = await tester.testSubscription();
-            if (result) {
-                alert('測試通知已發送，請查看系統通知');
-            } else {
-                alert('測試失敗，請檢查瀏覽器控制台以獲取詳細資訊');
-            }
-        });
     </script>
     <!-- 工作人員退出按鈕 -->
     <div class="staff-logout-section">
