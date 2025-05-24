@@ -10,79 +10,72 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-        }
-        
-        .license-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .license-section h2 {
-            color: #1a73e8;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
-        }
-        
-        .license-section p {
-            margin-bottom: 10px;
             line-height: 1.6;
         }
-        
-        .license-section ul {
-            margin-left: 20px;
-            margin-bottom: 15px;
+        .license-header {
+            text-align: center;
+            margin-bottom: 30px;
         }
-        
-        .license-section li {
-            margin-bottom: 8px;
+        .license-content {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
-        
-        .back-button {
+        .license-icons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .license-icons img {
+            max-width: 1em;
+            max-height: 1em;
+            margin: 0 0.2em;
+        }
+        .back-link {
             display: inline-block;
-            padding: 10px 20px;
-            background-color: #1a73e8;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
             margin-top: 20px;
-            transition: background-color 0.3s;
+            color: #4CAF50;
+            text-decoration: none;
         }
-        
-        .back-button:hover {
-            background-color: #1557b0;
-        }
-        
-        .version-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            background-color: #1a73e8;
-            color: white;
-            border-radius: 4px;
-            font-size: 0.9em;
-            margin-left: 10px;
+        .back-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="license-container">
-        <div class="license-section">
-            <h2>開源授權</h2>
-            <p>本系統採用 <strong>Creative Commons Attribution 4.0 International (CC BY 4.0)</strong> 授權條款，具體內容如下：</p>
-            <ul>
-                <li>允許分享：可自由分享、複製與散布本系統的內容</li>
-                <li>允許改作：可重新混合、轉變與創作衍生作品</li>
-                <li>需標示來源：必須給予適當的署名，提供授權連結，並註明是否有進行修改</li>
-                <li>不得施加額外限制：不得使用法律條款或技術手段限制他人行使授權條款允許的權利</li>
-            </ul>
-            <p>完整授權條款請參考：<a href="LICENSE" target="_blank">LICENSE 文件</a> 或 <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0 官方網站</a>。</p>
+        <div class="license-header">
+            <h1>授權與開源說明</h1>
+            <div class="license-icons">
+                <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="CC">
+                <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="BY">
+                <img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" alt="NC">
+            </div>
         </div>
 
-        <div class="license-section">
-            <h2>使用的開源套件與資源</h2>
+        <div class="license-content">
+            <h2>Creative Commons Attribution-NonCommercial 4.0 International 授權</h2>
+            
+            <h3>您被允許：</h3>
+            <ul>
+                <li>分享 — 以任何媒介或格式重製及散布本素材</li>
+                <li>改作 — 重混、轉換本素材、及依本素材建立新素材</li>
+            </ul>
+
+            <h3>惟須遵守以下條件：</h3>
+            <ul>
+                <li>姓名標示 — 您必須給予適當表彰、提供指向本授權條款的連結，同時標示是否作出了修改。您可以用任何合理方式為前述表彰，但不得以任何方式暗示授權人為您或您的使用方式背書。</li>
+                <li>非商業性 — 您不得將本素材用於商業目的。</li>
+            </ul>
+
+            <h3>專案資訊</h3>
+            <p>本專案由 Yo-Code LKJH Maker 開發，採用開源方式發布。</p>
+            <p>GitHub 專案連結：<a href="https://github.com/backup0821/Better-vegetable-catcher">https://github.com/backup0821/Better-vegetable-catcher</a></p>
+
+            <h3>資料來源</h3>
+            <p>本系統使用的農產品交易資料來自行政院農業委員會農產品交易行情站。</p>
+
+            <h3>使用的開源套件與資源</h3>
             <ul>
                 <li>
                     <strong>Plotly.js</strong>
@@ -157,38 +150,8 @@
                     </ul>
                 </li>
             </ul>
-        </div>
 
-        <div class="license-section">
-            <h2>資料來源</h2>
-            <ul>
-                <li>
-                    <strong>行政院農業委員會農產品交易行情站</strong>
-                    <ul>
-                        <li>用途：農產品交易資料</li>
-                        <li>授權：政府資料開放授權條款</li>
-                        <li>來源：<a href="https://amis.afa.gov.tw/" target="_blank">農產品交易行情站</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>行政院農業委員會農業氣象影片</strong>
-                    <ul>
-                        <li>用途：農業氣象預報影片</li>
-                        <li>授權：政府資料開放授權條款</li>
-                        <li>來源：<a href="https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx" target="_blank">農業氣象影片 RSS</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>YouTube 嵌入服務</strong>
-                    <p>用途：嵌入農業氣象影片播放</p>
-                    <p>授權條款：YouTube 服務條款</p>
-                    <p>來源連結：<a href="https://www.youtube.com/terms" target="_blank">YouTube 服務條款</a></p>
-                </li>
-            </ul>
-        </div>
-
-        <div class="license-section">
-            <h2>隱私權政策</h2>
+            <h3>隱私權政策</h3>
             <p>本系統重視使用者隱私：</p>
             <ul>
                 <li>所有資料處理均在本地進行</li>
@@ -198,10 +161,8 @@
                 <li>Firebase 分析僅收集匿名使用數據</li>
                 <li>通知系統使用 Firebase Cloud Messaging</li>
             </ul>
-        </div>
 
-        <div class="license-section">
-            <h2>技術支援</h2>
+            <h3>技術支援</h3>
             <p>如有任何問題或建議，請透過以下方式聯繫：</p>
             <ul>
                 <li>GitHub Issues：<a href="https://github.com/backup0821/Better-vegetable-catcher/issues" target="_blank">回報問題</a></li>
@@ -209,7 +170,7 @@
             </ul>
         </div>
 
-        <a href="index.html" class="back-button">返回主頁</a>
+        <a href="index.html" class="back-link">← 返回首頁</a>
     </div>
 </body>
 </html>
