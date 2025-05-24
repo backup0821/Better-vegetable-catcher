@@ -2,7 +2,8 @@
 # 🥕 高級版果菜市場資料抓取器  
 
 作者：鹿中創客  
-授權：MIT（禁商用）
+授權：CC 4.0 BY NC ［！[CC4.0 BY NC](https://creativecommons.org/licenses/by-nc/4.0/)
+
 [![Better Stack Badge](https://uptime.betterstack.com/status-badges/v3/monitor/1xu1o.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 ---
 
@@ -44,7 +45,10 @@ python main.py
 
 ## 📜 授權說明  
 
+本專案開發者為 @Yo-codeback 透過此帳號發布，開發者擁有此專案管理權以及所有權甚至商用行為都是合法之權利，非開發者禁止商用行為。
 本專案採用 CC (BY-NC) 4.0 授權，**禁止用於商業用途**。  
+［！[CC4.0 BY NC](https://creativecommons.org/licenses/by-nc/4.0/)
+
 若您有商業合作需求，請聯繫作者：「鹿中創客」。
 
 ---
