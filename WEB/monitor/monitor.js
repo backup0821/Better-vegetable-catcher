@@ -42,7 +42,8 @@ let systemStatus = {
 let controls = {
     errorSoundEnabled: true,
     notificationsEnabled: true,
-    isChecking: false
+    isChecking: false,
+    autoUpdate: true  // 新增自動更新控制
 };
 
 // 音效控制
@@ -130,6 +131,19 @@ function initControls() {
         controls.notificationsEnabled = e.target.checked;
     });
 
+    // 自動更新控制
+    const autoUpdateCheckbox = document.getElementById('enableAutoUpdate');
+    if (autoUpdateCheckbox) {
+        autoUpdateCheckbox.addEventListener('change', (e) => {
+            controls.autoUpdate = e.target.checked;
+            if (e.target.checked) {
+                startMonitoring();
+            } else {
+                stopMonitoring();
+            }
+        });
+    }
+
     // 歷史記錄過濾
     const historyFilter = document.getElementById('historyFilter');
     historyFilter.addEventListener('change', (e) => {
@@ -192,6 +206,14 @@ function updateCurrentTime() {
 function startMonitoring() {
     checkAllEndpoints();
     startCountdown();
+}
+
+// 停止監看
+function stopMonitoring() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
 }
 
 // 開始倒數計時
@@ -460,6 +482,31 @@ function updateSystemStatus() {
     const statusElement = document.getElementById('systemStatus');
     if (!statusElement) return;
 
+    // 重新計算狀態
+    systemStatus.hasError = false;
+    systemStatus.errorCount = 0;
+    systemStatus.outdatedCount = 0;
+    systemStatus.maintenanceCount = 0;
+
+    // 檢查所有端點狀態
+    endpoints.forEach(endpoint => {
+        const card = document.getElementById(`card-${endpoint.name.replace(/\s+/g, '-').toLowerCase()}`);
+        if (card) {
+            const statusBadge = card.querySelector('.endpoint-status');
+            if (statusBadge) {
+                if (statusBadge.classList.contains('status-error')) {
+                    systemStatus.hasError = true;
+                    systemStatus.errorCount++;
+                } else if (statusBadge.classList.contains('status-outdated')) {
+                    systemStatus.outdatedCount++;
+                } else if (statusBadge.classList.contains('status-maintenance')) {
+                    systemStatus.maintenanceCount++;
+                }
+            }
+        }
+    });
+
+    // 更新狀態顯示
     if (systemStatus.hasError) {
         statusElement.className = 'status-badge status-error';
         statusElement.textContent = `錯誤 (${systemStatus.errorCount})`;
@@ -594,6 +641,12 @@ function toggleMaintenance(endpointName, isMaintenance) {
         checkEndpoint(endpoint).then(result => {
             updateEndpointCard(endpoint, result);
             addToHistory(endpoint, result, new Date());
+            // 更新系統狀態
+            updateSystemStatus();
+            // 如果啟用了自動更新，重新開始監控
+            if (controls.autoUpdate) {
+                startMonitoring();
+            }
         }).catch(error => {
             console.error(`切換維護狀態後檢查失敗:`, error);
         });
