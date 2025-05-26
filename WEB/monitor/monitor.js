@@ -43,12 +43,13 @@ let controls = {
     errorSoundEnabled: true,
     notificationsEnabled: true,
     isChecking: false,
-    autoUpdate: true  // 新增自動更新控制
+    autoUpdate: true
 };
 
 // 音效控制
 let errorSoundEnabled = true;
 let countdownInterval = null;
+let checkInterval = null;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
@@ -204,12 +205,33 @@ function updateCurrentTime() {
 
 // 開始監看
 function startMonitoring() {
+    // 立即執行一次檢查
     checkAllEndpoints();
+    
+    // 清除現有的計時器
+    if (checkInterval) {
+        clearInterval(checkInterval);
+    }
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    // 設置新的計時器
+    checkInterval = setInterval(() => {
+        if (controls.autoUpdate) {
+            checkAllEndpoints();
+        }
+    }, CHECK_INTERVAL);
+    
     startCountdown();
 }
 
 // 停止監看
 function stopMonitoring() {
+    if (checkInterval) {
+        clearInterval(checkInterval);
+        checkInterval = null;
+    }
     if (countdownInterval) {
         clearInterval(countdownInterval);
         countdownInterval = null;
@@ -229,8 +251,11 @@ function startCountdown() {
 // 更新倒數計時
 function updateCountdown() {
     const nextCheckElement = document.getElementById('nextCheck');
+    if (!nextCheckElement) return;
+
     const now = new Date();
-    const nextCheck = new Date(now.getTime() + CHECK_INTERVAL);
+    const lastCheck = systemStatus.lastCheck || now;
+    const nextCheck = new Date(lastCheck.getTime() + CHECK_INTERVAL);
     const timeLeft = nextCheck - now;
     
     const minutes = Math.floor(timeLeft / 60000);
@@ -238,7 +263,7 @@ function updateCountdown() {
     
     nextCheckElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
-    if (timeLeft <= 0) {
+    if (timeLeft <= 0 && controls.autoUpdate) {
         checkAllEndpoints();
     }
 }
@@ -275,14 +300,7 @@ async function checkAllEndpoints() {
     controls.isChecking = true;
 
     const timestamp = new Date();
-    updateCurrentTime();
-    startCountdown();
-    
     systemStatus.lastCheck = timestamp;
-    systemStatus.hasError = false;
-    systemStatus.errorCount = 0;
-    systemStatus.outdatedCount = 0;
-    systemStatus.maintenanceCount = 0;
     
     const checkButton = document.getElementById('checkNow');
     const originalText = checkButton.innerHTML;
@@ -332,6 +350,7 @@ async function checkAllEndpoints() {
         checkButton.innerHTML = originalText;
         checkButton.disabled = false;
         updateSystemStatus();
+        updateCurrentTime();
     }
 }
 
