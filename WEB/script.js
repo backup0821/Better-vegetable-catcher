@@ -4540,3 +4540,196 @@ function initVersionCheck() {
 
 // 在頁面載入時初始化版本檢查
 document.addEventListener('DOMContentLoaded', initVersionCheck);
+
+// ETag 狀態檢查函數
+async function checkETagStatus() {
+    try {
+        const urls = [
+            '/api/data',
+            '/api/version',
+            '/api/notifications',
+            'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
+            'https://baclup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json'
+        ];
+        
+        const statusResults = await Promise.all(
+            urls.map(async (url) => {
+                try {
+                    // 使用 GET 請求而不是 HEAD
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+                    
+                    // 檢查多種快取相關的標頭
+                    const etag = response.headers.get('ETag');
+                    const lastModified = response.headers.get('Last-Modified');
+                    const cacheControl = response.headers.get('Cache-Control');
+                    const expires = response.headers.get('Expires');
+                    
+                    // 獲取內容的雜湊值作為備用 ETag
+                    const content = await response.text();
+                    const contentHash = await calculateHash(content);
+                    
+                    // 使用多種方式來判斷是否為最新
+                    const lastETag = localStorage.getItem(`etag_${url}`);
+                    const lastHash = localStorage.getItem(`hash_${url}`);
+                    const lastModifiedTime = localStorage.getItem(`modified_${url}`);
+                    
+                    // 判斷是否為最新
+                    const isLatest = 
+                        (etag && etag === lastETag) ||
+                        (contentHash && contentHash === lastHash) ||
+                        (lastModified && lastModified === lastModifiedTime);
+                    
+                    // 儲存新的值
+                    if (etag) localStorage.setItem(`etag_${url}`, etag);
+                    if (contentHash) localStorage.setItem(`hash_${url}`, contentHash);
+                    if (lastModified) localStorage.setItem(`modified_${url}`, lastModified);
+                    
+                    return {
+                        url,
+                        etag: etag || '無',
+                        contentHash: contentHash || '無',
+                        lastModified: lastModified || '無',
+                        cacheControl: cacheControl || '無',
+                        expires: expires || '無',
+                        isLatest,
+                        timestamp: new Date().toISOString(),
+                        status: 'success'
+                    };
+                } catch (error) {
+                    return {
+                        url,
+                        error: error.message,
+                        status: 'error',
+                        timestamp: new Date().toISOString()
+                    };
+                }
+            })
+        );
+        
+        return statusResults;
+    } catch (error) {
+        console.error('ETag 狀態檢查失敗:', error);
+        return null;
+    }
+}
+
+// 計算內容雜湊值
+async function calculateHash(content) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(content);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 顯示 ETag 狀態
+function showETagStatus(statusResults) {
+    const statusContainer = document.createElement('div');
+    statusContainer.className = 'etag-status-container';
+    
+    const statusHTML = statusResults.map(result => {
+        if (result.status === 'error') {
+            return `
+                <div class="etag-status-item error">
+                    <div class="status-header">
+                        <span class="status-icon">❌</span>
+                        <span class="status-title">${result.url}</span>
+                    </div>
+                    <div class="status-details">
+                        <p>錯誤: ${result.error}</p>
+                        <p>檢查時間: ${new Date(result.timestamp).toLocaleString('zh-TW')}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="etag-status-item ${result.isLatest ? 'latest' : 'outdated'}">
+                <div class="status-header">
+                    <span class="status-icon">${result.isLatest ? '✅' : '🔄'}</span>
+                    <span class="status-title">${result.url}</span>
+                </div>
+                <div class="status-details">
+                    <p>ETag: ${result.etag}</p>
+                    <p>內容雜湊值: ${result.contentHash}</p>
+                    <p>最後修改時間: ${result.lastModified}</p>
+                    <p>快取控制: ${result.cacheControl}</p>
+                    <p>過期時間: ${result.expires}</p>
+                    <p>狀態: ${result.isLatest ? '已是最新' : '需要更新'}</p>
+                    <p>檢查時間: ${new Date(result.timestamp).toLocaleString('zh-TW')}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    statusContainer.innerHTML = `
+        <div class="etag-status-header">
+            <h3>ETag 狀態檢查</h3>
+            <div class="header-buttons">
+                <button class="refresh-status-btn">重新整理</button>
+                <button class="close-status-btn">關閉</button>
+            </div>
+        </div>
+        <div class="etag-status-content">
+            ${statusHTML}
+        </div>
+    `;
+    
+    // 添加重新整理按鈕事件
+    const refreshBtn = statusContainer.querySelector('.refresh-status-btn');
+    refreshBtn.addEventListener('click', async () => {
+        const newStatus = await checkETagStatus();
+        if (newStatus) {
+            showETagStatus(newStatus);
+        }
+    });
+    
+    // 添加關閉按鈕事件
+    const closeBtn = statusContainer.querySelector('.close-status-btn');
+    closeBtn.addEventListener('click', () => {
+        statusContainer.remove();
+    });
+    
+    // 顯示狀態容器
+    const existingContainer = document.querySelector('.etag-status-container');
+    if (existingContainer) {
+        existingContainer.replaceWith(statusContainer);
+    } else {
+        document.body.appendChild(statusContainer);
+    }
+}
+
+// ... existing code ...
+
+// 初始化 ETag 狀態檢查
+function initETagStatusCheck() {
+    // 添加 ETag 狀態按鈕
+    const button = document.createElement('button');
+    button.className = 'etag-status-btn';
+    button.innerHTML = '📊 ETag 狀態';
+    button.onclick = async () => {
+        const status = await checkETagStatus();
+        if (status) {
+            showETagStatus(status);
+        }
+    };
+    
+    // 將按鈕添加到頁面
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'etag-status-btn-container';
+    buttonContainer.appendChild(button);
+    document.body.appendChild(buttonContainer);
+}
+
+// 在頁面載入時初始化
+document.addEventListener('DOMContentLoaded', () => {
+    initVersionCheck();
+    initETagStatusCheck();
+});
+
+// ... existing code ...
