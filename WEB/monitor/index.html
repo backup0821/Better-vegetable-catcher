@@ -12,6 +12,7 @@
             --success-color: #16a34a;
             --warning-color: #d97706;
             --error-color: #dc2626;
+            --maintenance-color: #6b7280;
         }
 
         body {
@@ -53,6 +54,11 @@
             color: white;
         }
 
+        .status-maintenance {
+            background-color: var(--maintenance-color);
+            color: white;
+        }
+
         .endpoint-card {
             border-left: 4px solid transparent;
         }
@@ -67,6 +73,10 @@
 
         .endpoint-card.error {
             border-left-color: var(--error-color);
+        }
+
+        .endpoint-card.maintenance {
+            border-left-color: var(--maintenance-color);
         }
 
         .history-table th {

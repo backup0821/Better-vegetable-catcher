@@ -4,19 +4,22 @@ const endpoints = [
         name: '通知 API',
         url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json',
         description: '系統通知 API',
-        icon: 'fa-bell'
+        icon: 'fa-bell',
+        maintenance: false
     },
     {
         name: '農業部資料',
         url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
         description: '農業部開放資料',
-        icon: 'fa-leaf'
+        icon: 'fa-leaf',
+        maintenance: false
     },
     {
         name: 'TV 驗證系統',
         url: 'https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
         description: 'TV 版本驗證系統',
-        icon: 'fa-tv'
+        icon: 'fa-tv',
+        maintenance: true
     }
 ];
 
@@ -31,7 +34,8 @@ let systemStatus = {
     lastCheck: null,
     hasError: false,
     errorCount: 0,
-    outdatedCount: 0
+    outdatedCount: 0,
+    maintenanceCount: 0
 };
 
 // 控制項狀態
@@ -76,8 +80,16 @@ function createEndpointCard(endpoint) {
                 <i class="fas ${endpoint.icon} text-gray-500"></i>
                 <h3 class="font-semibold text-gray-900">${endpoint.name}</h3>
             </div>
-            <div class="endpoint-status status-badge status-error">
-                <div class="loading-spinner"></div>
+            <div class="flex items-center gap-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="maintenance-toggle" 
+                           ${endpoint.maintenance ? 'checked' : ''} 
+                           onchange="toggleMaintenance('${endpoint.name}', this.checked)">
+                    <span class="text-sm text-gray-700">維護模式</span>
+                </label>
+                <div class="endpoint-status status-badge status-error">
+                    <div class="loading-spinner"></div>
+                </div>
             </div>
         </div>
         <div class="space-y-2 text-sm text-gray-600">
@@ -248,6 +260,7 @@ async function checkAllEndpoints() {
     systemStatus.hasError = false;
     systemStatus.errorCount = 0;
     systemStatus.outdatedCount = 0;
+    systemStatus.maintenanceCount = 0;
     
     const checkButton = document.getElementById('checkNow');
     const originalText = checkButton.innerHTML;
@@ -266,6 +279,8 @@ async function checkAllEndpoints() {
                     systemStatus.errorCount++;
                 } else if (result.status === 'outdated') {
                     systemStatus.outdatedCount++;
+                } else if (result.status === 'maintenance') {
+                    systemStatus.maintenanceCount++;
                 }
             } catch (error) {
                 console.error(`檢查 ${endpoint.name} 失敗:`, error);
@@ -287,6 +302,8 @@ async function checkAllEndpoints() {
             showNotification('監看系統警告', `發現 ${systemStatus.errorCount} 個錯誤`);
         } else if (systemStatus.outdatedCount > 0) {
             showNotification('監看系統通知', `發現 ${systemStatus.outdatedCount} 個過期端點`);
+        } else if (systemStatus.maintenanceCount > 0) {
+            showNotification('監看系統通知', `有 ${systemStatus.maintenanceCount} 個端點正在維護中`);
         }
     } finally {
         controls.isChecking = false;
@@ -301,6 +318,21 @@ async function checkEndpoint(endpoint) {
     try {
         console.log(`正在檢查端點: ${endpoint.name} (${endpoint.url})`);
         
+        // 檢查是否處於維護狀態
+        if (endpoint.maintenance) {
+            return {
+                status: 'maintenance',
+                etag: '維護中',
+                lastModified: '維護中',
+                hash: 'maintenance',
+                maintenanceInfo: {
+                    startTime: new Date().toISOString(),
+                    endTime: null,
+                    reason: '系統維護中'
+                }
+            };
+        }
+        
         const response = await fetch(endpoint.url, {
             method: 'GET',
             headers: {
@@ -308,10 +340,24 @@ async function checkEndpoint(endpoint) {
                 'Accept': 'application/json'
             },
             mode: 'cors',
-            credentials: 'omit'  // 不發送認證資訊
+            credentials: 'omit'
         });
         
         if (!response.ok) {
+            // 檢查是否為維護狀態
+            if (response.status === 503) {
+                return {
+                    status: 'maintenance',
+                    etag: '維護中',
+                    lastModified: '維護中',
+                    hash: 'maintenance',
+                    maintenanceInfo: {
+                        startTime: new Date().toISOString(),
+                        endTime: null,
+                        reason: '服務暫時不可用'
+                    }
+                };
+            }
             throw new Error(`HTTP 錯誤: ${response.status}`);
         }
         
@@ -322,6 +368,20 @@ async function checkEndpoint(endpoint) {
         let content;
         if (contentType && contentType.includes('application/json')) {
             content = await response.json();
+            // 檢查回應內容是否包含維護資訊
+            if (content.maintenance === true) {
+                return {
+                    status: 'maintenance',
+                    etag: '維護中',
+                    lastModified: '維護中',
+                    hash: 'maintenance',
+                    maintenanceInfo: {
+                        startTime: content.maintenanceStartTime || new Date().toISOString(),
+                        endTime: content.maintenanceEndTime || null,
+                        reason: content.maintenanceReason || '系統維護中'
+                    }
+                };
+            }
             content = JSON.stringify(content);
         } else {
             content = await response.text();
@@ -379,8 +439,19 @@ function updateEndpointCard(endpoint, result) {
     statusElement.textContent = getStatusText(result.status);
 
     // 更新資訊
-    etagElement.textContent = result.etag;
-    modifiedElement.textContent = result.lastModified;
+    if (result.status === 'maintenance' && result.maintenanceInfo) {
+        const startTime = new Date(result.maintenanceInfo.startTime);
+        const endTime = result.maintenanceInfo.endTime ? new Date(result.maintenanceInfo.endTime) : null;
+        
+        etagElement.textContent = result.maintenanceInfo.reason;
+        modifiedElement.innerHTML = `
+            <div>開始：${startTime.toLocaleString()}</div>
+            ${endTime ? `<div>預計結束：${endTime.toLocaleString()}</div>` : ''}
+        `;
+    } else {
+        etagElement.textContent = result.etag;
+        modifiedElement.textContent = result.lastModified;
+    }
     checkTimeElement.textContent = new Date().toLocaleTimeString();
 }
 
@@ -395,6 +466,9 @@ function updateSystemStatus() {
     } else if (systemStatus.outdatedCount > 0) {
         statusElement.className = 'status-badge status-outdated';
         statusElement.textContent = `過期 (${systemStatus.outdatedCount})`;
+    } else if (systemStatus.maintenanceCount > 0) {
+        statusElement.className = 'status-badge status-maintenance';
+        statusElement.textContent = `維護中 (${systemStatus.maintenanceCount})`;
     } else {
         statusElement.className = 'status-badge status-latest';
         statusElement.textContent = '正常';
@@ -409,14 +483,26 @@ function addToHistory(endpoint, result, timestamp) {
     const tr = document.createElement('tr');
     tr.className = `history-item ${result.status}`;
     
+    let statusText = getStatusText(result.status);
+    if (result.status === 'maintenance' && result.maintenanceInfo) {
+        statusText += ` (${result.maintenanceInfo.reason})`;
+    }
+    
     tr.innerHTML = `
         <td class="px-4 py-3">${timestamp.toLocaleString()}</td>
         <td class="px-4 py-3">${endpoint.name}</td>
         <td class="px-4 py-3">
-            <span class="status-badge status-${result.status}">${getStatusText(result.status)}</span>
+            <span class="status-badge status-${result.status}">${statusText}</span>
         </td>
         <td class="px-4 py-3">${result.etag}</td>
-        <td class="px-4 py-3">${result.lastModified}</td>
+        <td class="px-4 py-3">
+            ${result.status === 'maintenance' && result.maintenanceInfo 
+                ? `<div>開始：${new Date(result.maintenanceInfo.startTime).toLocaleString()}</div>
+                   ${result.maintenanceInfo.endTime 
+                       ? `<div>預計結束：${new Date(result.maintenanceInfo.endTime).toLocaleString()}</div>` 
+                       : ''}`
+                : result.lastModified}
+        </td>
         <td class="px-4 py-3">
             <button class="text-primary-600 hover:text-primary-800" onclick="recheckEndpoint('${endpoint.name}')">
                 <i class="fas fa-sync-alt"></i>
@@ -492,7 +578,24 @@ function getStatusText(status) {
             return '過期';
         case 'error':
             return '錯誤';
+        case 'maintenance':
+            return '維護中';
         default:
             return '未知';
+    }
+}
+
+// 切換維護狀態
+function toggleMaintenance(endpointName, isMaintenance) {
+    const endpoint = endpoints.find(e => e.name === endpointName);
+    if (endpoint) {
+        endpoint.maintenance = isMaintenance;
+        // 立即檢查端點狀態
+        checkEndpoint(endpoint).then(result => {
+            updateEndpointCard(endpoint, result);
+            addToHistory(endpoint, result, new Date());
+        }).catch(error => {
+            console.error(`切換維護狀態後檢查失敗:`, error);
+        });
     }
 } 
