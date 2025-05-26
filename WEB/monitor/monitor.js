@@ -2,19 +2,19 @@
 const endpoints = [
     {
         name: '資料 API',
-        url: 'http://localhost:3000/api/Better-vegetable-catcher/data',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/data',
         description: '主要資料 API',
         icon: 'fa-database'
     },
     {
         name: '版本 API',
-        url: 'http://localhost:3000/api/Better-vegetable-catcher/version',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/version',
         description: '版本檢查 API',
         icon: 'fa-code-branch'
     },
     {
         name: '通知 API',
-        url: 'http://localhost:3000/api/Better-vegetable-catcher/notifications',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notifications',
         description: '系統通知 API',
         icon: 'fa-bell'
     },
@@ -26,7 +26,7 @@ const endpoints = [
     },
     {
         name: 'TV 驗證系統',
-        url: 'http://localhost:3000/api/Better-vegetable-catcher/TV-drvice.json',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
         description: 'TV 版本驗證系統',
         icon: 'fa-tv'
     }
@@ -115,6 +115,13 @@ function initControls() {
     const soundCheckbox = document.getElementById('enableSound');
     soundCheckbox.addEventListener('change', (e) => {
         controls.errorSoundEnabled = e.target.checked;
+        // 如果啟用音效，預先載入音效
+        if (e.target.checked) {
+            const errorSound = document.getElementById('errorSound');
+            if (errorSound) {
+                errorSound.load();
+            }
+        }
     });
 
     // 通知控制
@@ -216,11 +223,26 @@ function updateCountdown() {
 
 // 播放錯誤音效
 function playErrorSound() {
-    if (controls.errorSoundEnabled) {
-        const errorSound = document.getElementById('errorSound');
-        errorSound.currentTime = 0;
-        errorSound.play().catch(error => {
-            console.error('播放音效失敗:', error);
+    if (!controls.errorSoundEnabled) return;
+
+    const errorSound = document.getElementById('errorSound');
+    if (!errorSound) return;
+
+    // 嘗試播放音效
+    const playPromise = errorSound.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            if (error.name === 'NotAllowedError') {
+                console.log('音效播放被阻止，等待使用者互動');
+                // 將音效播放加入待播放佇列
+                document.addEventListener('click', function playOnClick() {
+                    errorSound.play().catch(console.error);
+                    document.removeEventListener('click', playOnClick);
+                }, { once: true });
+            } else {
+                console.error('播放音效失敗:', error);
+            }
         });
     }
 }
@@ -297,7 +319,8 @@ async function checkEndpoint(endpoint) {
                 'Cache-Control': 'no-cache',
                 'Accept': 'application/json'
             },
-            mode: 'cors'
+            mode: 'cors',
+            credentials: 'omit'  // 不發送認證資訊
         });
         
         if (!response.ok) {
