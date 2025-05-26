@@ -1,20 +1,8 @@
 // 監看的端點列表
 const endpoints = [
     {
-        name: '資料 API',
-        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/data',
-        description: '主要資料 API',
-        icon: 'fa-database'
-    },
-    {
-        name: '版本 API',
-        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/version',
-        description: '版本檢查 API',
-        icon: 'fa-code-branch'
-    },
-    {
         name: '通知 API',
-        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notifications',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json',
         description: '系統通知 API',
         icon: 'fa-bell'
     },
