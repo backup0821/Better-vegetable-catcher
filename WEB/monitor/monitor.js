@@ -33,11 +33,16 @@ const CHECK_INTERVAL = 60000; // 1分鐘
 // 歷史記錄最大條數
 const MAX_HISTORY = 100;
 
+// 音效控制
+let errorSoundEnabled = true;
+let countdownInterval = null;
+
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
     initMonitor();
     initControls();
     startMonitoring();
+    startClock();
 });
 
 // 初始化監看介面
@@ -79,24 +84,88 @@ function createEndpointCard(endpoint) {
 function initControls() {
     document.getElementById('checkNow').addEventListener('click', checkAllEndpoints);
     document.getElementById('clearHistory').addEventListener('click', clearHistory);
+    
+    // 音效控制
+    const soundCheckbox = document.getElementById('enableSound');
+    soundCheckbox.addEventListener('change', (e) => {
+        errorSoundEnabled = e.target.checked;
+    });
+}
+
+// 開始時鐘
+function startClock() {
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+}
+
+// 更新現在時間
+function updateCurrentTime() {
+    const currentTimeElement = document.getElementById('currentTime');
+    const now = new Date();
+    currentTimeElement.textContent = now.toLocaleTimeString();
 }
 
 // 開始監看
 function startMonitoring() {
     checkAllEndpoints();
-    setInterval(checkAllEndpoints, CHECK_INTERVAL);
+    startCountdown();
+}
+
+// 開始倒數計時
+function startCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+// 更新倒數計時
+function updateCountdown() {
+    const nextCheckElement = document.getElementById('nextCheck');
+    const now = new Date();
+    const nextCheck = new Date(now.getTime() + CHECK_INTERVAL);
+    const timeLeft = nextCheck - now;
+    
+    const minutes = Math.floor(timeLeft / 60000);
+    const seconds = Math.floor((timeLeft % 60000) / 1000);
+    
+    nextCheckElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 0) {
+        checkAllEndpoints();
+    }
+}
+
+// 播放錯誤音效
+function playErrorSound() {
+    if (errorSoundEnabled) {
+        const errorSound = document.getElementById('errorSound');
+        errorSound.currentTime = 0;
+        errorSound.play().catch(error => {
+            console.error('播放音效失敗:', error);
+        });
+    }
 }
 
 // 檢查所有端點
 async function checkAllEndpoints() {
     const timestamp = new Date();
-    updateStatusInfo(timestamp);
+    updateCurrentTime();
+    startCountdown();
+    
+    let hasError = false;
     
     for (const endpoint of endpoints) {
         try {
             const result = await checkEndpoint(endpoint);
             updateEndpointCard(endpoint, result);
             addToHistory(endpoint, result, timestamp);
+            
+            if (result.status === 'error') {
+                hasError = true;
+            }
         } catch (error) {
             console.error(`檢查 ${endpoint.name} 失敗:`, error);
             updateEndpointCard(endpoint, {
@@ -107,7 +176,12 @@ async function checkAllEndpoints() {
                 status: 'error',
                 error: error.message
             }, timestamp);
+            hasError = true;
         }
+    }
+    
+    if (hasError) {
+        playErrorSound();
     }
 }
 

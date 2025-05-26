@@ -198,6 +198,37 @@
                 flex-direction: column;
             }
         }
+
+        .countdown {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .current-time {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .error-sound-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .error-sound-control label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .error-sound-control input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
     </style>
 </head>
 <body>
@@ -206,10 +237,10 @@
             <h1>ETag 監看介面</h1>
             <div class="status-info">
                 <div class="status-item">
-                    最後更新：<span id="lastUpdate">--:--:--</span>
+                    現在時間：<span id="currentTime" class="current-time">--:--:--</span>
                 </div>
                 <div class="status-item">
-                    下次檢查：<span id="nextCheck">--:--:--</span>
+                    下次檢查：<span id="nextCheck" class="countdown">--:--</span>
                 </div>
             </div>
         </div>
@@ -218,6 +249,12 @@
             <div class="control-buttons">
                 <button id="checkNow" class="btn btn-primary">立即檢查</button>
                 <button id="clearHistory" class="btn btn-danger">清除歷史記錄</button>
+            </div>
+            <div class="error-sound-control">
+                <label>
+                    <input type="checkbox" id="enableSound" checked>
+                    啟用錯誤音效
+                </label>
             </div>
         </div>
 
@@ -243,6 +280,11 @@
             </table>
         </div>
     </div>
+
+    <!-- 錯誤音效 -->
+    <audio id="errorSound" preload="auto">
+        <source src="error.mp3" type="audio/mpeg">
+    </audio>
 
     <script src="monitor.js"></script>
 </body>
