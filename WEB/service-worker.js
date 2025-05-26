@@ -61,40 +61,34 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 處理請求
-self.addEventListener('fetch', (event) => {
+// ETag 處理
+self.addEventListener('fetch', function(event) {
     event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // 如果在快取中找到回應，則返回快取的回應
-                if (response) {
-                    return response;
-                }
-
-                // 否則從網路獲取
-                return fetch(event.request)
-                    .then((response) => {
-                        // 檢查是否收到有效的回應
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
-
-                        // 複製回應，因為回應是串流，只能使用一次
-                        const responseToCache = response.clone();
-
-                        // 將新的回應加入快取
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return response;
-                    })
-                    .catch(() => {
-                        // 如果網路請求失敗，返回離線頁面
-                        return caches.match('/Better-vegetable-catcher/WEB/offline.html');
-                    });
-            })
+        fetch(event.request, {
+            headers: {
+                'Cache-Control': 'no-cache',
+                'If-None-Match': event.request.headers.get('If-None-Match') || ''
+            }
+        }).then(function(response) {
+            // 如果是 304 Not Modified，從快取中獲取
+            if (response.status === 304) {
+                return caches.match(event.request);
+            }
+            
+            // 如果有 ETag，保存它
+            const etag = response.headers.get('ETag');
+            if (etag) {
+                const clonedResponse = response.clone();
+                caches.open('etag-cache').then(function(cache) {
+                    cache.put(event.request, clonedResponse);
+                });
+            }
+            
+            return response;
+        }).catch(function() {
+            // 如果網路請求失敗，嘗試從快取中獲取
+            return caches.match(event.request);
+        })
     );
 });
 

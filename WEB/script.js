@@ -1,8 +1,11 @@
 // 版本資訊
-const VERSION = 'v2.4.web.1';
+const VERSION = 'v2.4.web.2';
 console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 const MAINTENANCE_CHECK_URL = 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json';
+
+// 版本常數
+const VERSION_CHECK_INTERVAL = 1000 * 60 * 60; // 每小時檢查一次
 
 // 裝置識別碼
 let deviceId = localStorage.getItem('deviceId');
@@ -61,23 +64,67 @@ if (savedEnv) {
     window.ENV_DEFAULT_CONFIGS.environment = savedEnv;
 }
 
+// ETag 相關函數
+async function checkETag(url) {
+    try {
+        const response = await fetch(url, {
+            method: 'HEAD',
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        const etag = response.headers.get('ETag');
+        const lastETag = localStorage.getItem(`etag_${url}`);
+        
+        if (etag && etag !== lastETag) {
+            localStorage.setItem(`etag_${url}`, etag);
+            return true; // 需要重新載入
+        }
+        return false; // 不需要重新載入
+    } catch (error) {
+        console.error('ETag 檢查失敗:', error);
+        return true; // 發生錯誤時，預設重新載入
+    }
+}
+
+async function fetchWithETag(url, options = {}) {
+    const needsReload = await checkETag(url);
+    if (needsReload) {
+        // 強制重新載入
+        const timestamp = new Date().getTime();
+        const separator = url.includes('?') ? '&' : '?';
+        url = `${url}${separator}_t=${timestamp}`;
+    }
+    
+    return fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Cache-Control': 'no-cache',
+            'If-None-Match': localStorage.getItem(`etag_${url}`) || ''
+        }
+    });
+}
+
 // 檢查版本更新
 async function checkForUpdates() {
     try {
-        const response = await fetch(VERSION_CHECK_URL);
-        if (!response.ok) throw new Error('無法檢查更新');
-        const data = await response.json();
-        const latestVersion = data.tag_name;
-        
-        if (latestVersion !== VERSION) {
-            // 顯示更新通知
-            showUpdateNotification(latestVersion);
+        const response = await fetchWithETag('/api/version');
+        if (!response.ok) {
+            throw new Error('版本檢查失敗');
         }
         
-        versionNumber.textContent = VERSION;
-        lastUpdate.textContent = new Date().toLocaleString('zh-TW');
+        const data = await response.json();
+        const etag = response.headers.get('ETag');
+        if (etag) {
+            localStorage.setItem('etag_version', etag);
+        }
+        
+        return data;
     } catch (error) {
-        console.error('檢查更新時發生錯誤:', error);
+        console.error('版本檢查錯誤:', error);
+        throw error;
     }
 }
 
@@ -168,29 +215,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 從農產品交易行情站獲取資料
 async function fetchData() {
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    loadingSpinner.style.display = 'flex';
-    loadingSpinner.innerHTML = '<div class="spinner"></div><div class="loading-text">資料載入中...</div>';
     try {
-        const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx');
-        if (!response.ok) throw new Error('無法獲取資料');
+        const response = await fetchWithETag('/api/data');
+        if (!response.ok) {
+            throw new Error('資料獲取失敗');
+        }
+        
         const data = await response.json();
-        cropData = data;
-        updateCropList();
+        // 更新 ETag
+        const etag = response.headers.get('ETag');
+        if (etag) {
+            localStorage.setItem('etag_data', etag);
+        }
         
-
-        
-        // 更新資料時間
-        const now = new Date();
-        dataUpdateTime.textContent = now.toLocaleString('zh-TW');
-        
-        // 檢查更新
-        await checkForUpdates();
+        return data;
     } catch (error) {
-        console.error('獲取資料時發生錯誤:', error);
-        resultArea.innerHTML = '<p class="error">無法獲取資料，請稍後再試</p>';
-    } finally {
-        loadingSpinner.innerHTML = '<div class="loading-text">⬇️ 請下滑查看更多內容 ⬇️</div>';
+        console.error('資料獲取錯誤:', error);
+        throw error;
     }
 }
 
@@ -4410,3 +4451,92 @@ function handleLogout() {
     hideLogoutDialog();
     // 其他退出相關操作
 }
+
+// 防止快取
+window.addEventListener('load', function() {
+    // 清除所有快取
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            for (let name of names) {
+                caches.delete(name);
+            }
+        });
+    }
+    
+    // 強制重新載入所有資源
+    if (window.performance && window.performance.getEntriesByType) {
+        const resources = window.performance.getEntriesByType('resource');
+        resources.forEach(resource => {
+            if (resource.initiatorType === 'script' || resource.initiatorType === 'link') {
+                const url = new URL(resource.name);
+                url.searchParams.set('t', Date.now());
+                fetch(url.toString(), { cache: 'no-store' });
+            }
+        });
+    }
+});
+
+// 版本檢查函數
+async function checkVersion() {
+    try {
+        const response = await fetchWithETag('/api/version');
+        if (!response.ok) {
+            throw new Error('版本檢查失敗');
+        }
+        
+        const data = await response.json();
+        const serverVersion = data.version;
+        const etag = response.headers.get('ETag');
+        
+        if (etag) {
+            localStorage.setItem('etag_version', etag);
+        }
+        
+        if (serverVersion !== VERSION) {
+            showUpdateNotification(serverVersion);
+        }
+        
+        // 更新顯示
+        const versionNumber = document.getElementById('versionNumber');
+        const lastUpdate = document.getElementById('lastUpdate');
+        if (versionNumber) versionNumber.textContent = VERSION;
+        if (lastUpdate) lastUpdate.textContent = new Date().toLocaleString('zh-TW');
+        
+    } catch (error) {
+        console.error('版本檢查錯誤:', error);
+    }
+}
+
+// 顯示更新通知
+function showUpdateNotification(newVersion) {
+    const notification = document.createElement('div');
+    notification.className = 'update-notification';
+    notification.innerHTML = `
+        <div class="update-content">
+            <h3>發現新版本！</h3>
+            <p>新版本 ${newVersion} 已發布</p>
+            <p>請重新整理頁面以更新</p>
+            <button onclick="window.location.reload()">立即更新</button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+}
+
+// 初始化版本檢查
+function initVersionCheck() {
+    // 立即檢查一次
+    checkVersion();
+    
+    // 設定定期檢查
+    setInterval(checkVersion, VERSION_CHECK_INTERVAL);
+    
+    // 監聽 Service Worker 更新
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
+        });
+    }
+}
+
+// 在頁面載入時初始化版本檢查
+document.addEventListener('DOMContentLoaded', initVersionCheck);

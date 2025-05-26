@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>農產品交易資料分析系統 v2.4.web.1</title>
+    <title>農產品交易資料分析系統 v2.4.web.2</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -17,6 +17,11 @@
     <link rel="icon" type="image/png" href="/Better-vegetable-catcher/image/png/icon-192.png">
     <link rel="icon" type="image/x-icon" href="/Better-vegetable-catcher/image/png/favicon.ico">
     <meta name="mobile-web-app-capable" content="yes">
+    <!-- 快取控制標籤 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="0">
     <style>
         .notification-modal {
             position: fixed;
@@ -177,6 +182,61 @@
         .test-notification-btn:active {
             transform: scale(0.95);
         }
+
+        /* 更新通知樣式 */
+        .update-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .update-content {
+            text-align: center;
+        }
+
+        .update-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .update-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .update-content button {
+            background-color: white;
+            color: #4CAF50;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .update-content button:hover {
+            background-color: #f0f0f0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
     <!-- start webpushr code -->
     <script>
@@ -195,10 +255,6 @@
         });
     </script>
     <!-- end webpushr code -->
-<!-- 絕對禁用快取的 META 標籤組合！ -->
-<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
 </head>
 <body>
     <div class="container">
@@ -216,7 +272,7 @@
             <h1>農產品交易資料分析系統</h1>
             <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
             <div class="version-info">
-                <p class="version">版本：<span id="versionNumber">v2.3.web</span></p>
+                <p class="version">版本：<span id="versionNumber">v2.4.web.2</span></p>
                 <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
                 <div class="button-group">
                     <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
