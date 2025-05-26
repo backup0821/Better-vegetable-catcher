@@ -2,17 +2,17 @@
 const endpoints = [
     {
         name: '資料 API',
-        url: '/api/data',
+        url: '../api/Better-vegetable-catcher/data',
         description: '主要資料 API'
     },
     {
         name: '版本 API',
-        url: '/api/version',
+        url: '../api/Better-vegetable-catcher/version',
         description: '版本檢查 API'
     },
     {
         name: '通知 API',
-        url: '/api/notifications',
+        url: '../api/Better-vegetable-catcher/notifications',
         description: '系統通知 API'
     },
     {
@@ -22,7 +22,7 @@ const endpoints = [
     },
     {
         name: 'TV 驗證系統',
-        url: 'https://baclup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
+        url: '../API/Better-vegetable-catcher/TV-drvice.json',
         description: 'TV 版本驗證系統'
     }
 ];
@@ -188,16 +188,33 @@ async function checkAllEndpoints() {
 // 檢查單個端點
 async function checkEndpoint(endpoint) {
     try {
+        console.log(`正在檢查端點: ${endpoint.name} (${endpoint.url})`);
+        
         const response = await fetch(endpoint.url, {
             method: 'GET',
             headers: {
-                'Cache-Control': 'no-cache'
-            }
+                'Cache-Control': 'no-cache',
+                'Accept': 'application/json'
+            },
+            mode: 'cors'
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP 錯誤: ${response.status}`);
+        }
         
         const etag = response.headers.get('ETag');
         const lastModified = response.headers.get('Last-Modified');
-        const content = await response.text();
+        const contentType = response.headers.get('Content-Type');
+        
+        let content;
+        if (contentType && contentType.includes('application/json')) {
+            content = await response.json();
+            content = JSON.stringify(content);
+        } else {
+            content = await response.text();
+        }
+        
         const hash = await calculateHash(content);
         
         const storedETag = localStorage.getItem(`etag_${endpoint.url}`);
@@ -215,6 +232,13 @@ async function checkEndpoint(endpoint) {
         localStorage.setItem(`hash_${endpoint.url}`, hash);
         if (lastModified) localStorage.setItem(`modified_${endpoint.url}`, lastModified);
         
+        console.log(`端點 ${endpoint.name} 檢查完成:`, {
+            status,
+            etag: etag || '無',
+            lastModified: lastModified || '無',
+            hash
+        });
+        
         return {
             status,
             etag: etag || '無',
@@ -222,6 +246,7 @@ async function checkEndpoint(endpoint) {
             hash
         };
     } catch (error) {
+        console.error(`檢查端點 ${endpoint.name} 失敗:`, error);
         throw new Error(`檢查失敗: ${error.message}`);
     }
 }
@@ -229,12 +254,20 @@ async function checkEndpoint(endpoint) {
 // 更新端點卡片
 function updateEndpointCard(endpoint, result) {
     const card = document.getElementById(`card-${endpoint.name.replace(/\s+/g, '-').toLowerCase()}`);
-    if (!card) return;
+    if (!card) {
+        console.error(`找不到端點卡片: ${endpoint.name}`);
+        return;
+    }
     
     const statusElement = card.querySelector('.endpoint-status');
     const etagElement = card.querySelector('.etag-value');
     const modifiedElement = card.querySelector('.modified-value');
     const checkTimeElement = card.querySelector('.check-time');
+    
+    if (!statusElement || !etagElement || !modifiedElement || !checkTimeElement) {
+        console.error(`找不到必要的元素: ${endpoint.name}`);
+        return;
+    }
     
     statusElement.className = `endpoint-status status-${result.status}`;
     statusElement.textContent = getStatusText(result.status);
@@ -242,6 +275,8 @@ function updateEndpointCard(endpoint, result) {
     etagElement.textContent = result.etag;
     modifiedElement.textContent = result.lastModified;
     checkTimeElement.textContent = new Date().toLocaleTimeString();
+    
+    console.log(`更新端點卡片: ${endpoint.name}`, result);
 }
 
 // 更新狀態信息
