@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ETag 監看系統</title>
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="ETag 監看系統 - 即時監控網站更新狀態">
@@ -20,20 +20,50 @@
         }
 
         body {
-            background-color: #f3f4f6;
+            background-color: #1a1a1a;
             min-height: 100vh;
+            overflow: hidden;
+            color: #fff;
         }
 
-        .dashboard-card {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            transition: all 0.3s ease;
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 1px;
+            background-color: #333;
+            height: 100vh;
+            padding: 1px;
         }
 
-        .dashboard-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        .monitor-cell {
+            background-color: #1a1a1a;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .monitor-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .monitor-content {
+            flex: 1;
+            padding: 3rem 1rem 1rem 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
         .status-badge {
@@ -63,168 +93,387 @@
             color: white;
         }
 
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.25rem;
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .control-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
         .endpoint-card {
-            border-left: 4px solid transparent;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.25rem;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
         .endpoint-card.latest {
-            border-left-color: var(--success-color);
+            background: rgba(22, 163, 74, 0.2);
+            border-left: 4px solid var(--success-color);
         }
 
         .endpoint-card.outdated {
-            border-left-color: var(--warning-color);
+            background: rgba(217, 119, 6, 0.2);
+            border-left: 4px solid var(--warning-color);
         }
 
         .endpoint-card.error {
-            border-left-color: var(--error-color);
+            background: rgba(220, 38, 38, 0.2);
+            border-left: 4px solid var(--error-color);
         }
 
         .endpoint-card.maintenance {
-            border-left-color: var(--maintenance-color);
+            background: rgba(107, 114, 128, 0.2);
+            border-left: 4px solid var(--maintenance-color);
         }
 
-        .history-table th {
-            background-color: #f8fafc;
-            font-weight: 600;
-            color: #1e293b;
+        .endpoint-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .history-table tr:hover {
-            background-color: #f8fafc;
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #e5e7eb;
+            word-break: break-all;
         }
 
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
+        .endpoint-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            font-size: 0.875rem;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            color: #9ca3af;
+            font-size: 0.75rem;
+        }
+
+        .detail-value {
+            color: #e5e7eb;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-indicator.latest {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-indicator.outdated {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .status-indicator.error {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .status-indicator.maintenance {
+            background-color: var(--maintenance-color);
+            color: white;
+        }
+
+        .status-indicator i {
+            font-size: 0.625rem;
         }
 
         .notification {
             position: fixed;
-            bottom: 1rem;
+            top: 1rem;
             right: 1rem;
             padding: 1rem;
             border-radius: 0.5rem;
-            background: white;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            transform: translateY(100%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            transform: translateY(-100%);
             opacity: 0;
             transition: all 0.3s ease;
+            z-index: 1000;
         }
 
         .notification.show {
             transform: translateY(0);
             opacity: 1;
         }
+
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- 頂部資訊列 -->
-        <div class="dashboard-card p-6 mb-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        <i class="fas fa-chart-line mr-2"></i>
-                        ETag 監看系統
-                    </h1>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-500">系統狀態：</span>
-                        <span id="systemStatus" class="status-badge status-latest">正常</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-6">
-                    <div class="text-center">
-                        <div class="text-sm text-gray-500">現在時間</div>
-                        <div id="currentTime" class="text-lg font-semibold text-gray-900">--:--:--</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-sm text-gray-500">下次檢查</div>
-                        <div id="nextCheck" class="text-lg font-semibold text-primary-600">--:--</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 控制面板 -->
-        <div class="dashboard-card p-6 mb-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <button id="checkNow" class="btn-primary flex items-center gap-2">
-                        <i class="fas fa-sync-alt"></i>
-                        立即檢查
-                    </button>
-                    <button id="clearHistory" class="btn-danger flex items-center gap-2">
-                        <i class="fas fa-trash-alt"></i>
-                        清除歷史記錄
-                    </button>
-                </div>
-                <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="enableSound" class="form-checkbox" checked>
-                        <span class="text-sm text-gray-700">啟用錯誤音效</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="enableNotifications" class="form-checkbox" checked>
-                        <span class="text-sm text-gray-700">啟用桌面通知</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="enableVibration" class="form-checkbox" checked>
-                        <span class="text-sm text-gray-700">震動</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="enableAutoUpdate" class="form-checkbox" checked>
-                        <span class="text-sm text-gray-700">自動更新</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <!-- 端點監控網格 -->
-        <div id="endpointGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <!-- 端點卡片將由 JavaScript 動態生成 -->
-        </div>
-
-        <!-- 歷史記錄 -->
-        <div class="dashboard-card p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-900">
-                    <i class="fas fa-history mr-2"></i>
-                    檢查歷史記錄
-                </h2>
+<body>
+    <div class="monitor-grid">
+        <!-- 監控單元 1 -->
+        <div class="monitor-cell">
+            <div class="monitor-header">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-500">顯示：</span>
-                    <select id="historyFilter" class="form-select text-sm">
-                        <option value="all">全部記錄</option>
-                        <option value="error">僅錯誤</option>
-                        <option value="outdated">僅過期</option>
-                    </select>
+                    <span class="font-bold">監控單元 1</span>
+                    <span class="status-badge status-latest">正常</span>
+                </div>
+                <div class="time-display">
+                    <span id="currentTime1">--:--:--</span>
                 </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="history-table w-full">
-                    <thead>
-                        <tr>
-                            <th class="px-4 py-3 text-left">時間</th>
-                            <th class="px-4 py-3 text-left">端點</th>
-                            <th class="px-4 py-3 text-left">狀態</th>
-                            <th class="px-4 py-3 text-left">ETag</th>
-                            <th class="px-4 py-3 text-left">最後修改時間</th>
-                            <th class="px-4 py-3 text-left">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTableBody">
-                        <!-- 歷史記錄將由 JavaScript 動態生成 -->
-                    </tbody>
-                </table>
+            <div class="monitor-content" id="monitorContent1">
+                <div class="endpoint-card latest">
+                    <div class="endpoint-info">
+                        <span class="endpoint-url">https://example.com/api/v1</span>
+                        <span class="status-indicator latest">
+                            <i class="fas fa-check-circle"></i>
+                            正常
+                        </span>
+                    </div>
+                    <div class="endpoint-details">
+                        <div class="detail-item">
+                            <span class="detail-label">ETag</span>
+                            <span class="detail-value">"abc123"</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">最後更新</span>
+                            <span class="detail-value">2024-03-21 15:30:00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">回應時間</span>
+                            <span class="detail-value">123ms</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">狀態碼</span>
+                            <span class="detail-value">200</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="endpoint-card outdated">
+                    <div class="endpoint-info">
+                        <span class="endpoint-url">https://example.com/api/v2</span>
+                        <span class="status-indicator outdated">
+                            <i class="fas fa-exclamation-circle"></i>
+                            過期
+                        </span>
+                    </div>
+                    <div class="endpoint-details">
+                        <div class="detail-item">
+                            <span class="detail-label">ETag</span>
+                            <span class="detail-value">"def456"</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">最後更新</span>
+                            <span class="detail-value">2024-03-20 10:15:00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">回應時間</span>
+                            <span class="detail-value">156ms</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">狀態碼</span>
+                            <span class="detail-value">200</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 監控單元 2 -->
+        <div class="monitor-cell">
+            <div class="monitor-header">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold">監控單元 2</span>
+                    <span class="status-badge status-error">錯誤</span>
+                </div>
+                <div class="time-display">
+                    <span id="currentTime2">--:--:--</span>
+                </div>
+            </div>
+            <div class="monitor-content" id="monitorContent2">
+                <div class="endpoint-card error">
+                    <div class="endpoint-info">
+                        <span class="endpoint-url">https://example.com/api/v3</span>
+                        <span class="status-indicator error">
+                            <i class="fas fa-times-circle"></i>
+                            錯誤
+                        </span>
+                    </div>
+                    <div class="endpoint-details">
+                        <div class="detail-item">
+                            <span class="detail-label">錯誤訊息</span>
+                            <span class="detail-value">Connection timeout</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">重試次數</span>
+                            <span class="detail-value">3/5</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">最後嘗試</span>
+                            <span class="detail-value">2024-03-21 15:35:00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">狀態碼</span>
+                            <span class="detail-value">504</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 監控單元 3 -->
+        <div class="monitor-cell">
+            <div class="monitor-header">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold">監控單元 3</span>
+                    <span class="status-badge status-maintenance">維護中</span>
+                </div>
+                <div class="time-display">
+                    <span id="currentTime3">--:--:--</span>
+                </div>
+            </div>
+            <div class="monitor-content" id="monitorContent3">
+                <div class="endpoint-card maintenance">
+                    <div class="endpoint-info">
+                        <span class="endpoint-url">https://example.com/api/v4</span>
+                        <span class="status-indicator maintenance">
+                            <i class="fas fa-tools"></i>
+                            維護中
+                        </span>
+                    </div>
+                    <div class="endpoint-details">
+                        <div class="detail-item">
+                            <span class="detail-label">維護原因</span>
+                            <span class="detail-value">系統更新</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">預計完成</span>
+                            <span class="detail-value">2024-03-21 16:00:00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">開始時間</span>
+                            <span class="detail-value">2024-03-21 15:00:00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">狀態碼</span>
+                            <span class="detail-value">503</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 監控單元 4 -->
+        <div class="monitor-cell">
+            <div class="monitor-header">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold">監控單元 4</span>
+                    <span class="status-badge status-latest">正常</span>
+                </div>
+                <div class="time-display">
+                    <span id="currentTime4">--:--:--</span>
+                </div>
+            </div>
+            <div class="monitor-content" id="monitorContent4">
+                <div class="endpoint-card latest">
+                    <div class="endpoint-info">
+                        <span class="endpoint-url">https://example.com/api/v5</span>
+                        <span class="status-indicator latest">
+                            <i class="fas fa-check-circle"></i>
+                            正常
+                        </span>
+                    </div>
+                    <div class="endpoint-details">
+                        <div class="detail-item">
+                            <span class="detail-label">ETag</span>
+                            <span class="detail-value">"ghi789"</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">最後更新</span>
+                            <span class="detail-value">2024-03-21 15:30:00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">回應時間</span>
+                            <span class="detail-value">98ms</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">狀態碼</span>
+                            <span class="detail-value">200</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+        <div class="flex items-center gap-4">
+            <button id="checkNow" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2">
+                <i class="fas fa-sync-alt"></i>
+                立即檢查
+            </button>
+            <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="enableSound" class="form-checkbox" checked>
+                    <span class="text-white">錯誤音效</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="enableNotifications" class="form-checkbox" checked>
+                    <span class="text-white">通知</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="enableVibration" class="form-checkbox" checked>
+                    <span class="text-white">震動</span>
+                </label>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-center">
+                <div class="text-sm text-gray-400">下次檢查</div>
+                <div id="nextCheck" class="time-display">--:--</div>
             </div>
         </div>
     </div>
@@ -232,7 +481,7 @@
     <!-- 通知元素 -->
     <div id="notification" class="notification">
         <div class="flex items-center gap-3">
-            <i class="fas fa-bell text-primary-600"></i>
+            <i class="fas fa-bell text-yellow-400"></i>
             <div class="notification-content"></div>
         </div>
     </div>
@@ -272,6 +521,40 @@
 
         // 頁面載入時請求通知權限
         window.addEventListener('load', requestNotificationPermission);
+
+        // 強制橫向顯示
+        function lockOrientation() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape')
+                    .catch(error => console.log('無法鎖定螢幕方向:', error));
+            }
+        }
+
+        // 頁面載入時嘗試鎖定橫向
+        window.addEventListener('load', lockOrientation);
+
+        // 更新時間顯示
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-TW', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            // 更新所有監控單元的時間
+            for (let i = 1; i <= 4; i++) {
+                const timeElement = document.getElementById(`currentTime${i}`);
+                if (timeElement) {
+                    timeElement.textContent = timeString;
+                }
+            }
+        }
+
+        // 每秒更新時間
+        setInterval(updateTime, 1000);
+        updateTime(); // 立即更新一次
     </script>
     <script src="monitor.js"></script>
 </body>
