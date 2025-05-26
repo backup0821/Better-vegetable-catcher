@@ -94,10 +94,44 @@
         }
 
         .time-display {
-            font-family: 'Courier New', monospace;
-            font-size: 1.25rem;
-            color: #00ff00;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            font-family: 'Digital-7', 'Courier New', monospace;
+            font-size: 3rem;
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 0.5rem 2rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+            letter-spacing: 0.5rem;
+        }
+
+        /* 七段顯示器效果 */
+        .time-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.1) 0%, rgba(255, 0, 0, 0.2) 100%);
+            border-radius: 0.5rem;
+            z-index: -1;
+        }
+
+        .time-display span {
+            display: inline-block;
+            position: relative;
+        }
+
+        .time-display span::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 2px;
         }
 
         .control-panel {
@@ -248,6 +282,62 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.4);
         }
+
+        .countdown-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.25rem;
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .time-display-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 50;
+            background: #000;
+            padding: 1rem 0;
+        }
+
+        .time-display {
+            font-family: 'Digital-7', 'Courier New', monospace;
+            font-size: 3rem;
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            display: inline-block;
+            letter-spacing: 0.5rem;
+        }
+
+        /* 七段顯示器效果 */
+        .time-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.1) 0%, rgba(255, 0, 0, 0.2) 100%);
+            border-radius: 0.5rem;
+            z-index: -1;
+        }
+
+        .time-display span {
+            display: inline-block;
+            position: relative;
+        }
+
+        .time-display span::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
@@ -256,19 +346,19 @@
         <div class="monitor-cell">
             <div class="monitor-header">
                 <div class="flex items-center gap-2">
-                    <span class="font-bold">監控單元 1</span>
+                    <span class="font-bold">通知 API</span>
                     <span class="status-badge status-latest">正常</span>
                 </div>
-                <div class="time-display">
-                    <span id="currentTime1">--:--:--</span>
+                <div class="countdown-display">
+                    <span id="countdown1">更新倒計時: 00:00</span>
                 </div>
             </div>
             <div class="monitor-content" id="monitorContent1">
                 <div class="endpoint-card latest">
                     <div class="endpoint-info">
-                        <span class="endpoint-url">https://example.com/api/v1</span>
+                        <span class="endpoint-url">https://backup0821.github.io/API/Better-vegetable-catcher/notify.json</span>
                         <span class="status-indicator latest">
-                            <i class="fas fa-check-circle"></i>
+                            <i class="fas fa-bell"></i>
                             正常
                         </span>
                     </div>
@@ -291,33 +381,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="endpoint-card outdated">
-                    <div class="endpoint-info">
-                        <span class="endpoint-url">https://example.com/api/v2</span>
-                        <span class="status-indicator outdated">
-                            <i class="fas fa-exclamation-circle"></i>
-                            過期
-                        </span>
-                    </div>
-                    <div class="endpoint-details">
-                        <div class="detail-item">
-                            <span class="detail-label">ETag</span>
-                            <span class="detail-value">"def456"</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">最後更新</span>
-                            <span class="detail-value">2024-03-20 10:15:00</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">回應時間</span>
-                            <span class="detail-value">156ms</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">狀態碼</span>
-                            <span class="detail-value">200</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -325,19 +388,19 @@
         <div class="monitor-cell">
             <div class="monitor-header">
                 <div class="flex items-center gap-2">
-                    <span class="font-bold">監控單元 2</span>
+                    <span class="font-bold">農業部資料</span>
                     <span class="status-badge status-error">錯誤</span>
                 </div>
-                <div class="time-display">
-                    <span id="currentTime2">--:--:--</span>
+                <div class="countdown-display">
+                    <span id="countdown2">更新倒計時: 00:00</span>
                 </div>
             </div>
             <div class="monitor-content" id="monitorContent2">
                 <div class="endpoint-card error">
                     <div class="endpoint-info">
-                        <span class="endpoint-url">https://example.com/api/v3</span>
+                        <span class="endpoint-url">https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx</span>
                         <span class="status-indicator error">
-                            <i class="fas fa-times-circle"></i>
+                            <i class="fas fa-leaf"></i>
                             錯誤
                         </span>
                     </div>
@@ -367,19 +430,19 @@
         <div class="monitor-cell">
             <div class="monitor-header">
                 <div class="flex items-center gap-2">
-                    <span class="font-bold">監控單元 3</span>
+                    <span class="font-bold">TV 驗證系統</span>
                     <span class="status-badge status-maintenance">維護中</span>
                 </div>
-                <div class="time-display">
-                    <span id="currentTime3">--:--:--</span>
+                <div class="countdown-display">
+                    <span id="countdown3">更新倒計時: 00:00</span>
                 </div>
             </div>
             <div class="monitor-content" id="monitorContent3">
                 <div class="endpoint-card maintenance">
                     <div class="endpoint-info">
-                        <span class="endpoint-url">https://example.com/api/v4</span>
+                        <span class="endpoint-url">https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json</span>
                         <span class="status-indicator maintenance">
-                            <i class="fas fa-tools"></i>
+                            <i class="fas fa-tv"></i>
                             維護中
                         </span>
                     </div>
@@ -409,19 +472,19 @@
         <div class="monitor-cell">
             <div class="monitor-header">
                 <div class="flex items-center gap-2">
-                    <span class="font-bold">監控單元 4</span>
+                    <span class="font-bold">主系統</span>
                     <span class="status-badge status-latest">正常</span>
                 </div>
-                <div class="time-display">
-                    <span id="currentTime4">--:--:--</span>
+                <div class="countdown-display">
+                    <span id="countdown4">更新倒計時: 00:00</span>
                 </div>
             </div>
             <div class="monitor-content" id="monitorContent4">
                 <div class="endpoint-card latest">
                     <div class="endpoint-info">
-                        <span class="endpoint-url">https://example.com/api/v5</span>
+                        <span class="endpoint-url">https://backup0821.github.io/Better-vegetable-catcher/WEB</span>
                         <span class="status-indicator latest">
-                            <i class="fas fa-check-circle"></i>
+                            <i class="fas fa-analytics"></i>
                             正常
                         </span>
                     </div>
@@ -448,34 +511,9 @@
         </div>
     </div>
 
-    <!-- 控制面板 -->
-    <div class="control-panel">
-        <div class="flex items-center gap-4">
-            <button id="checkNow" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2">
-                <i class="fas fa-sync-alt"></i>
-                立即檢查
-            </button>
-            <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="enableSound" class="form-checkbox" checked>
-                    <span class="text-white">錯誤音效</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="enableNotifications" class="form-checkbox" checked>
-                    <span class="text-white">通知</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="enableVibration" class="form-checkbox" checked>
-                    <span class="text-white">震動</span>
-                </label>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="text-center">
-                <div class="text-sm text-gray-400">下次檢查</div>
-                <div id="nextCheck" class="time-display">--:--</div>
-            </div>
-        </div>
+    <!-- 時間顯示 -->
+    <div class="time-display-container">
+        <div class="time-display" id="currentTime">--:--:--</div>
     </div>
 
     <!-- 通知元素 -->
@@ -543,18 +581,42 @@
                 second: '2-digit'
             });
             
-            // 更新所有監控單元的時間
+            // 更新中央時間顯示
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        }
+
+        // 更新倒計時
+        function updateCountdown() {
+            const now = new Date();
+            const nextCheck = new Date(now.getTime() + 5 * 60 * 1000); // 5分鐘後
+            const timeLeft = nextCheck - now;
+            
+            const minutes = Math.floor(timeLeft / (60 * 1000));
+            const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+            
+            const countdownString = `更新倒計時: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // 更新所有監控單元的倒計時
             for (let i = 1; i <= 4; i++) {
-                const timeElement = document.getElementById(`currentTime${i}`);
-                if (timeElement) {
-                    timeElement.textContent = timeString;
+                const countdownElement = document.getElementById(`countdown${i}`);
+                if (countdownElement) {
+                    countdownElement.textContent = countdownString;
                 }
             }
         }
 
-        // 每秒更新時間
-        setInterval(updateTime, 1000);
-        updateTime(); // 立即更新一次
+        // 每秒更新時間和倒計時
+        setInterval(() => {
+            updateTime();
+            updateCountdown();
+        }, 1000);
+
+        // 立即更新一次
+        updateTime();
+        updateCountdown();
     </script>
     <script src="monitor.js"></script>
 </body>
