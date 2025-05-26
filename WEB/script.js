@@ -4733,3 +4733,211 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ... existing code ...
+
+// ETag 開發者工具功能
+function initETagDevTools() {
+    const devModePanel = document.getElementById('devModePanel');
+    const closeButton = document.getElementById('closeDevMode');
+    const checkAllButton = document.getElementById('checkAllETags');
+    const clearCacheButton = document.getElementById('clearETagCache');
+    const forceRefreshButton = document.getElementById('forceRefresh');
+    const resultsContainer = document.getElementById('etagResults');
+
+    // 關閉按鈕
+    closeButton.addEventListener('click', () => {
+        devModePanel.style.display = 'none';
+    });
+
+    // 檢查所有 ETag
+    checkAllButton.addEventListener('click', async () => {
+        const selectedEndpoints = getSelectedEndpoints();
+        const selectedChecks = getSelectedChecks();
+        
+        resultsContainer.innerHTML = '<div class="result-item">檢查中...</div>';
+        
+        try {
+            const results = await checkSelectedETags(selectedEndpoints, selectedChecks);
+            displayResults(results);
+        } catch (error) {
+            resultsContainer.innerHTML = `
+                <div class="result-item error">
+                    <p>檢查失敗: ${error.message}</p>
+                </div>
+            `;
+        }
+    });
+
+    // 清除快取
+    clearCacheButton.addEventListener('click', () => {
+        clearETagCache();
+        resultsContainer.innerHTML = `
+            <div class="result-item success">
+                <p>快取已清除</p>
+            </div>
+        `;
+    });
+
+    // 強制更新
+    forceRefreshButton.addEventListener('click', async () => {
+        const selectedEndpoints = getSelectedEndpoints();
+        resultsContainer.innerHTML = '<div class="result-item">更新中...</div>';
+        
+        try {
+            await forceRefreshEndpoints(selectedEndpoints);
+            resultsContainer.innerHTML = `
+                <div class="result-item success">
+                    <p>已強制更新所有選定的端點</p>
+                </div>
+            `;
+        } catch (error) {
+            resultsContainer.innerHTML = `
+                <div class="result-item error">
+                    <p>更新失敗: ${error.message}</p>
+                </div>
+            `;
+        }
+    });
+}
+
+// 獲取選中的端點
+function getSelectedEndpoints() {
+    const endpoints = {
+        data: document.getElementById('endpoint-data').checked,
+        version: document.getElementById('endpoint-version').checked,
+        notifications: document.getElementById('endpoint-notifications').checked,
+        moa: document.getElementById('endpoint-moa').checked,
+        tv: document.getElementById('endpoint-tv').checked
+    };
+
+    const urls = [];
+    if (endpoints.data) urls.push('/api/data');
+    if (endpoints.version) urls.push('/api/version');
+    if (endpoints.notifications) urls.push('/api/notifications');
+    if (endpoints.moa) urls.push('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx');
+    if (endpoints.tv) urls.push('https://baclup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json');
+
+    return urls;
+}
+
+// 獲取選中的檢查選項
+function getSelectedChecks() {
+    return {
+        etag: document.getElementById('check-etag').checked,
+        hash: document.getElementById('check-hash').checked,
+        modified: document.getElementById('check-modified').checked
+    };
+}
+
+// 檢查選定的 ETag
+async function checkSelectedETags(urls, checks) {
+    const results = [];
+    
+    for (const url of urls) {
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            });
+            
+            const result = {
+                url,
+                status: 'success',
+                checks: {}
+            };
+            
+            if (checks.etag) {
+                result.checks.etag = response.headers.get('ETag') || '無';
+            }
+            
+            if (checks.hash) {
+                const content = await response.text();
+                result.checks.hash = await calculateHash(content);
+            }
+            
+            if (checks.modified) {
+                result.checks.modified = response.headers.get('Last-Modified') || '無';
+            }
+            
+            results.push(result);
+        } catch (error) {
+            results.push({
+                url,
+                status: 'error',
+                error: error.message
+            });
+        }
+    }
+    
+    return results;
+}
+
+// 顯示結果
+function displayResults(results) {
+    const resultsContainer = document.getElementById('etagResults');
+    resultsContainer.innerHTML = results.map(result => {
+        if (result.status === 'error') {
+            return `
+                <div class="result-item error">
+                    <h4>${result.url}</h4>
+                    <p>錯誤: ${result.error}</p>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="result-item success">
+                <h4>${result.url}</h4>
+                ${Object.entries(result.checks).map(([key, value]) => `
+                    <p><strong>${key}:</strong> ${value}</p>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
+}
+
+// 清除 ETag 快取
+function clearETagCache() {
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+        if (key.startsWith('etag_') || key.startsWith('hash_') || key.startsWith('modified_')) {
+            localStorage.removeItem(key);
+        }
+    });
+}
+
+// 強制更新端點
+async function forceRefreshEndpoints(urls) {
+    for (const url of urls) {
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
+            
+            const content = await response.text();
+            const etag = response.headers.get('ETag');
+            const lastModified = response.headers.get('Last-Modified');
+            
+            if (etag) localStorage.setItem(`etag_${url}`, etag);
+            if (lastModified) localStorage.setItem(`modified_${url}`, lastModified);
+            localStorage.setItem(`hash_${url}`, await calculateHash(content));
+        } catch (error) {
+            console.error(`更新 ${url} 失敗:`, error);
+        }
+    }
+}
+
+// 在頁面載入時初始化
+document.addEventListener('DOMContentLoaded', () => {
+    initVersionCheck();
+    initETagStatusCheck();
+    initETagDevTools();
+});
+
+// ... existing code ...
