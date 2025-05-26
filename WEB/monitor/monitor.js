@@ -20,6 +20,13 @@ const endpoints = [
         description: 'TV 版本驗證系統',
         icon: 'fa-tv',
         maintenance: true
+    },
+    {
+        name: '主系統',
+        url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB',
+        description: '農產分析 主要系統',
+        icon: 'fa-analytics',
+        maintenance: false
     }
 ];
 
