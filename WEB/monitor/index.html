@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ETag 監看系統</title>
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="ETag 監看系統 - 即時監控網站更新狀態">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -173,6 +177,10 @@
                         <span class="text-sm text-gray-700">啟用桌面通知</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="enableVibration" class="form-checkbox" checked>
+                        <span class="text-sm text-gray-700">震動</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="enableAutoUpdate" class="form-checkbox" checked>
                         <span class="text-sm text-gray-700">自動更新</span>
                     </label>
@@ -234,6 +242,37 @@
         <source src="error.mp3" type="audio/mpeg">
     </audio>
 
+    <script>
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker 註冊成功:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker 註冊失敗:', error);
+                    });
+            });
+        }
+
+        // 請求通知權限
+        async function requestNotificationPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    console.log('通知權限已授予');
+                } else {
+                    console.log('通知權限被拒絕');
+                }
+            } catch (error) {
+                console.error('請求通知權限時發生錯誤:', error);
+            }
+        }
+
+        // 頁面載入時請求通知權限
+        window.addEventListener('load', requestNotificationPermission);
+    </script>
     <script src="monitor.js"></script>
 </body>
 </html> 
