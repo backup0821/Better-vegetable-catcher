@@ -2,28 +2,33 @@
 const endpoints = [
     {
         name: '資料 API',
-        url: '../api/Better-vegetable-catcher/data',
-        description: '主要資料 API'
+        url: 'http://localhost:3000/api/Better-vegetable-catcher/data',
+        description: '主要資料 API',
+        icon: 'fa-database'
     },
     {
         name: '版本 API',
-        url: '../api/Better-vegetable-catcher/version',
-        description: '版本檢查 API'
+        url: 'http://localhost:3000/api/Better-vegetable-catcher/version',
+        description: '版本檢查 API',
+        icon: 'fa-code-branch'
     },
     {
         name: '通知 API',
-        url: '../api/Better-vegetable-catcher/notifications',
-        description: '系統通知 API'
+        url: 'http://localhost:3000/api/Better-vegetable-catcher/notifications',
+        description: '系統通知 API',
+        icon: 'fa-bell'
     },
     {
         name: '農業部資料',
         url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
-        description: '農業部開放資料'
+        description: '農業部開放資料',
+        icon: 'fa-leaf'
     },
     {
         name: 'TV 驗證系統',
-        url: '../API/Better-vegetable-catcher/TV-drvice.json',
-        description: 'TV 版本驗證系統'
+        url: 'http://localhost:3000/api/Better-vegetable-catcher/TV-drvice.json',
+        description: 'TV 版本驗證系統',
+        icon: 'fa-tv'
     }
 ];
 
@@ -33,6 +38,21 @@ const CHECK_INTERVAL = 60000; // 1分鐘
 // 歷史記錄最大條數
 const MAX_HISTORY = 100;
 
+// 系統狀態
+let systemStatus = {
+    lastCheck: null,
+    hasError: false,
+    errorCount: 0,
+    outdatedCount: 0
+};
+
+// 控制項狀態
+let controls = {
+    errorSoundEnabled: true,
+    notificationsEnabled: true,
+    isChecking: false
+};
+
 // 音效控制
 let errorSoundEnabled = true;
 let countdownInterval = null;
@@ -41,6 +61,7 @@ let countdownInterval = null;
 document.addEventListener('DOMContentLoaded', () => {
     initMonitor();
     initControls();
+    initNotifications();
     startMonitoring();
     startClock();
 });
@@ -52,27 +73,32 @@ function initMonitor() {
         const card = createEndpointCard(endpoint);
         grid.appendChild(card);
     });
-    updateStatusInfo();
+    updateSystemStatus();
 }
 
 // 創建端點卡片
 function createEndpointCard(endpoint) {
     const card = document.createElement('div');
-    card.className = 'endpoint-card';
+    card.className = 'dashboard-card endpoint-card p-4';
     card.id = `card-${endpoint.name.replace(/\s+/g, '-').toLowerCase()}`;
     
     card.innerHTML = `
-        <div class="endpoint-header">
-            <div class="endpoint-title">${endpoint.name}</div>
-            <div class="endpoint-status status-error">檢查中...</div>
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <i class="fas ${endpoint.icon} text-gray-500"></i>
+                <h3 class="font-semibold text-gray-900">${endpoint.name}</h3>
+            </div>
+            <div class="endpoint-status status-badge status-error">
+                <div class="loading-spinner"></div>
+            </div>
         </div>
-        <div class="endpoint-details">
-            <p><strong>URL：</strong>${endpoint.url}</p>
-            <p><strong>描述：</strong>${endpoint.description}</p>
-            <p><strong>ETag：</strong><span class="etag-value">--</span></p>
-            <p><strong>最後修改：</strong><span class="modified-value">--</span></p>
+        <div class="space-y-2 text-sm text-gray-600">
+            <p><span class="font-medium">URL：</span>${endpoint.url}</p>
+            <p><span class="font-medium">描述：</span>${endpoint.description}</p>
+            <p><span class="font-medium">ETag：</span><span class="etag-value">--</span></p>
+            <p><span class="font-medium">最後修改：</span><span class="modified-value">--</span></p>
         </div>
-        <div class="last-check">
+        <div class="mt-4 text-xs text-gray-500 text-right">
             最後檢查：<span class="check-time">--:--:--</span>
         </div>
     `;
@@ -88,8 +114,58 @@ function initControls() {
     // 音效控制
     const soundCheckbox = document.getElementById('enableSound');
     soundCheckbox.addEventListener('change', (e) => {
-        errorSoundEnabled = e.target.checked;
+        controls.errorSoundEnabled = e.target.checked;
     });
+
+    // 通知控制
+    const notificationCheckbox = document.getElementById('enableNotifications');
+    notificationCheckbox.addEventListener('change', (e) => {
+        controls.notificationsEnabled = e.target.checked;
+    });
+
+    // 歷史記錄過濾
+    const historyFilter = document.getElementById('historyFilter');
+    historyFilter.addEventListener('change', (e) => {
+        filterHistory(e.target.value);
+    });
+}
+
+// 初始化通知系統
+async function initNotifications() {
+    if (!('Notification' in window)) {
+        console.warn('此瀏覽器不支援桌面通知');
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        return;
+    }
+
+    if (Notification.permission !== 'denied') {
+        await Notification.requestPermission();
+    }
+}
+
+// 顯示通知
+function showNotification(title, message) {
+    if (!controls.notificationsEnabled) return;
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message,
+            icon: '/favicon.ico'
+        });
+    }
+
+    // 顯示頁面內通知
+    const notification = document.getElementById('notification');
+    const content = notification.querySelector('.notification-content');
+    content.textContent = message;
+    notification.classList.add('show');
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 5000);
 }
 
 // 開始時鐘
@@ -140,7 +216,7 @@ function updateCountdown() {
 
 // 播放錯誤音效
 function playErrorSound() {
-    if (errorSoundEnabled) {
+    if (controls.errorSoundEnabled) {
         const errorSound = document.getElementById('errorSound');
         errorSound.currentTime = 0;
         errorSound.play().catch(error => {
@@ -151,37 +227,62 @@ function playErrorSound() {
 
 // 檢查所有端點
 async function checkAllEndpoints() {
+    if (controls.isChecking) return;
+    controls.isChecking = true;
+
     const timestamp = new Date();
     updateCurrentTime();
     startCountdown();
     
-    let hasError = false;
+    systemStatus.lastCheck = timestamp;
+    systemStatus.hasError = false;
+    systemStatus.errorCount = 0;
+    systemStatus.outdatedCount = 0;
     
-    for (const endpoint of endpoints) {
-        try {
-            const result = await checkEndpoint(endpoint);
-            updateEndpointCard(endpoint, result);
-            addToHistory(endpoint, result, timestamp);
-            
-            if (result.status === 'error') {
-                hasError = true;
+    const checkButton = document.getElementById('checkNow');
+    const originalText = checkButton.innerHTML;
+    checkButton.innerHTML = '<div class="loading-spinner"></div>';
+    checkButton.disabled = true;
+    
+    try {
+        for (const endpoint of endpoints) {
+            try {
+                const result = await checkEndpoint(endpoint);
+                updateEndpointCard(endpoint, result);
+                addToHistory(endpoint, result, timestamp);
+                
+                if (result.status === 'error') {
+                    systemStatus.hasError = true;
+                    systemStatus.errorCount++;
+                } else if (result.status === 'outdated') {
+                    systemStatus.outdatedCount++;
+                }
+            } catch (error) {
+                console.error(`檢查 ${endpoint.name} 失敗:`, error);
+                updateEndpointCard(endpoint, {
+                    status: 'error',
+                    error: error.message
+                });
+                addToHistory(endpoint, {
+                    status: 'error',
+                    error: error.message
+                }, timestamp);
+                systemStatus.hasError = true;
+                systemStatus.errorCount++;
             }
-        } catch (error) {
-            console.error(`檢查 ${endpoint.name} 失敗:`, error);
-            updateEndpointCard(endpoint, {
-                status: 'error',
-                error: error.message
-            });
-            addToHistory(endpoint, {
-                status: 'error',
-                error: error.message
-            }, timestamp);
-            hasError = true;
         }
-    }
-    
-    if (hasError) {
-        playErrorSound();
+        
+        if (systemStatus.hasError) {
+            playErrorSound();
+            showNotification('監看系統警告', `發現 ${systemStatus.errorCount} 個錯誤`);
+        } else if (systemStatus.outdatedCount > 0) {
+            showNotification('監看系統通知', `發現 ${systemStatus.outdatedCount} 個過期端點`);
+        }
+    } finally {
+        controls.isChecking = false;
+        checkButton.innerHTML = originalText;
+        checkButton.disabled = false;
+        updateSystemStatus();
     }
 }
 
@@ -254,54 +355,65 @@ async function checkEndpoint(endpoint) {
 // 更新端點卡片
 function updateEndpointCard(endpoint, result) {
     const card = document.getElementById(`card-${endpoint.name.replace(/\s+/g, '-').toLowerCase()}`);
-    if (!card) {
-        console.error(`找不到端點卡片: ${endpoint.name}`);
-        return;
-    }
-    
+    if (!card) return;
+
     const statusElement = card.querySelector('.endpoint-status');
     const etagElement = card.querySelector('.etag-value');
     const modifiedElement = card.querySelector('.modified-value');
     const checkTimeElement = card.querySelector('.check-time');
-    
-    if (!statusElement || !etagElement || !modifiedElement || !checkTimeElement) {
-        console.error(`找不到必要的元素: ${endpoint.name}`);
-        return;
-    }
-    
-    statusElement.className = `endpoint-status status-${result.status}`;
+
+    // 更新狀態
+    card.className = `dashboard-card endpoint-card p-4 ${result.status}`;
+    statusElement.className = `endpoint-status status-badge status-${result.status}`;
     statusElement.textContent = getStatusText(result.status);
-    
+
+    // 更新資訊
     etagElement.textContent = result.etag;
     modifiedElement.textContent = result.lastModified;
     checkTimeElement.textContent = new Date().toLocaleTimeString();
-    
-    console.log(`更新端點卡片: ${endpoint.name}`, result);
 }
 
-// 更新狀態信息
-function updateStatusInfo(timestamp = new Date()) {
-    const lastUpdate = document.getElementById('lastUpdate');
-    const nextCheck = document.getElementById('nextCheck');
-    
-    lastUpdate.textContent = timestamp.toLocaleTimeString();
-    nextCheck.textContent = new Date(timestamp.getTime() + CHECK_INTERVAL).toLocaleTimeString();
+// 更新系統狀態
+function updateSystemStatus() {
+    const statusElement = document.getElementById('systemStatus');
+    if (!statusElement) return;
+
+    if (systemStatus.hasError) {
+        statusElement.className = 'status-badge status-error';
+        statusElement.textContent = `錯誤 (${systemStatus.errorCount})`;
+    } else if (systemStatus.outdatedCount > 0) {
+        statusElement.className = 'status-badge status-outdated';
+        statusElement.textContent = `過期 (${systemStatus.outdatedCount})`;
+    } else {
+        statusElement.className = 'status-badge status-latest';
+        statusElement.textContent = '正常';
+    }
 }
 
-// 添加到歷史記錄
+// 新增歷史記錄
 function addToHistory(endpoint, result, timestamp) {
     const tbody = document.getElementById('historyTableBody');
-    const row = document.createElement('tr');
+    if (!tbody) return;
+
+    const tr = document.createElement('tr');
+    tr.className = `history-item ${result.status}`;
     
-    row.innerHTML = `
-        <td>${timestamp.toLocaleString()}</td>
-        <td>${endpoint.name}</td>
-        <td><span class="status-${result.status}">${getStatusText(result.status)}</span></td>
-        <td>${result.etag || '--'}</td>
-        <td>${result.lastModified || '--'}</td>
+    tr.innerHTML = `
+        <td class="px-4 py-3">${timestamp.toLocaleString()}</td>
+        <td class="px-4 py-3">${endpoint.name}</td>
+        <td class="px-4 py-3">
+            <span class="status-badge status-${result.status}">${getStatusText(result.status)}</span>
+        </td>
+        <td class="px-4 py-3">${result.etag}</td>
+        <td class="px-4 py-3">${result.lastModified}</td>
+        <td class="px-4 py-3">
+            <button class="text-primary-600 hover:text-primary-800" onclick="recheckEndpoint('${endpoint.name}')">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </td>
     `;
     
-    tbody.insertBefore(row, tbody.firstChild);
+    tbody.insertBefore(tr, tbody.firstChild);
     
     // 限制歷史記錄數量
     while (tbody.children.length > MAX_HISTORY) {
@@ -309,13 +421,49 @@ function addToHistory(endpoint, result, timestamp) {
     }
 }
 
+// 過濾歷史記錄
+function filterHistory(filter) {
+    const items = document.querySelectorAll('.history-item');
+    items.forEach(item => {
+        if (filter === 'all' || item.classList.contains(filter)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
 // 清除歷史記錄
 function clearHistory() {
     const tbody = document.getElementById('historyTableBody');
-    tbody.innerHTML = '';
+    if (tbody) {
+        tbody.innerHTML = '';
+    }
 }
 
-// 計算內容雜湊
+// 重新檢查特定端點
+async function recheckEndpoint(endpointName) {
+    const endpoint = endpoints.find(e => e.name === endpointName);
+    if (!endpoint) return;
+
+    try {
+        const result = await checkEndpoint(endpoint);
+        updateEndpointCard(endpoint, result);
+        addToHistory(endpoint, result, new Date());
+    } catch (error) {
+        console.error(`重新檢查 ${endpointName} 失敗:`, error);
+        updateEndpointCard(endpoint, {
+            status: 'error',
+            error: error.message
+        });
+        addToHistory(endpoint, {
+            status: 'error',
+            error: error.message
+        }, new Date());
+    }
+}
+
+// 計算內容雜湊值
 async function calculateHash(content) {
     const encoder = new TextEncoder();
     const data = encoder.encode(content);
@@ -324,13 +472,13 @@ async function calculateHash(content) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 獲取狀態文本
+// 取得狀態文字
 function getStatusText(status) {
     switch (status) {
         case 'latest':
             return '最新';
         case 'outdated':
-            return '已過期';
+            return '過期';
         case 'error':
             return '錯誤';
         default:

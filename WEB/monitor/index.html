@@ -3,281 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETag 監看介面</title>
+    <title>ETag 監看系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f3f4f6;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background-color: #2196F3;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 {
-            margin: 0;
-        }
-
-        .status-info {
-            display: flex;
-            gap: 20px;
-        }
-
-        .status-item {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 20px;
-            border-radius: 4px;
-        }
-
-        .monitor-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .endpoint-card {
+        .dashboard-card {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease;
         }
 
-        .endpoint-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         }
 
-        .endpoint-title {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .endpoint-status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
 
         .status-latest {
-            background-color: #4CAF50;
+            background-color: var(--success-color);
             color: white;
         }
 
         .status-outdated {
-            background-color: #FF9800;
+            background-color: var(--warning-color);
             color: white;
         }
 
         .status-error {
-            background-color: #F44336;
+            background-color: var(--error-color);
             color: white;
         }
 
-        .endpoint-details {
-            font-size: 14px;
-            color: #666;
+        .endpoint-card {
+            border-left: 4px solid transparent;
         }
 
-        .endpoint-details p {
-            margin: 5px 0;
+        .endpoint-card.latest {
+            border-left-color: var(--success-color);
         }
 
-        .endpoint-details strong {
-            color: #333;
+        .endpoint-card.outdated {
+            border-left-color: var(--warning-color);
         }
 
-        .last-check {
-            font-size: 12px;
-            color: #999;
-            margin-top: 10px;
-            text-align: right;
-        }
-
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .control-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .btn-danger {
-            background-color: #F44336;
-            color: white;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .history {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .history h2 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .history-table th,
-        .history-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
+        .endpoint-card.error {
+            border-left-color: var(--error-color);
         }
 
         .history-table th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-            color: #333;
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #1e293b;
         }
 
         .history-table tr:hover {
-            background-color: #f9f9f9;
+            background-color: #f8fafc;
         }
 
-        @media (max-width: 768px) {
-            .monitor-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .status-info {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .control-buttons {
-                flex-direction: column;
-            }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
         }
 
-        .countdown {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2196F3;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .current-time {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #4CAF50;
+        .notification {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
         }
 
-        .error-sound-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .error-sound-control label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-        }
-
-        .error-sound-control input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>ETag 監看介面</h1>
-            <div class="status-info">
-                <div class="status-item">
-                    現在時間：<span id="currentTime" class="current-time">--:--:--</span>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- 頂部資訊列 -->
+        <div class="dashboard-card p-6 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        ETag 監看系統
+                    </h1>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-500">系統狀態：</span>
+                        <span id="systemStatus" class="status-badge status-latest">正常</span>
+                    </div>
                 </div>
-                <div class="status-item">
-                    下次檢查：<span id="nextCheck" class="countdown">--:--</span>
+                <div class="flex items-center gap-6">
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">現在時間</div>
+                        <div id="currentTime" class="text-lg font-semibold text-gray-900">--:--:--</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500">下次檢查</div>
+                        <div id="nextCheck" class="text-lg font-semibold text-primary-600">--:--</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="controls">
-            <div class="control-buttons">
-                <button id="checkNow" class="btn btn-primary">立即檢查</button>
-                <button id="clearHistory" class="btn btn-danger">清除歷史記錄</button>
-            </div>
-            <div class="error-sound-control">
-                <label>
-                    <input type="checkbox" id="enableSound" checked>
-                    啟用錯誤音效
-                </label>
+        <!-- 控制面板 -->
+        <div class="dashboard-card p-6 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <button id="checkNow" class="btn-primary flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        立即檢查
+                    </button>
+                    <button id="clearHistory" class="btn-danger flex items-center gap-2">
+                        <i class="fas fa-trash-alt"></i>
+                        清除歷史記錄
+                    </button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="enableSound" class="form-checkbox" checked>
+                        <span class="text-sm text-gray-700">啟用錯誤音效</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="enableNotifications" class="form-checkbox" checked>
+                        <span class="text-sm text-gray-700">啟用桌面通知</span>
+                    </label>
+                </div>
             </div>
         </div>
 
-        <div class="monitor-grid" id="endpointGrid">
+        <!-- 端點監控網格 -->
+        <div id="endpointGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             <!-- 端點卡片將由 JavaScript 動態生成 -->
         </div>
 
-        <div class="history">
-            <h2>檢查歷史記錄</h2>
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>時間</th>
-                        <th>端點</th>
-                        <th>狀態</th>
-                        <th>ETag</th>
-                        <th>最後修改時間</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    <!-- 歷史記錄將由 JavaScript 動態生成 -->
-                </tbody>
-            </table>
+        <!-- 歷史記錄 -->
+        <div class="dashboard-card p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-history mr-2"></i>
+                    檢查歷史記錄
+                </h2>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500">顯示：</span>
+                    <select id="historyFilter" class="form-select text-sm">
+                        <option value="all">全部記錄</option>
+                        <option value="error">僅錯誤</option>
+                        <option value="outdated">僅過期</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="history-table w-full">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 text-left">時間</th>
+                            <th class="px-4 py-3 text-left">端點</th>
+                            <th class="px-4 py-3 text-left">狀態</th>
+                            <th class="px-4 py-3 text-left">ETag</th>
+                            <th class="px-4 py-3 text-left">最後修改時間</th>
+                            <th class="px-4 py-3 text-left">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- 歷史記錄將由 JavaScript 動態生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知元素 -->
+    <div id="notification" class="notification">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-bell text-primary-600"></i>
+            <div class="notification-content"></div>
         </div>
     </div>
 
