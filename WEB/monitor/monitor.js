@@ -10,14 +10,14 @@ const MONITOR_CONFIG = {
         maintenance: false
     },
     {
-        name: '2 農業部資料',
-        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
-        description: '農業部開放資料',
+        name: '2 系統維護 API',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json',
+        description: '系統維護 API',
         icon: 'fa-leaf',
         maintenance: false
     },
     {
-        name: '3 TV 驗證系統',
+        name: '3 TV驗證系統 API',
         url: 'https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
         description: 'TV 版本驗證系統',
         icon: 'fa-tv',
