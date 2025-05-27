@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ETag 監看系統</title>
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="ETag 監看系統 - 即時監控網站更新狀態">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --maintenance-color: #6b7280;
+        }
+
+        /* 主指示燈樣式 */
+        .main-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            position: relative;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .main-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .main-indicator.normal {
+            background-color: var(--success-color);
+            color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .main-indicator.warning {
+            background-color: var(--warning-color);
+            color: var(--warning-color);
+            animation: pulse 1s infinite;
+        }
+
+        .main-indicator.error {
+            background-color: var(--error-color);
+            color: var(--error-color);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 currentColor;
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(0, 0, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+            }
+        }
+
+        body {
+            background-color: #1a1a1a;
+            min-height: 100vh;
+            overflow: hidden;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 1px;
+            background-color: #333;
+            height: calc(100vh - 60px);
+            padding: 1px;
+            position: relative;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 1px;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none;
+        }
+
+        .page.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .page-indicator {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .page-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .page-dot.active {
+            background-color: #fff;
+        }
+
+        .monitor-cell {
+            background-color: #1a1a1a;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* 防止內容溢出 */
+        }
+
+        .monitor-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            font-size: 0.875rem; /* 手機上字體稍小 */
+        }
+
+        .monitor-content {
+            flex: 1;
+            padding: 3rem 0.5rem 0.5rem 0.5rem; /* 減少左右padding */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            -webkit-overflow-scrolling: touch; /* 改善iOS滾動 */
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-latest {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-outdated {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .status-error {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .status-maintenance {
+            background-color: var(--maintenance-color);
+            color: white;
+        }
+
+        .time-display {
+            font-family: 'Digital-7', 'Courier New', monospace;
+            font-size: 3rem;
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 0.5rem 2rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+            letter-spacing: 0.5rem;
+        }
+
+        /* 七段顯示器效果 */
+        .time-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.1) 0%, rgba(255, 0, 0, 0.2) 100%);
+            border-radius: 0.5rem;
+            z-index: -1;
+        }
+
+        .time-display span {
+            display: inline-block;
+            position: relative;
+        }
+
+        .time-display span::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 2px;
+        }
+
+        .control-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .endpoint-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.25rem;
+            padding: 0.5rem; /* 減少padding */
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem; /* 減少間距 */
+        }
+
+        .endpoint-card.latest {
+            background: rgba(22, 163, 74, 0.2);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .endpoint-card.outdated {
+            background: rgba(217, 119, 6, 0.2);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .endpoint-card.error {
+            background: rgba(220, 38, 38, 0.2);
+            border-left: 4px solid var(--error-color);
+        }
+
+        .endpoint-card.maintenance {
+            background: rgba(107, 114, 128, 0.2);
+            border-left: 4px solid var(--maintenance-color);
+        }
+
+        .endpoint-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* 允許換行 */
+            gap: 0.25rem;
+        }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem; /* 手機上字體更小 */
+            color: #e5e7eb;
+            word-break: break-all;
+            flex: 1;
+            min-width: 0; /* 允許文字縮小 */
+        }
+
+        .endpoint-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.25rem;
+            font-size: 0.75rem; /* 手機上字體更小 */
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .detail-label {
+            color: #9ca3af;
+            font-size: 0.625rem;
+        }
+
+        .detail-value {
+            color: #e5e7eb;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-indicator.latest {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-indicator.outdated {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .status-indicator.error {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .status-indicator.maintenance {
+            background-color: var(--maintenance-color);
+            color: white;
+        }
+
+        .status-indicator i {
+            font-size: 0.625rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .countdown-display {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .time-display-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 50;
+            background: #000;
+            padding: 0.5rem 0;
+            height: 60px; /* 固定高度 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-display {
+            font-family: 'Digital-7', 'Courier New', monospace;
+            font-size: 2.5rem; /* 手機上字體稍小 */
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            display: inline-block;
+            letter-spacing: 0.25rem; /* 減少字間距 */
+        }
+
+        /* 七段顯示器效果 */
+        .time-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.1) 0%, rgba(255, 0, 0, 0.2) 100%);
+            border-radius: 0.5rem;
+            z-index: -1;
+        }
+
+        .time-display span {
+            display: inline-block;
+            position: relative;
+        }
+
+        .time-display span::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 2px;
+        }
+
+        /* 手機橫向特定樣式 */
+        @media screen and (max-height: 500px) {
+            .monitor-grid {
+                height: calc(100vh - 50px); /* 更小的時鐘高度 */
+            }
+
+            .monitor-header {
+                padding: 0.25rem;
+                font-size: 0.75rem;
+            }
+
+            .monitor-content {
+                padding-top: 2rem;
+            }
+
+            .endpoint-card {
+                padding: 0.25rem;
+            }
+
+            .endpoint-url {
+                font-size: 0.625rem;
+            }
+
+            .endpoint-details {
+                font-size: 0.625rem;
+            }
+
+            .time-display-container {
+                height: 50px;
+            }
+
+            .time-display {
+                font-size: 2rem;
+            }
+        }
+
+        /* 確保在手機上強制橫向 */
+        @media screen and (orientation: portrait) {
+            .monitor-grid {
+                transform: rotate(90deg);
+                transform-origin: left top;
+                width: 100vh;
+                height: 100vw;
+                position: absolute;
+                top: 100%;
+                left: 0;
+            }
+
+            .time-display-container {
+                transform: rotate(90deg);
+                transform-origin: left top;
+                width: 100vh;
+                height: 60px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="monitor-grid">
+        <div class="page active" id="page1">
+            <!-- 監控單元 1 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">通知 API</span>
+                        <span class="status-badge status-latest">正常</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown1">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent1">
+                    <div class="endpoint-card latest">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://backup0821.github.io/API/Better-vegetable-catcher/notify.json</span>
+                            <span class="status-indicator latest">
+                                <i class="fas fa-bell"></i>
+                                正常
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">ETag</span>
+                                <span class="detail-value">"abc123"</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">最後更新</span>
+                                <span class="detail-value">2024-03-21 15:30:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">回應時間</span>
+                                <span class="detail-value">123ms</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 監控單元 2 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">農業部資料</span>
+                        <span class="status-badge status-error">錯誤</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown2">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent2">
+                    <div class="endpoint-card error">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx</span>
+                            <span class="status-indicator error">
+                                <i class="fas fa-leaf"></i>
+                                錯誤
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">錯誤訊息</span>
+                                <span class="detail-value">Connection timeout</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">重試次數</span>
+                                <span class="detail-value">3/5</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">最後嘗試</span>
+                                <span class="detail-value">2024-03-21 15:35:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">504</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 監控單元 3 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">TV 驗證系統</span>
+                        <span class="status-badge status-maintenance">維護中</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown3">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent3">
+                    <div class="endpoint-card maintenance">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json</span>
+                            <span class="status-indicator maintenance">
+                                <i class="fas fa-tv"></i>
+                                維護中
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">維護原因</span>
+                                <span class="detail-value">系統更新</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">預計完成</span>
+                                <span class="detail-value">依系統維護公告為主</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">開始時間</span>
+                                <span class="detail-value">2024-03-21 15:00:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">503</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 監控單元 4 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">主系統</span>
+                        <span class="status-badge status-latest">正常</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown4">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent4">
+                    <div class="endpoint-card latest">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://backup0821.github.io/Better-vegetable-catcher/WEB</span>
+                            <span class="status-indicator latest">
+                                <i class="fas fa-analytics"></i>
+                                正常
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">ETag</span>
+                                <span class="detail-value">"ghi789"</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">最後更新</span>
+                                <span class="detail-value">2024-03-21 15:30:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">回應時間</span>
+                                <span class="detail-value">98ms</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="page2">
+            <!-- 監控單元 5 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">備份系統</span>
+                        <span class="status-badge status-latest">正常</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown5">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent5">
+                    <div class="endpoint-card latest">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://backup0821.github.io/Better-vegetable-catcher/WEB/backup</span>
+                            <span class="status-indicator latest">
+                                <i class="fas fa-database"></i>
+                                正常
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">ETag</span>
+                                <span class="detail-value">"jkl012"</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">最後更新</span>
+                                <span class="detail-value">2024-03-21 15:30:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">回應時間</span>
+                                <span class="detail-value">85ms</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 監控單元 6 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">更新日誌</span>
+                        <span class="status-badge status-latest">正常</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown6">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent6">
+                    <div class="endpoint-card latest">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://backup0821.github.io/API/Better-vegetable-catcher/changelog.json</span>
+                            <span class="status-indicator latest">
+                                <i class="fas fa-history"></i>
+                                正常
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">ETag</span>
+                                <span class="detail-value">"mno345"</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">最後更新</span>
+                                <span class="detail-value">2024-03-21 15:30:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">回應時間</span>
+                                <span class="detail-value">92ms</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 監控單元 7 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">統計資料</span>
+                        <span class="status-badge status-latest">正常</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown7">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent7">
+                    <div class="endpoint-card latest">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://backup0821.github.io/API/Better-vegetable-catcher/statistics.json</span>
+                            <span class="status-indicator latest">
+                                <i class="fas fa-chart-bar"></i>
+                                正常
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">ETag</span>
+                                <span class="detail-value">"pqr678"</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">最後更新</span>
+                                <span class="detail-value">2024-03-21 15:30:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">回應時間</span>
+                                <span class="detail-value">88ms</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 監控單元 8 -->
+            <div class="monitor-cell">
+                <div class="monitor-header">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">API 狀態</span>
+                        <span class="status-badge status-latest">正常</span>
+                    </div>
+                    <div class="countdown-display">
+                        <span id="countdown8">更新倒計時: 00:00</span>
+                    </div>
+                </div>
+                <div class="monitor-content" id="monitorContent8">
+                    <div class="endpoint-card latest">
+                        <div class="endpoint-info">
+                            <span class="endpoint-url">https://backup0821.github.io/API/Better-vegetable-catcher/status.json</span>
+                            <span class="status-indicator latest">
+                                <i class="fas fa-server"></i>
+                                正常
+                            </span>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="detail-item">
+                                <span class="detail-label">ETag</span>
+                                <span class="detail-value">"stu901"</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">最後更新</span>
+                                <span class="detail-value">2024-03-21 15:30:00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">回應時間</span>
+                                <span class="detail-value">95ms</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">狀態碼</span>
+                                <span class="detail-value">200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 時間顯示 -->
+    <div class="time-display-container">
+        <div class="flex items-center justify-between w-full px-4">
+            <div class="system-status flex items-center gap-4">
+                <div class="main-indicator normal" id="mainIndicator" title="系統狀態指示燈"></div>
+
+                <div class="status-item">
+                    <span class="text-gray-400 text-sm">最後更新：</span>
+                    <span class="text-blue-400" id="lastUpdateTime">--:--:--</span>
+                </div>
+                <div class="status-item">
+                    <span class="text-gray-400 text-sm">運行時間：</span>
+                    <span class="text-purple-400" id="uptime">00:00:00</span>
+                </div>
+            </div>
+            <div class="time-display" id="currentTime">--:--:--</div>
+        </div>
+    </div>
+
+    <div class="page-indicator" id="pageIndicator"></div>
+
+    <!-- 通知元素 -->
+    <div id="notification" class="notification">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-bell text-yellow-400"></i>
+            <div class="notification-content"></div>
+        </div>
+    </div>
+
+    <!-- 錯誤音效 -->
+    <audio id="errorSound" preload="auto">
+        <source src="error.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // 分頁控制
+        let currentPage = 1;
+        const totalPages = 2;
+        const pageChangeInterval = 10000; // 10秒
+
+        function initializePages() {
+            const indicator = document.getElementById('pageIndicator');
+            for (let i = 1; i <= totalPages; i++) {
+                const dot = document.createElement('div');
+                dot.className = `page-dot ${i === 1 ? 'active' : ''}`;
+                dot.onclick = () => switchPage(i);
+                indicator.appendChild(dot);
+            }
+        }
+
+        function switchPage(pageNumber) {
+            if (pageNumber < 1 || pageNumber > totalPages) return;
+            
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.querySelectorAll('.page-dot').forEach(dot => {
+                dot.classList.remove('active');
+            });
+            
+            document.getElementById(`page${pageNumber}`).classList.add('active');
+            document.querySelectorAll('.page-dot')[pageNumber - 1].classList.add('active');
+            currentPage = pageNumber;
+        }
+
+        function startPageRotation() {
+            setInterval(() => {
+                const nextPage = currentPage % totalPages + 1;
+                switchPage(nextPage);
+            }, pageChangeInterval);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initialize();
+            initializePages();
+            startPageRotation();
+        });
+    </script>
+    <script src="monitor.js"></script>
+</body>
+</html> 

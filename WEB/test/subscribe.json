@@ -1,0 +1,17 @@
+{
+    "subscribers": [
+        {
+            "deviceId": "DEV--example123",
+            "subscription": {
+                "endpoint": "https://fcm.googleapis.com/fcm/send/example",
+                "expirationTime": null,
+                "keys": {
+                    "p256dh": "example_p256dh_key",
+                    "auth": "example_auth_key"
+                }
+            },
+            "timestamp": "2024-03-21T10:00:00.000Z"
+        }
+    ],
+    "lastUpdated": "2024-03-21T10:00:00.000Z"
+} 
