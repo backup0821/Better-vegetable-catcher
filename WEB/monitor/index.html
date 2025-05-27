@@ -19,6 +19,58 @@
             --maintenance-color: #6b7280;
         }
 
+        /* 主指示燈樣式 */
+        .main-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            position: relative;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .main-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .main-indicator.normal {
+            background-color: var(--success-color);
+            color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .main-indicator.warning {
+            background-color: var(--warning-color);
+            color: var(--warning-color);
+            animation: pulse 1s infinite;
+        }
+
+        .main-indicator.error {
+            background-color: var(--error-color);
+            color: var(--error-color);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 currentColor;
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(0, 0, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+            }
+        }
+
         body {
             background-color: #1a1a1a;
             min-height: 100vh;
@@ -586,7 +638,24 @@
 
     <!-- 時間顯示 -->
     <div class="time-display-container">
-        <div class="time-display" id="currentTime">--:--:--</div>
+        <div class="flex items-center justify-between w-full px-4">
+            <div class="system-status flex items-center gap-4">
+                <div class="main-indicator normal" id="mainIndicator" title="系統狀態指示燈"></div>
+                <div class="status-item">
+                    <span class="text-gray-400 text-sm">系統狀態：</span>
+                    <span class="text-green-400 font-bold">正常運行中</span>
+                </div>
+                <div class="status-item">
+                    <span class="text-gray-400 text-sm">最後更新：</span>
+                    <span class="text-blue-400" id="lastUpdateTime">--:--:--</span>
+                </div>
+                <div class="status-item">
+                    <span class="text-gray-400 text-sm">運行時間：</span>
+                    <span class="text-purple-400" id="uptime">00:00:00</span>
+                </div>
+            </div>
+            <div class="time-display" id="currentTime">--:--:--</div>
+        </div>
     </div>
 
     <!-- 通知元素 -->
@@ -690,6 +759,77 @@
         // 立即更新一次
         updateTime();
         updateCountdown();
+
+        // 系統運行時間計時器
+        let startTime = new Date();
+        function updateUptime() {
+            const now = new Date();
+            const uptime = new Date(now - startTime);
+            const hours = uptime.getUTCHours().toString().padStart(2, '0');
+            const minutes = uptime.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = uptime.getUTCSeconds().toString().padStart(2, '0');
+            document.getElementById('uptime').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // 更新最後更新時間
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-TW', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdateTime').textContent = timeString;
+        }
+
+        // 每秒更新運行時間
+        setInterval(updateUptime, 1000);
+        // 每5分鐘更新最後更新時間
+        setInterval(updateLastUpdateTime, 5 * 60 * 1000);
+        // 立即更新一次
+        updateUptime();
+        updateLastUpdateTime();
+
+        // 更新主指示燈狀態
+        function updateMainIndicator() {
+            const indicator = document.getElementById('mainIndicator');
+            const statusText = document.querySelector('.status-item .text-green-400');
+            
+            // 檢查所有監控單元的狀態
+            const cells = document.querySelectorAll('.monitor-cell');
+            let hasError = false;
+            let hasWarning = false;
+            
+            cells.forEach(cell => {
+                const statusBadge = cell.querySelector('.status-badge');
+                if (statusBadge.classList.contains('status-error')) {
+                    hasError = true;
+                } else if (statusBadge.classList.contains('status-outdated')) {
+                    hasWarning = true;
+                }
+            });
+
+            // 更新指示燈狀態
+            if (hasError) {
+                indicator.className = 'main-indicator error';
+                statusText.textContent = '系統異常';
+                statusText.className = 'text-red-400 font-bold';
+            } else if (hasWarning) {
+                indicator.className = 'main-indicator warning';
+                statusText.textContent = '需要注意';
+                statusText.className = 'text-yellow-400 font-bold';
+            } else {
+                indicator.className = 'main-indicator normal';
+                statusText.textContent = '正常運行中';
+                statusText.className = 'text-green-400 font-bold';
+            }
+        }
+
+        // 每5秒更新一次主指示燈狀態
+        setInterval(updateMainIndicator, 5000);
+        // 立即更新一次
+        updateMainIndicator();
     </script>
     <script src="monitor.js"></script>
 </body>
