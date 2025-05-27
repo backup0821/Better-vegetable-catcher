@@ -65,6 +65,7 @@ const MONITOR_CONFIG = {
 let endpointStatuses = {};
 let lastCheckTime = null;
 let nextCheckTime = null;
+let startTime = null; // 新增運行開始時間
 
 // 更新時間顯示
 function updateTime() {
@@ -108,6 +109,87 @@ function updateCountdown() {
     }
 }
 
+// 更新運行時間
+function updateUptime() {
+    if (!startTime) return;
+    const now = new Date();
+    let diff = Math.floor((now - startTime) / 1000);
+    const hours = Math.floor(diff / 3600).toString().padStart(2, '0');
+    diff %= 3600;
+    const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+    const seconds = (diff % 60).toString().padStart(2, '0');
+    const uptimeStr = `${hours}:${minutes}:${seconds}`;
+    const uptimeElem = document.getElementById('uptime');
+    if (uptimeElem) uptimeElem.textContent = uptimeStr;
+}
+
+// 更新最後更新時間
+function updateLastUpdateTime() {
+    const elem = document.getElementById('lastUpdateTime');
+    if (elem && lastCheckTime) {
+        elem.textContent = lastCheckTime.toLocaleTimeString('zh-TW', { hour12: false });
+    }
+}
+
+// 更新主監控燈
+function updateMainIndicator() {
+    const indicator = document.getElementById('mainIndicator');
+    if (!indicator) return;
+    // 收集所有 endpoint 狀態
+    const statuses = [];
+    for (let i = 1; i <= MONITOR_CONFIG.endpoints.length; i++) {
+        const contentElement = document.getElementById(`monitorContent${i}`);
+        if (!contentElement) continue;
+        const card = contentElement.querySelector('.endpoint-card');
+        if (!card) continue;
+        if (card.classList.contains('error')) {
+            statuses.push('error');
+        } else if (card.classList.contains('maintenance')) {
+            statuses.push('maintenance');
+        } else if (card.classList.contains('outdated')) {
+            statuses.push('outdated');
+        } else if (card.classList.contains('latest')) {
+            statuses.push('latest');
+        }
+    }
+    // 決定主燈狀態
+    let mainStatus = 'normal';
+    if (statuses.includes('error')) {
+        mainStatus = 'error';
+    } else if (statuses.includes('maintenance')) {
+        mainStatus = 'maintenance';
+    } else if (statuses.includes('outdated')) {
+        mainStatus = 'warning';
+    } else {
+        mainStatus = 'normal';
+    }
+    indicator.className = `main-indicator ${mainStatus}`;
+}
+
+// 播放錯誤音效
+function playErrorSound() {
+    const audio = document.getElementById('errorSound');
+    if (audio) {
+        audio.play().catch(error => console.log('無法播放音效:', error));
+    }
+}
+
+// 播放維護音效
+function playMaintenanceSound() {
+    const audio = document.getElementById('maintenanceSound');
+    if (audio) {
+        audio.play().catch(error => console.log('無法播放音效:', error));
+    }
+}
+
+// 播放過期音效
+function playOutdatedSound() {
+    const audio = document.getElementById('outdatedSound');
+    if (audio) {
+        audio.play().catch(error => console.log('無法播放音效:', error));
+    }
+}
+
 // 檢查單個端點
 async function checkEndpoint(endpoint, index) {
     try {
@@ -120,37 +202,46 @@ async function checkEndpoint(endpoint, index) {
         const status = response.status;
         const responseTime = response.headers.get('x-response-time') || '0';
         
-        // 檢查狀態碼是否為錯誤（包括 404）
-        if (status >= 400) {
-            updateEndpointStatus(index, {
-                status: 'error',
-                error: `HTTP 錯誤: ${status}`,
-                lastUpdate: new Date().toLocaleString('zh-TW'),
-                statusCode: status
-            });
-            
-            playErrorSound();
-            showNotification(`${endpoint.name} 發生錯誤: HTTP ${status}`);
-            return false;
+        // 狀態判斷
+        let endpointStatus = 'latest';
+        let errorMsg = null;
+        if (endpoint.maintenance) {
+            endpointStatus = 'maintenance';
+        } else if (status >= 400) {
+            endpointStatus = 'error';
+            errorMsg = `HTTP 錯誤: ${status}`;
+        } else if (status === 203 || status === 202) { // 假設 203/202 代表過期
+            endpointStatus = 'outdated';
         }
         
         updateEndpointStatus(index, {
-            status: 'latest',
+            status: endpointStatus,
             etag,
             statusCode: status,
             responseTime,
             lastUpdate: new Date().toLocaleString('zh-TW'),
-            error: null
+            error: errorMsg
         });
         
-        return true;
+        // 播放音效
+        if (endpointStatus === 'error') {
+            playErrorSound();
+            showNotification(`${endpoint.name} 發生錯誤: HTTP ${status}`);
+        } else if (endpointStatus === 'maintenance') {
+            playMaintenanceSound();
+            showNotification(`${endpoint.name} 維護中`);
+        } else if (endpointStatus === 'outdated') {
+            playOutdatedSound();
+            showNotification(`${endpoint.name} 資料過期`);
+        }
+        
+        return endpointStatus === 'latest';
     } catch (error) {
         updateEndpointStatus(index, {
             status: 'error',
             error: error.message,
             lastUpdate: new Date().toLocaleString('zh-TW')
         });
-        
         playErrorSound();
         showNotification(`${endpoint.name} 發生錯誤: ${error.message}`);
         return false;
@@ -228,21 +319,14 @@ function getStatusIcon(status) {
 async function checkAllEndpoints() {
     lastCheckTime = new Date();
     nextCheckTime = new Date(lastCheckTime.getTime() + MONITOR_CONFIG.checkInterval);
-    
     for (let i = 0; i < MONITOR_CONFIG.endpoints.length; i++) {
         const endpoint = MONITOR_CONFIG.endpoints[i];
         if (!endpoint.maintenance) {
             await checkEndpoint(endpoint, i + 1);
         }
     }
-}
-
-// 播放錯誤音效
-function playErrorSound() {
-    const audio = document.getElementById('errorSound');
-    if (audio) {
-        audio.play().catch(error => console.log('無法播放音效:', error));
-    }
+    updateLastUpdateTime(); // 新增：更新最後更新時間
+    updateMainIndicator();  // 新增：更新主監控燈
 }
 
 // 顯示通知
@@ -262,7 +346,8 @@ function showNotification(message) {
 function initialize() {
     // 請求全螢幕
     requestFullscreen();
-
+    // 記錄運行開始時間
+    startTime = new Date();
     // 註冊 Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -273,28 +358,26 @@ function initialize() {
                 console.log('ServiceWorker 註冊失敗:', error);
             });
     }
-
     // 請求通知權限
     if ('Notification' in window) {
         Notification.requestPermission();
     }
-
     // 強制橫向顯示
     if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape')
             .catch(error => console.log('無法鎖定螢幕方向:', error));
     }
-
     // 開始定時更新
     setInterval(() => {
         updateTime();
         updateCountdown();
+        updateUptime(); // 新增：每秒更新運行時間
     }, 1000);
-
     // 立即執行一次檢查
     checkAllEndpoints();
     updateTime();
     updateCountdown();
+    updateUptime(); // 新增：初始化時也更新一次運行時間
 }
 
 // 請求全螢幕
