@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -463,6 +464,69 @@
                 left: 0;
             }
         }
+
+        /* 緊急模式閃爍效果 */
+        @keyframes emergency-flash {
+            0% { background-color: rgba(220, 38, 38, 0.1); }
+            50% { background-color: rgba(220, 38, 38, 0.2); }
+            100% { background-color: rgba(220, 38, 38, 0.1); }
+        }
+
+        .emergency-mode {
+            animation: emergency-flash 1s infinite;
+        }
+
+        /* 更新動畫效果 */
+        @keyframes update-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .updating {
+            animation: update-pulse 0.5s ease-in-out;
+        }
+
+        /* 狀態圖表容器 */
+        .status-chart {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            z-index: 1000;
+            display: none;
+        }
+
+        .status-chart.show {
+            display: block;
+        }
+
+        /* 暫停覆蓋層 */
+        .pause-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
+        }
+
+        .pause-overlay.show {
+            display: flex;
+        }
+
+        .pause-text {
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -642,10 +706,6 @@
             <div class="system-status flex items-center gap-4">
                 <div class="main-indicator normal" id="mainIndicator" title="系統狀態指示燈"></div>
                 <div class="status-item">
-                    <span class="text-gray-400 text-sm">系統狀態：</span>
-                    <span class="text-green-400 font-bold">正常運行中</span>
-                </div>
-                <div class="status-item">
                     <span class="text-gray-400 text-sm">最後更新：</span>
                     <span class="text-blue-400" id="lastUpdateTime">--:--:--</span>
                 </div>
@@ -670,6 +730,16 @@
     <audio id="errorSound" preload="auto">
         <source src="error.mp3" type="audio/mpeg">
     </audio>
+
+    <!-- 狀態圖表 -->
+    <div class="status-chart" id="statusChart">
+        <canvas id="statusCanvas" width="300" height="200"></canvas>
+    </div>
+
+    <!-- 暫停覆蓋層 -->
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-text">已暫停</div>
+    </div>
 
     <script>
         // 註冊 Service Worker
@@ -713,6 +783,180 @@
         // 頁面載入時嘗試鎖定橫向
         window.addEventListener('load', lockOrientation);
 
+        // 緊急狀態變數
+        let isEmergencyMode = false;
+        let updateInterval = 60 * 1000; // 預設 1 分鐘
+
+        // 新增變數
+        let isPaused = false;
+        let statusData = {
+            labels: [],
+            values: []
+        };
+
+        // 初始化圖表
+        function initChart() {
+            const ctx = document.getElementById('statusCanvas').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '系統狀態',
+                        data: [],
+                        borderColor: '#2563eb',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            return chart;
+        }
+
+        let statusChart = initChart();
+
+        // 更新圖表
+        function updateChart(status) {
+            const now = new Date();
+            statusData.labels.push(now.toLocaleTimeString('zh-TW'));
+            statusData.values.push(status);
+
+            if (statusData.labels.length > 20) {
+                statusData.labels.shift();
+                statusData.values.shift();
+            }
+
+            statusChart.data.labels = statusData.labels;
+            statusChart.data.datasets[0].data = statusData.values;
+            statusChart.update();
+        }
+
+        // 鍵盤快捷鍵
+        document.addEventListener('keydown', function(event) {
+            switch(event.key.toLowerCase()) {
+                case 'f':
+                    toggleFullscreen();
+                    break;
+                case 'r':
+                    resetTimers();
+                    break;
+                case ' ':
+                    togglePause();
+                    break;
+                case 'c':
+                    toggleChart();
+                    break;
+            }
+        });
+
+        // 切換全螢幕
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // 重置計時器
+        function resetTimers() {
+            startTime = new Date();
+            updateUptime();
+            updateLastUpdateTime();
+            showNotification('已重置所有計時器');
+        }
+
+        // 切換暫停狀態
+        function togglePause() {
+            isPaused = !isPaused;
+            const overlay = document.getElementById('pauseOverlay');
+            overlay.classList.toggle('show');
+            showNotification(isPaused ? '系統已暫停' : '系統已恢復');
+        }
+
+        // 切換圖表顯示
+        function toggleChart() {
+            const chart = document.getElementById('statusChart');
+            chart.classList.toggle('show');
+        }
+
+        // 修改更新函數
+        function updateCountdown() {
+            if (isPaused) return;
+
+            const now = new Date();
+            const nextCheck = new Date(now.getTime() + updateInterval);
+            const timeLeft = nextCheck - now;
+            
+            const minutes = Math.floor(timeLeft / (60 * 1000));
+            const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+            
+            const countdownString = `更新倒計時: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // 更新所有監控單元的倒計時
+            for (let i = 1; i <= 4; i++) {
+                const countdownElement = document.getElementById(`countdown${i}`);
+                if (countdownElement) {
+                    countdownElement.textContent = countdownString;
+                }
+            }
+
+            // 更新圖表
+            const status = isEmergencyMode ? 100 : 50;
+            updateChart(status);
+        }
+
+        // 修改 Enter 鍵處理
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                isEmergencyMode = !isEmergencyMode;
+                updateInterval = isEmergencyMode ? 10 * 1000 : 60 * 1000;
+                
+                // 更新所有監控單元的狀態
+                const cells = document.querySelectorAll('.monitor-cell');
+                cells.forEach(cell => {
+                    const statusBadge = cell.querySelector('.status-badge');
+                    if (isEmergencyMode) {
+                        statusBadge.className = 'status-badge status-error';
+                        statusBadge.textContent = '緊急';
+                        cell.classList.add('updating');
+                    } else {
+                        statusBadge.className = 'status-badge status-latest';
+                        statusBadge.textContent = '正常';
+                        cell.classList.remove('updating');
+                    }
+                });
+
+                // 更新主指示燈
+                const indicator = document.getElementById('mainIndicator');
+                if (isEmergencyMode) {
+                    indicator.className = 'main-indicator error';
+                    document.body.classList.add('emergency-mode');
+                } else {
+                    indicator.className = 'main-indicator normal';
+                    document.body.classList.remove('emergency-mode');
+                }
+
+                // 顯示通知
+                const notification = document.getElementById('notification');
+                const content = notification.querySelector('.notification-content');
+                content.textContent = isEmergencyMode ? '已進入緊急模式，更新間隔改為 10 秒' : '已退出緊急模式，更新間隔改為 1 分鐘';
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 5000);
+            }
+        });
+
         // 更新時間顯示
         function updateTime() {
             const now = new Date();
@@ -727,26 +971,6 @@
             const timeElement = document.getElementById('currentTime');
             if (timeElement) {
                 timeElement.textContent = timeString;
-            }
-        }
-
-        // 更新倒計時
-        function updateCountdown() {
-            const now = new Date();
-            const nextCheck = new Date(now.getTime() + 5 * 60 * 1000); // 5分鐘後
-            const timeLeft = nextCheck - now;
-            
-            const minutes = Math.floor(timeLeft / (60 * 1000));
-            const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
-            
-            const countdownString = `更新倒計時: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // 更新所有監控單元的倒計時
-            for (let i = 1; i <= 4; i++) {
-                const countdownElement = document.getElementById(`countdown${i}`);
-                if (countdownElement) {
-                    countdownElement.textContent = countdownString;
-                }
             }
         }
 
