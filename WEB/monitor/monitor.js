@@ -31,8 +31,8 @@ const MONITOR_CONFIG = {
         maintenance: false
     },
     {
-        name: '5 備份系統',
-        url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB/backup',
+        name: '5 測試系統',
+        url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB/test',
         description: '系統備份服務',
         icon: 'fa-database',
         maintenance: false
