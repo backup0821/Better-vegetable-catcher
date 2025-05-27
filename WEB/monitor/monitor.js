@@ -25,7 +25,7 @@ const MONITOR_CONFIG = {
     },
     {
         name: '4 主系統',
-        url: 'https://backup0821.github.io/Better-vegetable-catcher/test',
+        url: 'https://backup0821.github.io/Better-vegetable-catcher/web',
         description: '農產分析 主要系統',
         icon: 'fa-analytics',
         maintenance: false
