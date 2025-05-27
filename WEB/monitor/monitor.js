@@ -1,35 +1,35 @@
 // 監控設定
 const MONITOR_CONFIG = {
-    checkInterval: 5 * 60 * 1000, // 5分鐘檢查一次
+    checkInterval: 60 * 1000, // 1分鐘檢查一次
     endpoints: [
-        {
-            name: '通知 API',
-            url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json',
-            description: '系統通知 API',
-            icon: 'fa-bell',
-            maintenance: false
-        },
-        {
-            name: '農業部資料',
-            url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
-            description: '農業部開放資料',
-            icon: 'fa-leaf',
-            maintenance: false
-        },
-        {
-            name: 'TV 驗證系統',
-            url: 'https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
-            description: 'TV 版本驗證系統',
-            icon: 'fa-tv',
-            maintenance: true
-        },
-        {
-            name: '主系統',
-            url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB',
-            description: '農產分析 主要系統',
-            icon: 'fa-analytics',
-            maintenance: false
-        }
+    {
+        name: '通知 API',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json',
+        description: '系統通知 API',
+        icon: 'fa-bell',
+        maintenance: false
+    },
+    {
+        name: '農業部資料',
+        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
+        description: '農業部開放資料',
+        icon: 'fa-leaf',
+        maintenance: false
+    },
+    {
+        name: 'TV 驗證系統',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
+        description: 'TV 版本驗證系統',
+        icon: 'fa-tv',
+        maintenance: true
+    },
+    {
+        name: '主系統',
+        url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB',
+        description: '農產分析 主要系統',
+        icon: 'fa-analytics',
+        maintenance: false
+    }
     ]
 };
 
@@ -218,6 +218,9 @@ function showNotification(message) {
 
 // 初始化
 function initialize() {
+    // 請求全螢幕
+    requestFullscreen();
+
     // 註冊 Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -250,6 +253,49 @@ function initialize() {
     checkAllEndpoints();
     updateTime();
     updateCountdown();
+}
+
+// 請求全螢幕
+function requestFullscreen() {
+    const element = document.documentElement;
+    
+    // 檢查是否支援全螢幕
+    if (!document.fullscreenElement && 
+        !document.mozFullScreenElement && 
+        !document.webkitFullscreenElement && 
+        !document.msFullscreenElement) {
+        
+        // 顯示確認對話框
+        if (confirm('是否要進入全螢幕模式？')) {
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+        }
+    }
+}
+
+// 監聽全螢幕變化
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+function handleFullscreenChange() {
+    const isFullscreen = document.fullscreenElement || 
+                        document.mozFullScreenElement || 
+                        document.webkitFullscreenElement || 
+                        document.msFullscreenElement;
+    
+    if (!isFullscreen) {
+        // 如果退出全螢幕，再次詢問
+        requestFullscreen();
+    }
 }
 
 // 頁面載入完成後初始化
