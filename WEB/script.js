@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 從農產品交易行情站獲取資料
-async function fetchData() {
+async function fetchData(retryCount = 3) {
     try {
         console.log('開始獲取資料...');
         
@@ -236,72 +236,54 @@ async function fetchData() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            },
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        console.log('API 回應狀態:', response.status);
-        console.log('API 回應標頭:', Object.fromEntries(response.headers.entries()));
-        
-        if (!response.ok) {
-            throw new Error(`資料獲取失敗: ${response.status} ${response.statusText}`);
-        }
-        
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error(`無效的回應格式: ${contentType}`);
-        }
-        
-        const data = await response.json();
-        console.log('獲取到的資料範例:', data.slice(0, 2));
-        
-        // 儲存資料到全域變數和快取
-        window.cropData = data;
-        localStorage.setItem('cached_crop_data', JSON.stringify(data));
-        
-        // 更新資料更新時間
-        const updateTimeElement = document.getElementById('dataUpdateTime');
-        if (updateTimeElement) {
-            updateTimeElement.textContent = new Date().toLocaleString('zh-TW');
-        }
-        
-        return data;
-    } catch (error) {
-        console.error('資料獲取錯誤:', error);
-        
-        // 根據錯誤類型提供更具體的錯誤訊息
-        let errorMessage = '資料獲取失敗';
-        if (error.name === 'AbortError') {
-            errorMessage = '請求超時，請稍後再試';
-        } else if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-            errorMessage = '無法連接到伺服器，可能是因為：\n1. 網路連線問題\n2. 伺服器暫時無法回應\n3. CORS 政策限制';
-        } else if (!navigator.onLine) {
-            errorMessage = '網路連線已中斷，請檢查您的網路連線';
-        }
-        
-        // 顯示錯誤通知給使用者
-        showNotification('錯誤', errorMessage);
-        
-        // 如果網路離線，嘗試使用快取資料
-        if (!navigator.onLine) {
-            const cachedData = localStorage.getItem('cached_crop_data');
-            if (cachedData) {
-                console.log('使用快取資料');
-                const data = JSON.parse(cachedData);
-                window.cropData = data;
-                showNotification('提示', '目前使用快取資料，請檢查網路連線');
-                return data;
+        try {
+            const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                },
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            console.log('API 回應狀態:', response.status);
+            console.log('API 回應標頭:', Object.fromEntries(response.headers.entries()));
+            
+            if (!response.ok) {
+                throw new Error(`資料獲取失敗: ${response.status} ${response.statusText}`);
             }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`無效的回應格式: ${contentType}`);
+            }
+            
+            const data = await response.json();
+            console.log('獲取到的資料範例:', data.slice(0, 2));
+            
+            // 儲存資料到全域變數和快取
+            window.cropData = data;
+            localStorage.setItem('cached_crop_data', JSON.stringify(data));
+            localStorage.setItem('last_update_time', new Date().toISOString());
+            
+            return data;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            
+            if (retryCount > 0 && (error.name === 'AbortError' || error.message.includes('Failed to fetch'))) {
+                console.log(`重試中... 剩餘重試次數: ${retryCount - 1}`);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 等待 2 秒後重試
+                return fetchData(retryCount - 1);
+            }
+            
+            throw error;
         }
-        
+    } catch (error) {
+        console.error('獲取資料失敗:', error);
+        showNotification('錯誤', '無法獲取資料，請稍後再試');
         throw error;
     }
 }

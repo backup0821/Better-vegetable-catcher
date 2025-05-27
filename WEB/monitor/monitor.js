@@ -3,31 +3,59 @@ const MONITOR_CONFIG = {
     checkInterval: 60 * 1000, // 1分鐘檢查一次
     endpoints: [
     {
-        name: '通知 API',
+        name: '1 通知 API',
         url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json',
         description: '系統通知 API',
         icon: 'fa-bell',
         maintenance: false
     },
     {
-        name: '農業部資料',
+        name: '2 農業部資料',
         url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
         description: '農業部開放資料',
         icon: 'fa-leaf',
         maintenance: false
     },
     {
-        name: 'TV 驗證系統',
+        name: '3 TV 驗證系統',
         url: 'https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
         description: 'TV 版本驗證系統',
         icon: 'fa-tv',
         maintenance: true
     },
     {
-        name: '主系統',
+        name: '4 主系統',
         url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB',
         description: '農產分析 主要系統',
         icon: 'fa-analytics',
+        maintenance: false
+    },
+    {
+        name: '5 備份系統',
+        url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB/backup',
+        description: '系統備份服務',
+        icon: 'fa-database',
+        maintenance: false
+    },
+    {
+        name: '6 農業部 主API',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/changelog.json',
+        description: '系統更新日誌',
+        icon: 'fa-history',
+        maintenance: false
+    },
+    {
+        name: '7 農業部 修市API',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/statistics.json',
+        description: '使用統計資料',
+        icon: 'fa-chart-bar',
+        maintenance: false
+    },
+    {
+        name: '8 農業部 農業氣象影音API',
+        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/status.json',
+        description: 'API 服務狀態',
+        icon: 'fa-server',
         maintenance: false
     }
     ]
@@ -91,6 +119,20 @@ async function checkEndpoint(endpoint, index) {
         const etag = response.headers.get('etag');
         const status = response.status;
         const responseTime = response.headers.get('x-response-time') || '0';
+        
+        // 檢查狀態碼是否為錯誤（包括 404）
+        if (status >= 400) {
+            updateEndpointStatus(index, {
+                status: 'error',
+                error: `HTTP 錯誤: ${status}`,
+                lastUpdate: new Date().toLocaleString('zh-TW'),
+                statusCode: status
+            });
+            
+            playErrorSound();
+            showNotification(`${endpoint.name} 發生錯誤: HTTP ${status}`);
+            return false;
+        }
         
         updateEndpointStatus(index, {
             status: 'latest',
