@@ -411,6 +411,29 @@
                 left: 0;
             }
         }
+
+        .logout-button {
+            position: absolute;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .time-display-container {
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -587,6 +610,10 @@
     <!-- 時間顯示 -->
     <div class="time-display-container">
         <div class="time-display" id="currentTime">--:--:--</div>
+        <button onclick="logout()" class="logout-button">
+            <i class="fas fa-sign-out-alt"></i>
+            登出
+        </button>
     </div>
 
     <!-- 通知元素 -->
@@ -691,6 +718,7 @@
         updateTime();
         updateCountdown();
     </script>
+    <script src="login.js"></script>
     <script src="monitor.js"></script>
 </body>
 </html> 
