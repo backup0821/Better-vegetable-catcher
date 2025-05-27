@@ -24,6 +24,8 @@
             min-height: 100vh;
             overflow: hidden;
             color: #fff;
+            margin: 0;
+            padding: 0;
         }
 
         .monitor-grid {
@@ -32,7 +34,7 @@
             grid-template-rows: repeat(2, 1fr);
             gap: 1px;
             background-color: #333;
-            height: 100vh;
+            height: calc(100vh - 60px); /* 減去時鐘高度 */
             padding: 1px;
         }
 
@@ -42,6 +44,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            min-height: 0; /* 防止內容溢出 */
         }
 
         .monitor-header {
@@ -55,15 +58,17 @@
             justify-content: space-between;
             align-items: center;
             z-index: 10;
+            font-size: 0.875rem; /* 手機上字體稍小 */
         }
 
         .monitor-content {
             flex: 1;
-            padding: 3rem 1rem 1rem 1rem;
+            padding: 3rem 0.5rem 0.5rem 0.5rem; /* 減少左右padding */
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            -webkit-overflow-scrolling: touch; /* 改善iOS滾動 */
         }
 
         .status-badge {
@@ -150,10 +155,10 @@
         .endpoint-card {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 0.25rem;
-            padding: 0.75rem;
+            padding: 0.5rem; /* 減少padding */
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.25rem; /* 減少間距 */
         }
 
         .endpoint-card.latest {
@@ -180,36 +185,41 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap; /* 允許換行 */
+            gap: 0.25rem;
         }
 
         .endpoint-url {
             font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
+            font-size: 0.75rem; /* 手機上字體更小 */
             color: #e5e7eb;
             word-break: break-all;
+            flex: 1;
+            min-width: 0; /* 允許文字縮小 */
         }
 
         .endpoint-details {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            font-size: 0.875rem;
+            gap: 0.25rem;
+            font-size: 0.75rem; /* 手機上字體更小 */
         }
 
         .detail-item {
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 0.125rem;
         }
 
         .detail-label {
             color: #9ca3af;
-            font-size: 0.75rem;
+            font-size: 0.625rem;
         }
 
         .detail-value {
             color: #e5e7eb;
             font-family: 'Courier New', monospace;
+            word-break: break-all;
         }
 
         .status-indicator {
@@ -285,7 +295,7 @@
 
         .countdown-display {
             font-family: 'Courier New', monospace;
-            font-size: 1.25rem;
+            font-size: 0.75rem;
             color: #00ff00;
             text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
@@ -298,16 +308,20 @@
             text-align: center;
             z-index: 50;
             background: #000;
-            padding: 1rem 0;
+            padding: 0.5rem 0;
+            height: 60px; /* 固定高度 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .time-display {
             font-family: 'Digital-7', 'Courier New', monospace;
-            font-size: 3rem;
+            font-size: 2.5rem; /* 手機上字體稍小 */
             color: #ff0000;
             text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
             display: inline-block;
-            letter-spacing: 0.5rem;
+            letter-spacing: 0.25rem; /* 減少字間距 */
         }
 
         /* 七段顯示器效果 */
@@ -337,6 +351,65 @@
             bottom: 0;
             background: rgba(255, 0, 0, 0.1);
             border-radius: 2px;
+        }
+
+        /* 手機橫向特定樣式 */
+        @media screen and (max-height: 500px) {
+            .monitor-grid {
+                height: calc(100vh - 50px); /* 更小的時鐘高度 */
+            }
+
+            .monitor-header {
+                padding: 0.25rem;
+                font-size: 0.75rem;
+            }
+
+            .monitor-content {
+                padding-top: 2rem;
+            }
+
+            .endpoint-card {
+                padding: 0.25rem;
+            }
+
+            .endpoint-url {
+                font-size: 0.625rem;
+            }
+
+            .endpoint-details {
+                font-size: 0.625rem;
+            }
+
+            .time-display-container {
+                height: 50px;
+            }
+
+            .time-display {
+                font-size: 2rem;
+            }
+        }
+
+        /* 確保在手機上強制橫向 */
+        @media screen and (orientation: portrait) {
+            .monitor-grid {
+                transform: rotate(90deg);
+                transform-origin: left top;
+                width: 100vh;
+                height: 100vw;
+                position: absolute;
+                top: 100%;
+                left: 0;
+            }
+
+            .time-display-container {
+                transform: rotate(90deg);
+                transform-origin: left top;
+                width: 100vh;
+                height: 60px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+            }
         }
     </style>
 </head>
