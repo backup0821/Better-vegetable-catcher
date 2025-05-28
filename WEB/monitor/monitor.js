@@ -468,10 +468,20 @@ async function showMarquee() {
         const marqueeContent = document.getElementById('marqueeContent');
         const marqueeClock = document.getElementById('marqueeClock');
         const currentTime = document.getElementById('currentTime');
+        const systemStatus = document.querySelector('.system-status');
         // 設定時鐘
         marqueeClock.textContent = currentTime.textContent;
+        // 動畫：時鐘滑到左邊
+        currentTime.classList.add('marquee-mode');
+        // 小物件收起來
+        if(systemStatus) systemStatus.classList.add('hide');
+        // 計算時鐘寬度，設置跑馬燈 padding-left
+        setTimeout(() => {
+            const clockRect = currentTime.getBoundingClientRect();
+            marqueeBar.style.paddingLeft = clockRect.width + 'px';
+        }, 100);
         // 隱藏底部原有狀態
-        document.querySelector('.time-display-container').style.visibility = 'hidden';
+        document.querySelector('.time-display-container').style.overflow = 'visible';
         // 顯示跑馬燈
         marqueeBar.style.display = 'flex';
         setTimeout(()=> marqueeBar.classList.add('active'), 10);
@@ -480,9 +490,11 @@ async function showMarquee() {
         // 動畫結束後恢復
         setTimeout(() => {
             marqueeBar.classList.remove('active');
+            currentTime.classList.remove('marquee-mode');
+            if(systemStatus) systemStatus.classList.remove('hide');
             setTimeout(()=>{
                 marqueeBar.style.display = 'none';
-                document.querySelector('.time-display-container').style.visibility = '';
+                marqueeBar.style.paddingLeft = '0';
             }, 600);
         }, 12000); // 跑馬燈動畫時間
     } catch(e) { /* 忽略錯誤 */ }
