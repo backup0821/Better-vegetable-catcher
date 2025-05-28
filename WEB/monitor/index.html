@@ -571,9 +571,12 @@
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
-        .status-code.success, .status-code[code="200"] {
-            color: var(--normal-color) !important;
-            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        /* 強制 200 狀態碼為綠色 */
+        .status-code.success, .status-code.success[code="200"], .status-code[code="200"] {
+            color: #10b981 !important;
+            text-shadow: 0 0 10px #10b98199 !important;
+            border: none !important;
+            background: none !important;
         }
         .status-code.error {
             color: var(--error-color);

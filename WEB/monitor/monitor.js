@@ -255,48 +255,41 @@ function updateEndpointStatus(index, status) {
     // 更新詳細資訊
     const details = card.querySelector('.endpoint-details');
     
-    if (status.statusCode && status.statusCode !== '200') {
-        // 非 200 狀態時的顯示
+    if (status.statusCode) {
         let statusClass = '';
-        if (status.statusCode === '410') {
-            statusClass = 'removed';
+        if (status.statusCode === '200') {
+            statusClass = 'success';
         } else if (status.statusCode === '503') {
             statusClass = 'maintenance';
+        } else if (status.statusCode === '410') {
+            statusClass = 'removed';
         } else {
             statusClass = 'error';
         }
         details.innerHTML = `
-            <div class="error-details">
-                <div class="status-code ${statusClass}">${status.statusCode}</div>
-                <div class="last-update">${status.lastUpdate}</div>
-            </div>
-        `;
-    } else if (status.statusCode && status.statusCode === '200') {
-        // 200 狀態時顯示綠色
-        details.innerHTML = `
             <div class=\"error-details\">
-                <div class=\"status-code success\">200</div>
+                <div class=\"status-code ${statusClass}\">${status.statusCode}</div>
                 <div class=\"last-update\">${status.lastUpdate}</div>
             </div>
         `;
     } else {
         // 200 狀態時的顯示（保持原樣）
         details.innerHTML = `
-            <div class="detail-item">
-                <span class="detail-label">ETag</span>
-                <span class="detail-value">${status.etag || 'N/A'}</span>
+            <div class=\"detail-item\">
+                <span class=\"detail-label\">ETag</span>
+                <span class=\"detail-value\">${status.etag || 'N/A'}</span>
             </div>
-            <div class="detail-item">
-                <span class="detail-label">最後更新</span>
-                <span class="detail-value">${status.lastUpdate}</span>
+            <div class=\"detail-item\">
+                <span class=\"detail-label\">最後更新</span>
+                <span class=\"detail-value\">${status.lastUpdate}</span>
             </div>
-            <div class="detail-item">
-                <span class="detail-label">回應時間</span>
-                <span class="detail-value">${status.responseTime || 'N/A'}</span>
+            <div class=\"detail-item\">
+                <span class=\"detail-label\">回應時間</span>
+                <span class=\"detail-value\">${status.responseTime || 'N/A'}</span>
             </div>
-            <div class="detail-item">
-                <span class="detail-label">狀態碼</span>
-                <span class="detail-value">${status.statusCode || 'N/A'}</span>
+            <div class=\"detail-item\">
+                <span class=\"detail-label\">狀態碼</span>
+                <span class=\"detail-value\">${status.statusCode || 'N/A'}</span>
             </div>
         `;
     }
