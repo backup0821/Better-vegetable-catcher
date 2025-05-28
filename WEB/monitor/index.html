@@ -17,16 +17,18 @@
             --warning-color: #d97706;
             --error-color: #dc2626;
             --maintenance-color: #6b7280;
+            --removed-color: #f59e0b;
         }
 
         /* 主指示燈樣式 */
         .main-indicator {
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            margin-right: 8px;
+            margin-right: 12px;
             position: relative;
-            box-shadow: 0 0 10px currentColor;
+            box-shadow: 0 0 15px currentColor;
+            transition: all 0.3s ease;
         }
 
         .main-indicator::after {
@@ -35,10 +37,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
         .main-indicator.normal {
@@ -140,7 +143,14 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            min-height: 0; /* 防止內容溢出 */
+            min-height: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .monitor-cell:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
         }
 
         .monitor-header {
@@ -148,13 +158,15 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 0.75rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10;
-            font-size: 0.875rem; /* 手機上字體稍小 */
+            font-size: 0.875rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .monitor-content {
@@ -172,6 +184,14 @@
             border-radius: 9999px;
             font-size: 0.875rem;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge i {
+            font-size: 0.75rem;
         }
 
         .status-latest {
@@ -191,6 +211,11 @@
 
         .status-maintenance {
             background-color: var(--maintenance-color);
+            color: white;
+        }
+
+        .status-removed {
+            background-color: var(--removed-color);
             color: white;
         }
 
@@ -249,12 +274,13 @@
         }
 
         .endpoint-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 0.25rem;
-            padding: 0.5rem; /* 減少padding */
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.25rem; /* 減少間距 */
+            gap: 0.5rem;
+            transition: all 0.3s ease;
         }
 
         .endpoint-card.latest {
@@ -268,13 +294,18 @@
         }
 
         .endpoint-card.error {
-            background: rgba(220, 38, 38, 0.2);
-            border-left: 4px solid var(--error-color);
+            background: rgba(220, 38, 38, 0.15);
+            border: 2px solid var(--error-color);
         }
 
         .endpoint-card.maintenance {
-            background: rgba(107, 114, 128, 0.2);
-            border-left: 4px solid var(--maintenance-color);
+            background: rgba(107, 114, 128, 0.15);
+            border: 2px solid var(--maintenance-color);
+        }
+
+        .endpoint-card.removed {
+            background-color: rgba(245, 158, 11, 0.15);
+            border: 2px solid var(--removed-color);
         }
 
         .endpoint-info {
@@ -348,6 +379,11 @@
             color: white;
         }
 
+        .status-indicator.removed {
+            background-color: var(--removed-color);
+            color: white;
+        }
+
         .status-indicator i {
             font-size: 0.625rem;
         }
@@ -358,7 +394,8 @@
             right: 1rem;
             padding: 1rem;
             border-radius: 0.5rem;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
             color: white;
             transform: translateY(-100%);
             opacity: 0;
@@ -403,21 +440,26 @@
             right: 0;
             text-align: center;
             z-index: 50;
-            background: #000;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
             padding: 0.5rem 0;
             height: 60px; /* 固定高度 */
             display: flex;
             align-items: center;
             justify-content: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .time-display {
             font-family: 'Digital-7', 'Courier New', monospace;
-            font-size: 2.5rem; /* 手機上字體稍小 */
+            font-size: 2.5rem;
             color: #ff0000;
-            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-            display: inline-block;
-            letter-spacing: 0.25rem; /* 減少字間距 */
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            letter-spacing: 0.25rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 0, 0, 0.2);
         }
 
         /* 七段顯示器效果 */
@@ -515,14 +557,18 @@
             align-items: center;
             justify-content: center;
             height: 100%;
-            padding: 1rem;
+            padding: 2rem;
             text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0.5rem;
         }
 
         .error-details .status-code {
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px currentColor;
+            color: var(--error-color);
         }
 
         .error-details .last-update {

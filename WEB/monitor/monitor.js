@@ -243,7 +243,10 @@ function updateEndpointStatus(index, status) {
     
     // 更新狀態標籤
     statusBadge.className = `status-badge status-${status.status}`;
-    statusBadge.textContent = getStatusText(status.status);
+    statusBadge.innerHTML = `
+        <i class="fas ${getStatusIcon(status.status)}"></i>
+        ${getStatusText(status.status)}
+    `;
     
     // 更新內容卡片
     const card = contentElement.querySelector('.endpoint-card');
@@ -254,9 +257,10 @@ function updateEndpointStatus(index, status) {
     
     if (status.statusCode && status.statusCode !== '200') {
         // 非 200 狀態時的顯示
+        const statusClass = status.statusCode === '410' ? 'removed' : 'error';
         details.innerHTML = `
             <div class="error-details">
-                <div class="status-code">${status.statusCode}</div>
+                <div class="status-code ${statusClass}">${status.statusCode}</div>
                 <div class="last-update">${status.lastUpdate}</div>
                 <div class="endpoint-url">${endpoint.url}</div>
             </div>
