@@ -257,18 +257,19 @@ function updateEndpointStatus(index, status) {
     
     if (status.statusCode) {
         let statusClass = '';
-        if (status.statusCode === '200') {
+        const codeStr = String(status.statusCode);
+        if (codeStr === '200') {
             statusClass = 'success';
-        } else if (status.statusCode === '503') {
+        } else if (codeStr === '503') {
             statusClass = 'maintenance';
-        } else if (status.statusCode === '410') {
+        } else if (codeStr === '410') {
             statusClass = 'removed';
         } else {
             statusClass = 'error';
         }
         details.innerHTML = `
             <div class=\"error-details\">
-                <div class=\"status-code ${statusClass}\">${status.statusCode}</div>
+                <div class=\"status-code ${statusClass}\">${codeStr}</div>
                 <div class=\"last-update\">${status.lastUpdate}</div>
             </div>
         `;
