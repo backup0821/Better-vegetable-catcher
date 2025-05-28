@@ -251,24 +251,37 @@ function updateEndpointStatus(index, status) {
     
     // 更新詳細資訊
     const details = card.querySelector('.endpoint-details');
-    details.innerHTML = `
-        <div class="detail-item">
-            <span class="detail-label">ETag</span>
-            <span class="detail-value">${status.etag || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-            <span class="detail-label">最後更新</span>
-            <span class="detail-value">${status.lastUpdate}</span>
-        </div>
-        <div class="detail-item">
-            <span class="detail-label">回應時間</span>
-            <span class="detail-value">${status.responseTime || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-            <span class="detail-label">狀態碼</span>
-            <span class="detail-value">${status.statusCode || 'N/A'}</span>
-        </div>
-    `;
+    
+    if (status.statusCode && status.statusCode !== '200') {
+        // 非 200 狀態時的顯示
+        details.innerHTML = `
+            <div class="error-details">
+                <div class="status-code">${status.statusCode}</div>
+                <div class="last-update">${status.lastUpdate}</div>
+                <div class="endpoint-url">${endpoint.url}</div>
+            </div>
+        `;
+    } else {
+        // 正常狀態時的顯示
+        details.innerHTML = `
+            <div class="detail-item">
+                <span class="detail-label">ETag</span>
+                <span class="detail-value">${status.etag || 'N/A'}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">最後更新</span>
+                <span class="detail-value">${status.lastUpdate}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">回應時間</span>
+                <span class="detail-value">${status.responseTime || 'N/A'}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">狀態碼</span>
+                <span class="detail-value">${status.statusCode || 'N/A'}</span>
+            </div>
+        `;
+    }
     
     // 更新狀態指示器
     const statusIndicator = card.querySelector('.status-indicator');

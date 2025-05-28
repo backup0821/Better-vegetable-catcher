@@ -507,6 +507,50 @@
                 left: 0;
             }
         }
+
+        /* 錯誤狀態詳細資訊樣式 */
+        .error-details {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .error-details .status-code {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-details .last-update {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-details .endpoint-url {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.7);
+            word-break: break-all;
+        }
+
+        /* 錯誤狀態卡片樣式 */
+        .endpoint-card.error {
+            background-color: rgba(220, 38, 38, 0.2);
+            border: 2px solid var(--error-color);
+        }
+
+        .endpoint-card.maintenance {
+            background-color: rgba(107, 114, 128, 0.2);
+            border: 2px solid var(--maintenance-color);
+        }
+
+        .endpoint-card.outdated {
+            background-color: rgba(217, 119, 6, 0.2);
+            border: 2px solid var(--warning-color);
+        }
     </style>
 </head>
 <body>
