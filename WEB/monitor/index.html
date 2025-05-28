@@ -604,6 +604,54 @@
             background-color: var(--normal-color);
             color: white;
         }
+
+        .marquee-bar {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 60px;
+            background: rgba(0,0,0,0.85);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        .marquee-bar.active {
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.5s;
+        }
+        .marquee-content {
+            white-space: nowrap;
+            font-size: 2rem;
+            color: #fff200;
+            font-weight: bold;
+            animation: marquee-move 12s linear 1;
+            will-change: transform;
+        }
+        @keyframes marquee-move {
+            0% { transform: translateX(100%); }
+            10% { transform: translateX(80%); }
+            90% { transform: translateX(-100%); }
+            100% { transform: translateX(-120%); }
+        }
+        .time-display.marquee-mode {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto 0;
+            z-index: 1002;
+            background: rgba(0,0,0,0.95);
+            border-radius: 0 0.5rem 0.5rem 0;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -990,6 +1038,11 @@
     <audio id="outdatedSound" preload="auto">
         <source src="outdated.mp3" type="audio/mpeg">
     </audio>
+
+    <div class="marquee-bar" id="marqueeBar" style="display:none;">
+        <div class="time-display" id="marqueeClock"></div>
+        <div class="marquee-content" id="marqueeContent"></div>
+    </div>
 
     <script>
         // 分頁控制

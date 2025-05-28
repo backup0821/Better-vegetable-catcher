@@ -5,6 +5,10 @@ let lastCheckTime = null;
 let nextCheckTime = null;
 let startTime = null;
 
+// ========== 跑馬燈功能 ==========
+let marqueeTimer = null;
+let marqueeInterval = 30000; // 30秒
+
 // 載入設定檔
 async function loadConfig() {
     try {
@@ -451,4 +455,44 @@ function handleFullscreenChange() {
 }
 
 // 頁面載入完成後初始化
-document.addEventListener('DOMContentLoaded', initialize); 
+document.addEventListener('DOMContentLoaded', initialize);
+
+async function showMarquee() {
+    try {
+        const res = await fetch('marquee.txt?_=' + Date.now());
+        if (!res.ok) return;
+        const text = await res.text();
+        if (!text.trim()) return;
+        // 顯示跑馬燈
+        const marqueeBar = document.getElementById('marqueeBar');
+        const marqueeContent = document.getElementById('marqueeContent');
+        const marqueeClock = document.getElementById('marqueeClock');
+        const currentTime = document.getElementById('currentTime');
+        // 設定時鐘
+        marqueeClock.textContent = currentTime.textContent;
+        // 隱藏底部原有狀態
+        document.querySelector('.time-display-container').style.visibility = 'hidden';
+        // 顯示跑馬燈
+        marqueeBar.style.display = 'flex';
+        setTimeout(()=> marqueeBar.classList.add('active'), 10);
+        // 設定內容
+        marqueeContent.textContent = text.trim();
+        // 動畫結束後恢復
+        setTimeout(() => {
+            marqueeBar.classList.remove('active');
+            setTimeout(()=>{
+                marqueeBar.style.display = 'none';
+                document.querySelector('.time-display-container').style.visibility = '';
+            }, 600);
+        }, 12000); // 跑馬燈動畫時間
+    } catch(e) { /* 忽略錯誤 */ }
+}
+
+function startMarqueeLoop() {
+    if (marqueeTimer) clearInterval(marqueeTimer);
+    marqueeTimer = setInterval(showMarquee, marqueeInterval);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    startMarqueeLoop();
+}); 

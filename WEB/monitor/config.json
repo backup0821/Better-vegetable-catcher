@@ -1,0 +1,61 @@
+{
+    "checkInterval": 60000,
+    "endpoints": [
+        {
+            "name": "1 通知 API",
+            "url": "https://backup0821.github.io/API/Better-vegetable-catcher/notify.json",
+            "description": "系統通知 API",
+            "icon": "fa-bell",
+            "forceStatus": "auto"
+        },
+        {
+            "name": "2 系統維護 API",
+            "url": "https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json",
+            "description": "系統維護 API",
+            "icon": "fa-leaf",
+            "forceStatus": "auto"
+        },
+        {
+            "name": "3 TV驗證系統 API",
+            "url": "https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json",
+            "description": "TV 版本驗證系統",
+            "icon": "fa-tv",
+            "forceStatus": "503"
+        },
+        {
+            "name": "4 主系統",
+            "url": "https://backup0821.github.io/Better-vegetable-catcher/web",
+            "description": "農產分析 主要系統",
+            "icon": "fa-analytics",
+            "forceStatus": "503"
+        },
+        {
+            "name": "5 測試系統",
+            "url": "https://backup0821.github.io/Better-vegetable-catcher/WEB/test",
+            "description": "系統備份服務",
+            "icon": "fa-database",
+            "forceStatus": "410"
+        },
+        {
+            "name": "6 農業部 主API",
+            "url": "https://bvc-api.deno.dev",
+            "description": "農業部主要資料 API",
+            "icon": "fa-tractor",
+            "forceStatus": "auto"
+        },
+        {
+            "name": "7 農業部 修市API",
+            "url": "https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx",
+            "description": "農業部修市資料 API",
+            "icon": "fa-store",
+            "forceStatus": "auto"
+        },
+        {
+            "name": "8 農業部 農業氣象影音API",
+            "url": "https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx",
+            "description": "農業部氣象影音資料 API",
+            "icon": "fa-cloud-sun-rain",
+            "forceStatus": "auto"
+        }
+    ]
+} 
