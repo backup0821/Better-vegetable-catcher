@@ -3,7 +3,7 @@ const CONFIG = {
     // API 端點
     API: {
         MARKET_DEVICE: 'https://backup0821.github.io/API/Better-vegetable-catcher/marketTV-drvice.json',
-        PRICE_DATA: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx'
+        PRICE_DATA: 'https://bvc-api.deno.dev'
     },
 
     // 顯示設定

@@ -4256,6 +4256,16 @@ function initDevModeFeatures() {
 // 檢查維護狀態
 async function checkMaintenanceStatus() {
     console.log('開始檢查維護狀態...');
+    
+    // 檢查 URL 參數
+    const urlParams = new URLSearchParams(window.location.search);
+    const passMaintenance = urlParams.get('pass') === 'true';
+    
+    if (passMaintenance) {
+        console.log('維護模式已通過');
+        return;
+    }
+    
     try {
         const response = await fetch('https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json');
         console.log('維護狀態 API 回應:', response.status);

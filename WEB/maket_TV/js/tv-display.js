@@ -11,8 +11,14 @@ let cropNames = [];
 
 // 主要常數
 const MARKET_API = 'https://backup0821.github.io/API/Better-vegetable-catcher/marketTV-drvice.json';
-const PRICE_API = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx';
+const PRICE_API = 'https://bvc-api.deno.dev';
 const CROP_INTERVAL = 5000; // 5秒輪播
+
+// 本地存儲相關常數
+const STORAGE_KEYS = {
+    PRICE_DATA: 'price_data',
+    LAST_FETCH_DATE: 'last_fetch_date'
+};
 
 // 市場名稱對應表
 const MARKET_NAME_MAP = {
