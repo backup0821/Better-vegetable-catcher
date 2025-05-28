@@ -262,7 +262,7 @@ function updateEndpointStatus(index, status) {
             </div>
         `;
     } else {
-        // 正常狀態時的顯示
+        // 200 狀態時的顯示（保持原樣）
         details.innerHTML = `
             <div class="detail-item">
                 <span class="detail-label">ETag</span>
