@@ -11,7 +11,7 @@ const MONITOR_CONFIG = {
     },
     {
         name: '2 農業部資料',
-        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
+        url: 'https://bvc-api.deno.dev/data',
         description: '農業部開放資料',
         icon: 'fa-leaf',
         maintenance: false

@@ -1,7 +1,7 @@
 // 測試農業部 API
 async function testMOAApi() {
     const apis = [
-        'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
+        'https://bvc-api.deno.dev/data',
         'https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx',
         'https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx'
     ];
