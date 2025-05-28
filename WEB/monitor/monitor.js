@@ -1,71 +1,25 @@
 // 監控設定
-const MONITOR_CONFIG = {
-    checkInterval: 60 * 1000, // 1分鐘檢查一次
-    endpoints: [
-    {
-        name: '1 通知 API',
-        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json',
-        description: '系統通知 API',
-        icon: 'fa-bell',
-        maintenance: false
-    },
-    {
-        name: '2 系統維護 API',
-        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/maintenance.json',
-        description: '系統維護 API',
-        icon: 'fa-leaf',
-        maintenance: false
-    },
-    {
-        name: '3 TV驗證系統 API',
-        url: 'https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json',
-        description: 'TV 版本驗證系統',
-        icon: 'fa-tv',
-        maintenance: true
-    },
-    {
-        name: '4 主系統',
-        url: 'https://backup0821.github.io/Better-vegetable-catcher/web',
-        description: '農產分析 主要系統',
-        icon: 'fa-analytics',
-        maintenance: true
-    },
-    {
-        name: '5 測試系統',
-        url: 'https://backup0821.github.io/Better-vegetable-catcher/WEB/test',
-        description: '系統備份服務',
-        icon: 'fa-database',
-        maintenance: false
-    },
-    {
-        name: '6 農業部 主API',
-        url: 'https://bvc-api.deno.dev',
-        description: '農業部主要資料 API',
-        icon: 'fa-tractor',
-        maintenance: false
-    },
-    {
-        name: '7 農業部 修市API',
-        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/MarketRestFarm.aspx',
-        description: '農業部修市資料 API',
-        icon: 'fa-store',
-        maintenance: false
-    },
-    {
-        name: '8 農業部 農業氣象影音API',
-        url: 'https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx',
-        description: '農業部氣象影音資料 API',
-        icon: 'fa-cloud-sun-rain',
-        maintenance: false
-    }
-    ]
-};
-
-// 狀態管理
+let MONITOR_CONFIG = null;
 let endpointStatuses = {};
 let lastCheckTime = null;
 let nextCheckTime = null;
-let startTime = null; // 新增運行開始時間
+let startTime = null;
+
+// 載入設定檔
+async function loadConfig() {
+    try {
+        const response = await fetch('config.json');
+        MONITOR_CONFIG = await response.json();
+        console.log('設定檔載入成功');
+    } catch (error) {
+        console.error('載入設定檔失敗:', error);
+        // 使用預設設定
+        MONITOR_CONFIG = {
+            checkInterval: 60000,
+            endpoints: []
+        };
+    }
+}
 
 // 更新時間顯示
 function updateTime() {
@@ -193,6 +147,42 @@ function playOutdatedSound() {
 // 檢查單個端點
 async function checkEndpoint(endpoint, index) {
     try {
+        // 檢查是否強制狀態
+        if (endpoint.forceStatus !== 'auto') {
+            const forcedStatus = {
+                '503': 'maintenance',
+                '404': 'error',
+                '410': 'removed',
+                '200': 'latest'
+            }[endpoint.forceStatus] || 'auto';
+            
+            if (forcedStatus !== 'auto') {
+                updateEndpointStatus(index, {
+                    status: forcedStatus,
+                    etag: 'N/A',
+                    statusCode: endpoint.forceStatus,
+                    responseTime: 'N/A',
+                    lastUpdate: new Date().toLocaleString('zh-TW'),
+                    error: null
+                });
+                
+                // 播放對應音效
+                if (forcedStatus === 'error') {
+                    playErrorSound();
+                    showNotification(`${endpoint.name} 發生錯誤: HTTP ${endpoint.forceStatus}`);
+                } else if (forcedStatus === 'maintenance') {
+                    playMaintenanceSound();
+                    showNotification(`${endpoint.name} 維護中`);
+                } else if (forcedStatus === 'removed') {
+                    playErrorSound();
+                    showNotification(`${endpoint.name} 檔案已移除`);
+                }
+                
+                return forcedStatus === 'latest';
+            }
+        }
+        
+        // 自動檢查狀態
         const response = await fetch(endpoint.url, {
             method: 'HEAD',
             cache: 'no-cache'
@@ -205,12 +195,11 @@ async function checkEndpoint(endpoint, index) {
         // 狀態判斷
         let endpointStatus = 'latest';
         let errorMsg = null;
-        if (endpoint.maintenance) {
-            endpointStatus = 'maintenance';
-        } else if (status >= 400) {
+        
+        if (status >= 400) {
             endpointStatus = 'error';
             errorMsg = `HTTP 錯誤: ${status}`;
-        } else if (status === 203 || status === 202) { // 假設 203/202 代表過期
+        } else if (status === 203 || status === 202) {
             endpointStatus = 'outdated';
         }
         
@@ -227,9 +216,6 @@ async function checkEndpoint(endpoint, index) {
         if (endpointStatus === 'error') {
             playErrorSound();
             showNotification(`${endpoint.name} 發生錯誤: HTTP ${status}`);
-        } else if (endpointStatus === 'maintenance') {
-            playMaintenanceSound();
-            showNotification(`${endpoint.name} 維護中`);
         } else if (endpointStatus === 'outdated') {
             playOutdatedSound();
             showNotification(`${endpoint.name} 資料過期`);
@@ -299,7 +285,8 @@ function getStatusText(status) {
         'latest': '正常',
         'outdated': '過期',
         'error': '錯誤',
-        'maintenance': '維護中'
+        'maintenance': '維護中',
+        'removed': '已移除'
     };
     return statusMap[status] || status;
 }
@@ -310,23 +297,29 @@ function getStatusIcon(status) {
         'latest': 'fa-check-circle',
         'outdated': 'fa-exclamation-circle',
         'error': 'fa-times-circle',
-        'maintenance': 'fa-tools'
+        'maintenance': 'fa-tools',
+        'removed': 'fa-trash-alt'
     };
     return iconMap[status] || 'fa-question-circle';
 }
 
 // 檢查所有端點
 async function checkAllEndpoints() {
+    if (!MONITOR_CONFIG) {
+        console.error('設定檔尚未載入');
+        return;
+    }
+    
     lastCheckTime = new Date();
     nextCheckTime = new Date(lastCheckTime.getTime() + MONITOR_CONFIG.checkInterval);
+    
     for (let i = 0; i < MONITOR_CONFIG.endpoints.length; i++) {
         const endpoint = MONITOR_CONFIG.endpoints[i];
-        if (!endpoint.maintenance) {
-            await checkEndpoint(endpoint, i + 1);
-        }
+        await checkEndpoint(endpoint, i + 1);
     }
-    updateLastUpdateTime(); // 新增：更新最後更新時間
-    updateMainIndicator();  // 新增：更新主監控燈
+    
+    updateLastUpdateTime();
+    updateMainIndicator();
 }
 
 // 顯示通知
@@ -343,11 +336,16 @@ function showNotification(message) {
 }
 
 // 初始化
-function initialize() {
+async function initialize() {
+    // 載入設定檔
+    await loadConfig();
+    
     // 請求全螢幕
     requestFullscreen();
+    
     // 記錄運行開始時間
     startTime = new Date();
+    
     // 註冊 Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
@@ -358,26 +356,30 @@ function initialize() {
                 console.log('ServiceWorker 註冊失敗:', error);
             });
     }
+    
     // 請求通知權限
     if ('Notification' in window) {
         Notification.requestPermission();
     }
+    
     // 強制橫向顯示
     if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape')
             .catch(error => console.log('無法鎖定螢幕方向:', error));
     }
+    
     // 開始定時更新
     setInterval(() => {
         updateTime();
         updateCountdown();
-        updateUptime(); // 新增：每秒更新運行時間
+        updateUptime();
     }, 1000);
+    
     // 立即執行一次檢查
     checkAllEndpoints();
     updateTime();
     updateCountdown();
-    updateUptime(); // 新增：初始化時也更新一次運行時間
+    updateUptime();
 }
 
 // 請求全螢幕
