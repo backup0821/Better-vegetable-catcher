@@ -289,6 +289,7 @@
 
         .endpoint-card.latest {
             border-left: 4px solid var(--normal-color);
+            background: rgba(16, 185, 129, 0.1);
         }
 
         .endpoint-card.error {
@@ -311,8 +312,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap; /* 允許換行 */
-            gap: 0.25rem;
+            margin-bottom: 0.5rem;
         }
 
         .endpoint-url {
@@ -320,7 +320,9 @@
             color: rgba(255, 255, 255, 0.4);
             font-family: 'Courier New', monospace;
             word-break: break-all;
-            text-align: center;
+            text-align: left;
+            flex: 1;
+            margin-right: 1rem;
         }
 
         .endpoint-details {
@@ -579,12 +581,14 @@
             font-family: 'Courier New', monospace;
         }
 
-        .endpoint-url {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.4);
-            font-family: 'Courier New', monospace;
-            word-break: break-all;
-            text-align: center;
+        .status-badge.status-latest {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--normal-color);
+        }
+
+        .status-indicator.latest {
+            background-color: var(--normal-color);
+            color: white;
         }
     </style>
 </head>

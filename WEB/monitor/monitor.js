@@ -262,7 +262,6 @@ function updateEndpointStatus(index, status) {
             <div class="error-details">
                 <div class="status-code ${statusClass}">${status.statusCode}</div>
                 <div class="last-update">${status.lastUpdate}</div>
-                <div class="endpoint-url">${endpoint.url}</div>
             </div>
         `;
     } else {
