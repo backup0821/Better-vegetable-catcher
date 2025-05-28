@@ -257,11 +257,26 @@ function updateEndpointStatus(index, status) {
     
     if (status.statusCode && status.statusCode !== '200') {
         // 非 200 狀態時的顯示
-        const statusClass = status.statusCode === '410' ? 'removed' : 'error';
+        let statusClass = '';
+        if (status.statusCode === '410') {
+            statusClass = 'removed';
+        } else if (status.statusCode === '503') {
+            statusClass = 'maintenance';
+        } else {
+            statusClass = 'error';
+        }
         details.innerHTML = `
             <div class="error-details">
                 <div class="status-code ${statusClass}">${status.statusCode}</div>
                 <div class="last-update">${status.lastUpdate}</div>
+            </div>
+        `;
+    } else if (status.statusCode && status.statusCode === '200') {
+        // 200 狀態時顯示綠色
+        details.innerHTML = `
+            <div class=\"error-details\">
+                <div class=\"status-code success\">200</div>
+                <div class=\"last-update\">${status.lastUpdate}</div>
             </div>
         `;
     } else {

@@ -289,7 +289,6 @@
 
         .endpoint-card.latest {
             border-left: 4px solid var(--normal-color);
-            background: rgba(16, 185, 129, 0.1);
         }
 
         .endpoint-card.error {
@@ -347,6 +346,11 @@
             color: var(--text-color);
             font-size: 0.875rem;
             font-family: 'Courier New', monospace;
+        }
+
+        /* 200 狀態時的值顯示為綠色 */
+        .endpoint-card.latest .detail-value {
+            color: var(--normal-color);
         }
 
         .status-indicator {
@@ -567,12 +571,19 @@
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
+        .status-code.success, .status-code[code="200"] {
+            color: var(--normal-color) !important;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
         .status-code.error {
             color: var(--error-color);
         }
-
         .status-code.removed {
             color: var(--removed-color);
+        }
+        .status-code.maintenance, .status-code[code="503"] {
+            color: var(--maintenance-color) !important;
+            text-shadow: 0 0 10px rgba(107, 114, 128, 0.5);
         }
 
         .last-update {
