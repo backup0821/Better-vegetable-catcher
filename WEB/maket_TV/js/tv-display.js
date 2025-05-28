@@ -696,28 +696,32 @@ let cropTimer = null;
 
 async function fetchAndStartCropRotation() {
     if (!(await ensureDeviceIdAndMarket())) return;
-    // 取得所有資料
-    const res = await fetch(PRICE_API);
-    const data = await res.json();
-    // 只取本市場
-    const marketData = data.filter(item => item.市場名稱 === marketName);
-    // 取得所有作物名稱（去重）
-    allCrops = [...new Set(marketData.map(item => item.作物名稱))].filter(Boolean);
-    // 整理每個作物近7日資料
-    cropTrendData = {};
-    allCrops.forEach(crop => {
-        const cropData = marketData.filter(item => item.作物名稱 === crop)
-            .sort((a, b) => new Date(a.交易日期) - new Date(b.交易日期));
-        cropTrendData[crop] = cropData.slice(-7);
-    });
-    // 輪播
-    cropIndex = 0;
-    showCurrentCrop();
-    if (cropTimer) clearInterval(cropTimer);
-    cropTimer = setInterval(() => {
-        cropIndex = (cropIndex + 1) % allCrops.length;
+    try {
+        // 使用新的資料獲取方式
+        const data = await checkAndUpdateLocalData();
+        // 只取本市場
+        const marketData = data.filter(item => item.市場名稱 === marketName);
+        // 取得所有作物名稱（去重）
+        allCrops = [...new Set(marketData.map(item => item.作物名稱))].filter(Boolean);
+        // 整理每個作物近7日資料
+        cropTrendData = {};
+        allCrops.forEach(crop => {
+            const cropData = marketData.filter(item => item.作物名稱 === crop)
+                .sort((a, b) => new Date(a.交易日期) - new Date(b.交易日期));
+            cropTrendData[crop] = cropData.slice(-7);
+        });
+        // 輪播
+        cropIndex = 0;
         showCurrentCrop();
-    }, 5000);
+        if (cropTimer) clearInterval(cropTimer);
+        cropTimer = setInterval(() => {
+            cropIndex = (cropIndex + 1) % allCrops.length;
+            showCurrentCrop();
+        }, 5000);
+    } catch (error) {
+        console.error('作物輪播初始化失敗:', error);
+        showError('無法獲取作物資料，請檢查網路連線');
+    }
 }
 
 function showCurrentCrop() {
@@ -940,4 +944,40 @@ function updateNotificationDisplay() {
         notificationElement.textContent = notification.message;
         notificationList.appendChild(notificationElement);
     });
+}
+
+// 檢查並更新本地資料
+async function checkAndUpdateLocalData() {
+    const lastFetchDate = localStorage.getItem(STORAGE_KEYS.LAST_FETCH_DATE);
+    const today = new Date().toDateString();
+    
+    if (lastFetchDate !== today) {
+        try {
+            console.log('開始獲取新資料...');
+            const response = await fetch(PRICE_API);
+            const data = await response.json();
+            
+            // 儲存新資料
+            localStorage.setItem(STORAGE_KEYS.PRICE_DATA, JSON.stringify(data));
+            localStorage.setItem(STORAGE_KEYS.LAST_FETCH_DATE, today);
+            console.log('資料已更新並儲存');
+            
+            return data;
+        } catch (error) {
+            console.error('獲取新資料失敗:', error);
+            // 如果獲取失敗，嘗試使用舊資料
+            const oldData = localStorage.getItem(STORAGE_KEYS.PRICE_DATA);
+            if (oldData) {
+                return JSON.parse(oldData);
+            }
+            throw error;
+        }
+    } else {
+        // 使用本地資料
+        const localData = localStorage.getItem(STORAGE_KEYS.PRICE_DATA);
+        if (localData) {
+            return JSON.parse(localData);
+        }
+        throw new Error('本地無資料');
+    }
 }
