@@ -39,7 +39,7 @@ const MONITOR_CONFIG = {
     },
     {
         name: '6 農業部 主API',
-        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
+        url: 'https://bvc-api.deno.dev',
         description: '農業部主要資料 API',
         icon: 'fa-tractor',
         maintenance: false

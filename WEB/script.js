@@ -216,74 +216,35 @@ document.addEventListener('DOMContentLoaded', () => {
 // 從農產品交易行情站獲取資料
 async function fetchData(retryCount = 3) {
     try {
-        console.log('開始獲取資料...');
+        const lastFetchDate = localStorage.getItem('last_fetch_date');
+        const today = new Date().toDateString();
         
-        // 檢查網路連線
-        if (!navigator.onLine) {
-            console.log('網路離線，嘗試使用快取資料...');
-            const cachedData = localStorage.getItem('cached_crop_data');
-            if (cachedData) {
-                console.log('使用快取資料');
-                const data = JSON.parse(cachedData);
-                window.cropData = data;
-                showNotification('提示', '目前使用快取資料，請檢查網路連線');
-                return data;
-            }
-            throw new Error('網路連線已中斷，且無可用快取資料');
-        }
-
-        // 設定超時
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-        try {
-            const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                },
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            console.log('API 回應狀態:', response.status);
-            console.log('API 回應標頭:', Object.fromEntries(response.headers.entries()));
-            
-            if (!response.ok) {
-                throw new Error(`資料獲取失敗: ${response.status} ${response.statusText}`);
-            }
-            
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error(`無效的回應格式: ${contentType}`);
-            }
-            
+        if (lastFetchDate !== today) {
+            console.log('開始獲取新資料...');
+            const response = await fetch('https://bvc-api.deno.dev');
             const data = await response.json();
-            console.log('獲取到的資料範例:', data.slice(0, 2));
             
-            // 儲存資料到全域變數和快取
-            window.cropData = data;
-            localStorage.setItem('cached_crop_data', JSON.stringify(data));
-            localStorage.setItem('last_update_time', new Date().toISOString());
+            // 儲存新資料
+            localStorage.setItem('price_data', JSON.stringify(data));
+            localStorage.setItem('last_fetch_date', today);
+            console.log('資料已更新並儲存');
             
             return data;
-        } catch (error) {
-            clearTimeout(timeoutId);
-            
-            if (retryCount > 0 && (error.name === 'AbortError' || error.message.includes('Failed to fetch'))) {
-                console.log(`重試中... 剩餘重試次數: ${retryCount - 1}`);
-                await new Promise(resolve => setTimeout(resolve, 2000)); // 等待 2 秒後重試
-                return fetchData(retryCount - 1);
+        } else {
+            // 使用本地資料
+            const localData = localStorage.getItem('price_data');
+            if (localData) {
+                return JSON.parse(localData);
             }
-            
-            throw error;
+            throw new Error('本地無資料');
         }
     } catch (error) {
         console.error('獲取資料失敗:', error);
-        showNotification('錯誤', '無法獲取資料，請稍後再試');
+        if (retryCount > 0) {
+            console.log(`重試中... 剩餘次數: ${retryCount - 1}`);
+            await new Promise(resolve => setTimeout(resolve, 30000)); // 等待30秒
+            return fetchData(retryCount - 1);
+        }
         throw error;
     }
 }
