@@ -222,8 +222,8 @@ async function fetchData(retryCount = 3) {
         if (lastFetchDate !== today) {
             console.log('開始獲取新資料...');
             
-            // 使用新的 API URL
-            const apiUrl = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json';
+            // 使用新的 API URL，加入查詢參數
+            const apiUrl = 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/?$format=json&$top=1000';
             console.log('API URL:', apiUrl);
             
             const response = await fetch(apiUrl, {
@@ -231,85 +231,85 @@ async function fetchData(retryCount = 3) {
                 headers: {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
+                    'Pragma': 'no-cache',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                },
+                mode: 'cors',
+                credentials: 'omit'
             });
             
             if (!response.ok) {
+                console.error('API 回應狀態:', response.status, response.statusText);
                 throw new Error(`API 請求失敗: ${response.status} ${response.statusText}`);
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('API 回應內容類型:', contentType);
+                throw new Error('API 回應不是 JSON 格式');
             }
             
             const data = await response.json();
             console.log('API 回應資料:', data);
             
-            if (!Array.isArray(data)) {
+            // 檢查資料結構
+            if (!data || typeof data !== 'object') {
+                console.error('API 回應格式不正確:', data);
                 throw new Error('API 回應格式不正確');
             }
             
-            if (data.length === 0) {
+            // 檢查是否有 Data 屬性
+            if (!data.Data) {
+                console.error('API 回應缺少 Data 屬性:', data);
+                throw new Error('API 回應缺少 Data 屬性');
+            }
+            
+            // 檢查 Data 是否為陣列
+            if (!Array.isArray(data.Data)) {
+                console.error('API 回應 Data 不是陣列:', data.Data);
+                throw new Error('API 回應 Data 不是陣列');
+            }
+            
+            if (data.Data.length === 0) {
+                console.error('API 回應資料為空');
                 throw new Error('API 回應為空');
             }
             
             // 處理資料格式
-            const processedData = data.map(item => {
+            const processedData = data.Data.map(item => {
                 try {
                     return {
-                        交易日期: item.交易日期 || '',
-                        作物名稱: item.作物名稱 || '',
-                        市場名稱: item.市場名稱 || '',
-                        平均價: Number(item.平均價) || 0,
-                        交易量: Number(item.交易量) || 0
+                        交易日期: item.TransDate,
+                        作物名稱: item.CropName,
+                        市場名稱: item.MarketName,
+                        平均價: Number(item.Avg_Price),
+                        交易量: Number(item.Trans_Quantity)
                     };
                 } catch (error) {
-                    console.error('處理資料項目時發生錯誤:', error, item);
+                    console.error('資料處理錯誤:', error, '原始資料:', item);
                     return null;
                 }
             }).filter(item => item !== null);
             
-            console.log('處理後的資料:', processedData);
-            
             if (processedData.length === 0) {
-                throw new Error('處理後的資料為空');
+                throw new Error('資料處理後為空');
             }
             
-            // 儲存新資料
-            localStorage.setItem('price_data', JSON.stringify(processedData));
+            // 儲存資料
+            localStorage.setItem('crop_data', JSON.stringify(processedData));
             localStorage.setItem('last_fetch_date', today);
-            console.log('資料已更新並儲存');
-            
-            // 更新作物列表
-            updateCropList();
-            
-            // 更新資料更新時間
-            const updateTimeElement = document.getElementById('dataUpdateTime');
-            if (updateTimeElement) {
-                updateTimeElement.textContent = new Date().toLocaleString('zh-TW');
-            }
-            
-            // 顯示成功通知
-            showNotification('系統訊息', '資料已成功更新');
             
             return processedData;
         } else {
-            console.log('使用本地快取資料');
-            // 使用本地資料
-            const localData = localStorage.getItem('price_data');
-            if (localData) {
-                const data = JSON.parse(localData);
-                console.log('本地資料:', data);
-                // 更新作物列表
-                updateCropList();
-                return data;
-            }
-            throw new Error('本地無資料');
+            console.log('使用快取資料');
+            const cachedData = localStorage.getItem('crop_data');
+            return cachedData ? JSON.parse(cachedData) : [];
         }
     } catch (error) {
-        console.error('獲取資料失敗:', error);
-        showNotification('錯誤', `獲取資料失敗: ${error.message}`);
-        
+        console.error('資料獲取錯誤:', error);
         if (retryCount > 0) {
             console.log(`重試中... 剩餘次數: ${retryCount - 1}`);
-            await new Promise(resolve => setTimeout(resolve, 30000)); // 等待30秒
+            await new Promise(resolve => setTimeout(resolve, 1000));
             return fetchData(retryCount - 1);
         }
         throw error;
@@ -323,7 +323,7 @@ async function forceUpdateData() {
         
         // 清除本地快取
         localStorage.removeItem('last_fetch_date');
-        localStorage.removeItem('price_data');
+        localStorage.removeItem('crop_data');
         
         // 重新獲取資料
         const data = await fetchData();
@@ -384,7 +384,7 @@ function updateCropList() {
     cropSelect.innerHTML = '<option value="">請選擇作物</option>';
     
     // 從本地儲存獲取資料
-    const localData = localStorage.getItem('price_data');
+    const localData = localStorage.getItem('crop_data');
     if (localData) {
         const data = JSON.parse(localData);
         
