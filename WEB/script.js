@@ -224,7 +224,7 @@ async function fetchData(retryCount = 3) {
             
             // 使用 CORS Proxy 來繞過跨域限制
             const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-            const apiUrl = corsProxy + 'https://data.moa.gov.tw/api/v1/AgriProductsTransType';
+            const apiUrl = 'https://data.moa.gov.tw/api/v1/AgriProductsTransType';
             console.log('API URL:', apiUrl);
             
             const response = await fetch(apiUrl, {
