@@ -41,3 +41,6 @@ ENV/
 # 作業系統
 .DS_Store
 Thumbs.db 
+
+#測試系統
+test/
