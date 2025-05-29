@@ -2,10 +2,22 @@
 const API_CONFIG = {
     // 主要資料 API
     DATA_API: {
-        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',
+        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$top=1&$format=json',
         method: 'GET',
         headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        },
+        // 資料格式處理函數
+        processData: (data) => {
+            return data.map(item => ({
+                交易日期: item.交易日期,
+                作物名稱: item.作物名稱,
+                市場名稱: item.市場名稱,
+                平均價: Number(item.平均價),
+                交易量: Number(item.交易量)
+            }));
         }
     },
 

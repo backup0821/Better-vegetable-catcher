@@ -221,20 +221,47 @@ async function fetchData(retryCount = 3) {
         
         if (lastFetchDate !== today) {
             console.log('開始獲取新資料...');
-            const response = await fetch('https://bvc-api.deno.dev');
+            const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('API 請求失敗');
+            }
+            
             const data = await response.json();
             
+            // 處理資料格式
+            const processedData = data.map(item => ({
+                交易日期: item.交易日期,
+                作物名稱: item.作物名稱,
+                市場名稱: item.市場名稱,
+                平均價: Number(item.平均價),
+                交易量: Number(item.交易量)
+            }));
+            
             // 儲存新資料
-            localStorage.setItem('price_data', JSON.stringify(data));
+            localStorage.setItem('price_data', JSON.stringify(processedData));
             localStorage.setItem('last_fetch_date', today);
             console.log('資料已更新並儲存');
             
-            return data;
+            // 更新作物列表
+            updateCropList();
+            
+            return processedData;
         } else {
             // 使用本地資料
             const localData = localStorage.getItem('price_data');
             if (localData) {
-                return JSON.parse(localData);
+                const data = JSON.parse(localData);
+                // 更新作物列表
+                updateCropList();
+                return data;
             }
             throw new Error('本地無資料');
         }
@@ -270,14 +297,31 @@ function showNotification(title, message) {
 
 // 更新作物列表
 function updateCropList() {
-    const crops = [...new Set(cropData.map(item => item.作物名稱))].sort();
+    const cropSelect = document.getElementById('cropSelect');
+    if (!cropSelect) return;
+    
+    // 清空現有選項
     cropSelect.innerHTML = '<option value="">請選擇作物</option>';
-    crops.forEach(crop => {
-        const option = document.createElement('option');
-        option.value = crop;
-        option.textContent = crop;
-        cropSelect.appendChild(option);
-    });
+    
+    // 從本地儲存獲取資料
+    const localData = localStorage.getItem('price_data');
+    if (localData) {
+        const data = JSON.parse(localData);
+        
+        // 使用 Set 來去除重複的作物名稱
+        const cropSet = new Set(data.map(item => item.作物名稱));
+        
+        // 將作物名稱轉換為陣列並排序
+        const sortedCrops = Array.from(cropSet).sort();
+        
+        // 添加作物選項
+        sortedCrops.forEach(crop => {
+            const option = document.createElement('option');
+            option.value = crop;
+            option.textContent = crop;
+            cropSelect.appendChild(option);
+        });
+    }
 }
 
 // 搜尋作物
