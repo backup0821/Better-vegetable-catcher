@@ -463,41 +463,67 @@ async function showMarquee() {
         if (!res.ok) return;
         const text = await res.text();
         if (!text.trim()) return;
+
         // 顯示跑馬燈
         const marqueeBar = document.getElementById('marqueeBar');
         const marqueeContent = document.getElementById('marqueeContent');
-        const marqueeClock = document.getElementById('marqueeClock');
         const currentTime = document.getElementById('currentTime');
         const systemStatus = document.querySelector('.system-status');
-        // 設定時鐘
-        marqueeClock.textContent = currentTime.textContent;
-        // 動畫：時鐘滑到左邊
-        currentTime.classList.add('marquee-mode');
-        // 小物件收起來
+
+        // 將時鐘移到最上層並蓋過小工具
+        currentTime.style.position = 'absolute';
+        currentTime.style.zIndex = '1000';
+        currentTime.style.left = '0';
+        currentTime.style.top = '0';
+        currentTime.style.backgroundColor = '#1a1a1a';
+        currentTime.style.padding = '5px 10px';
+        currentTime.style.borderRadius = '4px';
+
+        // 隱藏系統狀態
         if(systemStatus) systemStatus.classList.add('hide');
+
         // 計算時鐘寬度，設置跑馬燈 padding-left
-        setTimeout(() => {
-            const clockRect = currentTime.getBoundingClientRect();
-            marqueeBar.style.paddingLeft = clockRect.width + 'px';
-        }, 100);
+        const clockRect = currentTime.getBoundingClientRect();
+        marqueeBar.style.paddingLeft = clockRect.width + 'px';
+
         // 隱藏底部原有狀態
         document.querySelector('.time-display-container').style.overflow = 'visible';
+
         // 顯示跑馬燈
         marqueeBar.style.display = 'flex';
-        setTimeout(()=> marqueeBar.classList.add('active'), 10);
-        // 設定內容
         marqueeContent.textContent = text.trim();
+
+        // 等待跑馬燈動畫完成
+        await new Promise(resolve => {
+            marqueeBar.classList.add('active');
+            setTimeout(resolve, 12000); // 跑馬燈動畫時間
+        });
+
         // 動畫結束後恢復
-        setTimeout(() => {
-            marqueeBar.classList.remove('active');
-            currentTime.classList.remove('marquee-mode');
-            if(systemStatus) systemStatus.classList.remove('hide');
-            setTimeout(()=>{
+        marqueeBar.classList.remove('active');
+        if(systemStatus) systemStatus.classList.remove('hide');
+        
+        // 恢復時鐘原始樣式
+        currentTime.style.position = '';
+        currentTime.style.zIndex = '';
+        currentTime.style.left = '';
+        currentTime.style.top = '';
+        currentTime.style.backgroundColor = '';
+        currentTime.style.padding = '';
+        currentTime.style.borderRadius = '';
+        
+        // 等待淡出動畫完成
+        await new Promise(resolve => {
+            setTimeout(() => {
                 marqueeBar.style.display = 'none';
                 marqueeBar.style.paddingLeft = '0';
+                resolve();
             }, 600);
-        }, 12000); // 跑馬燈動畫時間
-    } catch(e) { /* 忽略錯誤 */ }
+        });
+
+    } catch(e) { 
+        console.error('跑馬燈顯示錯誤:', e);
+    }
 }
 
 function startMarqueeLoop() {
