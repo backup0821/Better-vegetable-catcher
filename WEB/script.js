@@ -222,8 +222,9 @@ async function fetchData(retryCount = 3) {
         if (lastFetchDate !== today) {
             console.log('開始獲取新資料...');
             
-            // 使用新的 API URL，加入查詢參數
-            const apiUrl = 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/?$format=json&$top=1000';
+            // 使用 CORS Proxy 來繞過跨域限制
+            const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+            const apiUrl = corsProxy + 'https://data.moa.gov.tw/api/v1/AgriProductsTransType';
             console.log('API URL:', apiUrl);
             
             const response = await fetch(apiUrl, {
@@ -232,7 +233,8 @@ async function fetchData(retryCount = 3) {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache',
                     'Pragma': 'no-cache',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Origin': window.location.origin
                 },
                 mode: 'cors',
                 credentials: 'omit'
