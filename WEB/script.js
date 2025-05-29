@@ -5028,3 +5028,78 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ... existing code ...
+
+// 初始化事件監聽器
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化版本檢查
+    initVersionCheck();
+    
+    // 初始化 ETag 狀態檢查
+    initETagStatusCheck();
+    
+    // 初始化作物選擇事件
+    const cropSelect = document.getElementById('cropSelect');
+    if (cropSelect) {
+        cropSelect.addEventListener('change', (event) => {
+            const selectedCrop = event.target.value;
+            if (selectedCrop) {
+                const cropData = getCropData(selectedCrop);
+                if (cropData.length > 0) {
+                    // 更新基本統計資訊
+                    showBasicStats(cropData);
+                    // 更新詳細資料表格
+                    updateDetailTable(cropData);
+                } else {
+                    showNotification('提示', '沒有找到該作物的資料');
+                }
+            }
+        });
+    }
+    
+    // 初始化市場選擇事件
+    const marketSelect = document.getElementById('marketSelect');
+    if (marketSelect) {
+        marketSelect.addEventListener('change', () => {
+            const cropSelect = document.getElementById('cropSelect');
+            if (cropSelect && cropSelect.value) {
+                const cropData = getCropData(cropSelect.value);
+                if (cropData.length > 0) {
+                    showBasicStats(cropData);
+                    updateDetailTable(cropData);
+                }
+            }
+        });
+    }
+    
+    // 初始化搜尋功能
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const cropSelect = document.getElementById('cropSelect');
+            if (cropSelect) {
+                const options = Array.from(cropSelect.options);
+                options.forEach(option => {
+                    if (option.value === '') return; // 跳過預設選項
+                    const cropName = option.textContent.toLowerCase();
+                    option.style.display = cropName.includes(searchTerm) ? '' : 'none';
+                });
+            }
+        });
+    }
+    
+    // 初始化分析按鈕事件
+    document.getElementById('showPriceTrend').addEventListener('click', showPriceTrend);
+    document.getElementById('showVolumeDist').addEventListener('click', showVolumeDistribution);
+    document.getElementById('showPriceDist').addEventListener('click', showPriceDistribution);
+    document.getElementById('showSeasonal').addEventListener('click', showSeasonalAnalysis);
+    document.getElementById('showPricePrediction').addEventListener('click', showPricePrediction);
+    
+    // 初始化匯出按鈕事件
+    document.getElementById('exportExcel').addEventListener('click', () => exportData('excel'));
+    document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
+    
+    // 初始化資料載入
+    fetchData();
+});
+// ... existing code ...
