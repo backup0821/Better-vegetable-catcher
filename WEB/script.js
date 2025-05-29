@@ -221,7 +221,12 @@ async function fetchData(retryCount = 3) {
         
         if (lastFetchDate !== today) {
             console.log('開始獲取新資料...');
-            const response = await fetch('https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json', {
+            
+            // 使用新的 API URL
+            const apiUrl = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json&$top=1000';
+            console.log('API URL:', apiUrl);
+            
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -231,19 +236,41 @@ async function fetchData(retryCount = 3) {
             });
             
             if (!response.ok) {
-                throw new Error('API 請求失敗');
+                throw new Error(`API 請求失敗: ${response.status} ${response.statusText}`);
             }
             
             const data = await response.json();
+            console.log('API 回應資料:', data);
+            
+            if (!Array.isArray(data)) {
+                throw new Error('API 回應格式不正確');
+            }
+            
+            if (data.length === 0) {
+                throw new Error('API 回應為空');
+            }
             
             // 處理資料格式
-            const processedData = data.map(item => ({
-                交易日期: item.交易日期,
-                作物名稱: item.作物名稱,
-                市場名稱: item.市場名稱,
-                平均價: Number(item.平均價),
-                交易量: Number(item.交易量)
-            }));
+            const processedData = data.map(item => {
+                try {
+                    return {
+                        交易日期: item.交易日期 || '',
+                        作物名稱: item.作物名稱 || '',
+                        市場名稱: item.市場名稱 || '',
+                        平均價: Number(item.平均價) || 0,
+                        交易量: Number(item.交易量) || 0
+                    };
+                } catch (error) {
+                    console.error('處理資料項目時發生錯誤:', error, item);
+                    return null;
+                }
+            }).filter(item => item !== null);
+            
+            console.log('處理後的資料:', processedData);
+            
+            if (processedData.length === 0) {
+                throw new Error('處理後的資料為空');
+            }
             
             // 儲存新資料
             localStorage.setItem('price_data', JSON.stringify(processedData));
@@ -253,12 +280,23 @@ async function fetchData(retryCount = 3) {
             // 更新作物列表
             updateCropList();
             
+            // 更新資料更新時間
+            const updateTimeElement = document.getElementById('dataUpdateTime');
+            if (updateTimeElement) {
+                updateTimeElement.textContent = new Date().toLocaleString('zh-TW');
+            }
+            
+            // 顯示成功通知
+            showNotification('系統訊息', '資料已成功更新');
+            
             return processedData;
         } else {
+            console.log('使用本地快取資料');
             // 使用本地資料
             const localData = localStorage.getItem('price_data');
             if (localData) {
                 const data = JSON.parse(localData);
+                console.log('本地資料:', data);
                 // 更新作物列表
                 updateCropList();
                 return data;
@@ -267,6 +305,8 @@ async function fetchData(retryCount = 3) {
         }
     } catch (error) {
         console.error('獲取資料失敗:', error);
+        showNotification('錯誤', `獲取資料失敗: ${error.message}`);
+        
         if (retryCount > 0) {
             console.log(`重試中... 剩餘次數: ${retryCount - 1}`);
             await new Promise(resolve => setTimeout(resolve, 30000)); // 等待30秒
@@ -275,6 +315,46 @@ async function fetchData(retryCount = 3) {
         throw error;
     }
 }
+
+// 強制更新資料
+async function forceUpdateData() {
+    try {
+        showNotification('系統訊息', '開始更新資料...');
+        
+        // 清除本地快取
+        localStorage.removeItem('last_fetch_date');
+        localStorage.removeItem('price_data');
+        
+        // 重新獲取資料
+        const data = await fetchData();
+        showNotification('系統訊息', '資料已成功更新');
+        return data;
+    } catch (error) {
+        console.error('強制更新資料失敗:', error);
+        showNotification('錯誤', `更新資料失敗: ${error.message}`);
+        throw error;
+    }
+}
+
+// 初始化事件監聽器
+document.addEventListener('DOMContentLoaded', () => {
+    // ... 其他初始化程式碼 ...
+    
+    // 添加強制更新按鈕事件
+    const forceUpdateBtn = document.createElement('button');
+    forceUpdateBtn.textContent = '強制更新資料';
+    forceUpdateBtn.className = 'force-update-btn';
+    forceUpdateBtn.addEventListener('click', forceUpdateData);
+    
+    // 將按鈕添加到控制面板
+    const controlPanel = document.querySelector('.control-panel');
+    if (controlPanel) {
+        controlPanel.appendChild(forceUpdateBtn);
+    }
+    
+    // 初始化資料載入
+    fetchData();
+});
 
 // 顯示通知函數
 function showNotification(title, message) {
@@ -2228,75 +2308,145 @@ const CLICK_THRESHOLD = 5; // 需要點擊的次數
 const CLICK_TIMEOUT = 2000; // 點擊超時時間（毫秒）
 
 // 初始化開發者模式
-document.addEventListener('DOMContentLoaded', () => {
-    const devModePanel = document.getElementById('devModePanel');
-    if (devModePanel) {
-        devModePanel.style.display = 'none'; // 預設隱藏開發者模式面板
-    }
-    initDevMode();
-    console.log('開發者模式初始化完成');
-});
-
-// 開發者模式觸發邏輯
 function initDevMode() {
-    const devModePanel = document.getElementById('devModePanel');
-    const closeDevModeBtn = document.getElementById('closeDevMode');
+    // 創建開發者模式按鈕
+    const devModeBtn = document.createElement('button');
+    devModeBtn.textContent = '開發者模式';
+    devModeBtn.className = 'dev-mode-btn';
+    devModeBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background-color: #333;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 1000;
+        opacity: 0.7;
+        transition: opacity 0.3s;
+    `;
     
-    // 監聽頁面標題點擊事件
-    const header = document.querySelector('header h1');
-    if (header) {
-        header.addEventListener('click', (e) => {
-            const currentTime = Date.now();
-            
-            // 如果超過超時時間，重置計數
-            if (currentTime - lastClickTime > CLICK_TIMEOUT) {
-                devModeClickCount = 0;
-            }
-            
-            // 更新最後點擊時間
-            lastClickTime = currentTime;
-            
-            // 增加點擊計數
-            devModeClickCount++;
-            
-            // 檢查是否達到觸發條件
-            if (devModeClickCount >= CLICK_THRESHOLD) {
-                activateDevMode();
-                devModeClickCount = 0; // 重置計數
-            }
-        });
-    }
-
-    // 關閉按鈕事件
-    if (closeDevModeBtn) {
-        closeDevModeBtn.addEventListener('click', () => {
-            devModePanel.style.display = 'none';
-            isDevModeActive = false;
-        });
-    }
-
-    // 點擊外部區域關閉
-    document.addEventListener('click', (e) => {
-        if (e.target === devModePanel) {
-            devModePanel.style.display = 'none';
-            isDevModeActive = false;
+    // 滑鼠懸停效果
+    devModeBtn.addEventListener('mouseover', () => {
+        devModeBtn.style.opacity = '1';
+    });
+    devModeBtn.addEventListener('mouseout', () => {
+        devModeBtn.style.opacity = '0.7';
+    });
+    
+    // 點擊事件
+    devModeBtn.addEventListener('click', () => {
+        const devModePanel = document.getElementById('devModePanel');
+        if (devModePanel) {
+            devModePanel.style.display = devModePanel.style.display === 'none' ? 'block' : 'none';
+        } else {
+            createDevModePanel();
         }
     });
-
-    // ESC 鍵關閉
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && devModePanel.style.display === 'block') {
-            devModePanel.style.display = 'none';
-            isDevModeActive = false;
-        }
-    });
-
-    // 初始化環境設定
-    initEnvironmentSettings();
     
-    // 初始化其他開發者模式功能
-    initDevModeFeatures();
+    document.body.appendChild(devModeBtn);
 }
+
+// 創建開發者模式面板
+function createDevModePanel() {
+    const panel = document.createElement('div');
+    panel.id = 'devModePanel';
+    panel.className = 'dev-mode-panel';
+    panel.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        z-index: 1001;
+        width: 80%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    
+    panel.innerHTML = `
+        <div class="panel-header">
+            <h3>開發者模式</h3>
+            <button class="close-btn">×</button>
+        </div>
+        <div class="action-buttons">
+            <button class="action-btn" style="background-color: #4CAF50;">查看 API 資料</button>
+            <button class="action-btn" style="background-color: #2196F3;">查看資料庫</button>
+            <button class="action-btn" style="background-color: #FF9800;">功能設定</button>
+            <button class="action-btn" style="background-color: #9C27B0;">主題設定</button>
+        </div>
+    `;
+    
+    // 添加樣式
+    const style = document.createElement('style');
+    style.textContent = `
+        .dev-mode-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .dev-mode-panel .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .dev-mode-panel .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .dev-mode-panel .action-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        
+        .dev-mode-panel .action-btn:hover {
+            opacity: 0.8;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // 關閉按鈕事件
+    const closeBtn = panel.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => {
+        panel.style.display = 'none';
+    });
+    
+    // 按鈕事件
+    const buttons = panel.querySelectorAll('.action-btn');
+    buttons[0].addEventListener('click', showApiData);
+    buttons[1].addEventListener('click', viewDatabase);
+    buttons[2].addEventListener('click', showFeatureSettings);
+    buttons[3].addEventListener('click', showThemeSettings);
+    
+    document.body.appendChild(panel);
+}
+
+// 初始化事件監聽器
+document.addEventListener('DOMContentLoaded', () => {
+    // ... 其他初始化程式碼 ...
+    
+    // 初始化開發者模式
+    initDevMode();
+});
 
 // 初始化環境設定
 function initEnvironmentSettings() {
@@ -2325,41 +2475,207 @@ function initEnvironmentSettings() {
 
 // 初始化開發者模式功能
 function initDevModeFeatures() {
-    console.log('初始化開發者模式功能');
-    
-    // 資料庫操作按鈕
-    const viewDatabaseBtn = document.getElementById('viewDatabase');
-    if (viewDatabaseBtn) {
-        console.log('綁定查看資料庫按鈕');
-        viewDatabaseBtn.addEventListener('click', viewDatabase);
+    // 添加查看 API 資料按鈕
+    const devModePanel = document.getElementById('devModePanel');
+    if (devModePanel) {
+        const apiViewerBtn = document.createElement('button');
+        apiViewerBtn.textContent = '查看 API 資料';
+        apiViewerBtn.className = 'action-btn';
+        apiViewerBtn.style.backgroundColor = '#9C27B0';
+        apiViewerBtn.addEventListener('click', showApiData);
+        
+        // 將按鈕添加到操作按鈕組
+        const actionButtons = devModePanel.querySelector('.action-buttons');
+        if (actionButtons) {
+            actionButtons.appendChild(apiViewerBtn);
+        }
     }
-
-    // 功能設定按鈕
-    const featureToggleBtn = document.getElementById('featureToggle');
-    const customThemeBtn = document.getElementById('customTheme');
-
-    if (featureToggleBtn) {
-        console.log('綁定功能開關按鈕');
-        featureToggleBtn.addEventListener('click', () => {
-            console.log('點擊功能開關按鈕');
-            showFeatureSettings();
-        });
-    }
-
-    if (customThemeBtn) {
-        console.log('綁定主題設定按鈕');
-        customThemeBtn.addEventListener('click', () => {
-            console.log('點擊主題設定按鈕');
-            showThemeSettings();
-        });
-    }
-
-    // 初始化環境設定
-    initEnvironmentSettings();
-
-    // 初始化抓取更多資料按鈕
-    initFetchMoreDataButton();
 }
+
+// 顯示 API 資料
+async function showApiData() {
+    try {
+        // 創建對話框
+        const dialog = document.createElement('div');
+        dialog.className = 'api-data-dialog';
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <div class="dialog-header">
+                    <h3>API 資料查看器</h3>
+                    <button class="close-btn">×</button>
+                </div>
+                <div class="dialog-body">
+                    <div class="loading">載入中...</div>
+                    <div class="api-data-content" style="display: none;">
+                        <div class="api-info">
+                            <h4>API 資訊</h4>
+                            <p>URL: <span class="api-url"></span></p>
+                            <p>狀態: <span class="api-status"></span></p>
+                            <p>資料筆數: <span class="data-count"></span></p>
+                            <p>錯誤訊息: <span class="error-message"></span></p>
+                        </div>
+                        <div class="data-preview">
+                            <h4>資料預覽</h4>
+                            <pre class="json-preview"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 添加到頁面
+        document.body.appendChild(dialog);
+        
+        // 關閉按鈕事件
+        const closeBtn = dialog.querySelector('.close-btn');
+        closeBtn.addEventListener('click', () => dialog.remove());
+        
+        // 獲取 API 資料
+        const apiUrl = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json&$top=1000';
+        console.log('正在請求 API:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        console.log('API 回應狀態:', response.status, response.statusText);
+        
+        // 更新 API 資訊
+        const apiUrlElement = dialog.querySelector('.api-url');
+        const apiStatusElement = dialog.querySelector('.api-status');
+        const dataCountElement = dialog.querySelector('.data-count');
+        const jsonPreviewElement = dialog.querySelector('.json-preview');
+        const errorMessageElement = dialog.querySelector('.error-message');
+        
+        apiUrlElement.textContent = apiUrl;
+        apiStatusElement.textContent = response.ok ? '成功' : '失敗';
+        
+        if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            console.log('回應內容類型:', contentType);
+            
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                console.log('獲取到的資料:', data);
+                
+                if (Array.isArray(data)) {
+                    dataCountElement.textContent = data.length;
+                    jsonPreviewElement.textContent = JSON.stringify(data.slice(0, 5), null, 2);
+                } else {
+                    dataCountElement.textContent = '非陣列格式';
+                    jsonPreviewElement.textContent = JSON.stringify(data, null, 2);
+                }
+            } else {
+                const text = await response.text();
+                console.log('非 JSON 回應:', text);
+                errorMessageElement.textContent = '回應不是 JSON 格式';
+                jsonPreviewElement.textContent = text;
+            }
+        } else {
+            const errorText = await response.text();
+            console.error('API 錯誤:', errorText);
+            errorMessageElement.textContent = `錯誤 ${response.status}: ${response.statusText}`;
+            jsonPreviewElement.textContent = errorText;
+        }
+        
+        // 顯示資料內容
+        dialog.querySelector('.loading').style.display = 'none';
+        dialog.querySelector('.api-data-content').style.display = 'block';
+        
+    } catch (error) {
+        console.error('顯示 API 資料時發生錯誤:', error);
+        showNotification('錯誤', `無法顯示 API 資料: ${error.message}`);
+    }
+}
+
+// 添加樣式
+const style = document.createElement('style');
+style.textContent = `
+    .api-data-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    .api-data-dialog .dialog-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .api-data-dialog .dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .api-data-dialog .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+    
+    .api-data-dialog .api-info {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 5px;
+    }
+    
+    .api-data-dialog .error-message {
+        color: #d32f2f;
+        font-weight: bold;
+    }
+    
+    .api-data-dialog .data-preview {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+    
+    .api-data-dialog .json-preview {
+        margin: 0;
+        white-space: pre-wrap;
+        font-family: monospace;
+    }
+    
+    .api-data-dialog .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+`;
+document.head.appendChild(style);
+
+// 初始化事件監聽器
+document.addEventListener('DOMContentLoaded', () => {
+    // ... 其他初始化程式碼 ...
+    
+    // 初始化開發者模式功能
+    initDevModeFeatures();
+});
 
 // 初始化抓取更多資料按鈕
 function initFetchMoreDataButton() {
