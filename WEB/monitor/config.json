@@ -34,7 +34,7 @@
             "url": "https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx",
             "description": "系統備份服務",
             "icon": "fa-database",
-            "forceStatus": "410"
+            "forceStatus": "auto"
         },
         {
             "name": "6 農業部 主API",
@@ -56,6 +56,10 @@
             "description": "農業部氣象影音資料 API",
             "icon": "fa-cloud-sun-rain",
             "forceStatus": "auto"
+        },
+        {
+            "des": "401",
+            "description": "移除代碼"
         }
     ]
 } 
