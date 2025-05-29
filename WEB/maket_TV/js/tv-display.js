@@ -11,7 +11,7 @@ let cropNames = [];
 
 // 主要常數
 const MARKET_API = 'https://backup0821.github.io/API/Better-vegetable-catcher/marketTV-drvice.json';
-const PRICE_API = 'https://bvc-api.deno.dev';
+const PRICE_API = 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/';
 const CROP_INTERVAL = 5000; // 5秒輪播
 
 // 本地存儲相關常數
@@ -475,10 +475,10 @@ async function startCropRotation() {
         const data = await response.json();
         
         // 過濾出當前市場的資料
-        const marketData = data.filter(item => item.市場名稱 === marketName);
+        const marketData = data.Data.filter(item => item.MarketName === marketName);
         
         // 取得所有作物名稱（去重）
-        cropNames = [...new Set(marketData.map(item => item.作物名稱))].filter(Boolean);
+        cropNames = [...new Set(marketData.map(item => item.CropName))].filter(Boolean);
         
         if (cropNames.length === 0) {
             showError('無法獲取作物資料');
@@ -508,7 +508,7 @@ async function startCropRotation() {
 // 顯示作物資訊
 function showCropInfo(cropName) {
     // 過濾出該作物的資料
-    const cropData = marketCrops.filter(item => item.作物名稱 === cropName);
+    const cropData = marketCrops.filter(item => item.CropName === cropName);
     if (cropData.length === 0) return;
     
     // 取得最新一筆資料
@@ -516,15 +516,15 @@ function showCropInfo(cropName) {
     
     // 更新作物基本資訊
     document.getElementById('cropName').textContent = cropName;
-    document.getElementById('tradeVolume').textContent = `${Number(latestData.交易量).toLocaleString()} 公斤`;
-    document.getElementById('avgPrice').textContent = `${Number(latestData.平均價).toFixed(2)} 元/公斤`;
+    document.getElementById('tradeVolume').textContent = `${Number(latestData.Trans_Quantity).toLocaleString()} 公斤`;
+    document.getElementById('avgPrice').textContent = `${Number(latestData.Avg_Price).toFixed(2)} 元/公斤`;
     
     // 更新價格資訊
-    document.getElementById('priceHigh').textContent = `${Number(latestData.上價).toFixed(2)} 元/公斤`;
-    document.getElementById('priceLow').textContent = `${Number(latestData.下價).toFixed(2)} 元/公斤`;
+    document.getElementById('priceHigh').textContent = `${Number(latestData.High_Price).toFixed(2)} 元/公斤`;
+    document.getElementById('priceLow').textContent = `${Number(latestData.Low_Price).toFixed(2)} 元/公斤`;
     
     // 計算價格變化
-    const prices = cropData.map(item => Number(item.平均價));
+    const prices = cropData.map(item => Number(item.Avg_Price));
     const priceChange = ((prices[prices.length - 1] - prices[0]) / prices[0] * 100).toFixed(2);
     
     // 更新圖表

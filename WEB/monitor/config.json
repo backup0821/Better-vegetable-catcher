@@ -31,13 +31,13 @@
         },
         {
             "name": "5 農業部 主API - 原API",
-            "url": "https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx",
+            "url": "https://data.moa.gov.tw/api/v1/AgriProductsTransType/",
             "description": "系統備份服務",
             "icon": "fa-database",
             "forceStatus": "auto"
         },
         {
-            "name": "6 農業部 主API",
+            "name": "6 農業部 主API - 新API",
             "url": "https://bvc-api.deno.dev",
             "description": "農業部主要資料 API",
             "icon": "fa-tractor",
