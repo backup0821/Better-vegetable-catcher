@@ -4,8 +4,7 @@ let displayInterval;
 const DISPLAY_DURATION = 30000; // 30秒切換一次顯示模式
 let currentCropIndex = 0;
 let crops = [];
-let deviceId = localStorage.getItem('deviceId');
-let marketName = '';
+let marketName = localStorage.getItem('marketName') || '';
 let marketCrops = [];
 let cropNames = [];
 
@@ -17,7 +16,8 @@ const CROP_INTERVAL = 5000; // 5秒輪播
 // 本地存儲相關常數
 const STORAGE_KEYS = {
     PRICE_DATA: 'price_data',
-    LAST_FETCH_DATE: 'last_fetch_date'
+    LAST_FETCH_DATE: 'last_fetch_date',
+    MARKET_NAME: 'marketName'
 };
 
 // 市場名稱對應表
@@ -50,7 +50,7 @@ const DevMode = {
 
     // 初始化開發者模式
     init() {
-        document.addEventListener('click', this.handleClick.bind(this));
+        // 不再用點擊觸發
         this.loadSettings();
     },
 
@@ -66,144 +66,6 @@ const DevMode = {
     // 儲存設定
     saveSettings() {
         localStorage.setItem('devModeBrightness', this.brightness.toString());
-    },
-
-    // 處理點擊事件
-    handleClick(event) {
-        const currentTime = Date.now();
-        if (currentTime - this.lastTriggerTime > this.TRIGGER_TIMEOUT) {
-            this.triggerCount = 0;
-        }
-        this.triggerCount++;
-        this.lastTriggerTime = currentTime;
-        if (this.triggerCount >= this.TRIGGER_THRESHOLD) {
-            this.enableDevMode();
-            this.triggerCount = 0;
-        }
-    },
-
-    // 啟用開發者模式
-    enableDevMode() {
-        this.isEnabled = true;
-        this.showDevModePanel();
-    },
-
-    // 顯示開發者模式面板（含遮罩）
-    showDevModePanel() {
-        // 遮罩
-        this.overlay = document.createElement('div');
-        this.overlay.className = 'dev-mode-overlay';
-        document.body.appendChild(this.overlay);
-        // 面板
-        this.panel = document.createElement('div');
-        this.panel.className = 'dev-mode-panel';
-        this.panel.innerHTML = `
-            <div class="dev-mode-header">
-                <h2>開發者模式</h2>
-                <button class="close-button">×</button>
-            </div>
-            <div class="dev-mode-content">
-                <div class="dev-mode-section">
-                    <h3>系統操作</h3>
-                    <button id="resetDeviceBtn">重設裝置識別碼</button>
-                    <button id="clearCacheBtn">清除快取</button>
-                    <button id="reloadDataBtn">重新載入資料</button>
-                </div>
-                <div class="dev-mode-section">
-                    <h3>顯示設定</h3>
-                    <div class="brightness-control">
-                        <label for="brightnessSlider">亮度調整</label>
-                        <input type="range" id="brightnessSlider" min="0" max="100" value="${this.brightness}">
-                        <span id="brightnessValue">${this.brightness}%</span>
-                    </div>
-                    <button id="toggleFullscreenBtn">切換全螢幕</button>
-                    <button id="testDisplayBtn">測試顯示</button>
-                </div>
-                <div class="dev-mode-section">
-                    <h3>系統資訊</h3>
-                    <div id="systemInfo"></div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(this.panel);
-        this.bindDevModeEvents(this.panel);
-    },
-
-    // 綁定開發者模式事件
-    bindDevModeEvents(panel) {
-        // 關閉按鈕
-        panel.querySelector('.close-button').addEventListener('click', () => {
-            this.closeDevModePanel();
-        });
-        // 點遮罩也可關閉
-        this.overlay.addEventListener('click', () => {
-            this.closeDevModePanel();
-        });
-        // 重設裝置按鈕
-        panel.querySelector('#resetDeviceBtn').addEventListener('click', () => {
-            if (confirm('確定要重設裝置識別碼嗎？此操作將清除所有本地設定。')) {
-                localStorage.removeItem('deviceId');
-                location.reload();
-            }
-        });
-        // 清除快取按鈕
-        panel.querySelector('#clearCacheBtn').addEventListener('click', () => {
-            if (confirm('確定要清除快取嗎？')) {
-                localStorage.clear();
-                location.reload();
-            }
-        });
-        // 重新載入資料按鈕
-        panel.querySelector('#reloadDataBtn').addEventListener('click', () => {
-            location.reload();
-        });
-        // 切換全螢幕按鈕
-        panel.querySelector('#toggleFullscreenBtn').addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-            setTimeout(() => this.updateSystemInfo(panel.querySelector('#systemInfo')), 500);
-        });
-        // 亮度調整
-        const brightnessSlider = panel.querySelector('#brightnessSlider');
-        const brightnessValue = panel.querySelector('#brightnessValue');
-        brightnessSlider.addEventListener('input', (e) => {
-            this.brightness = parseInt(e.target.value);
-            brightnessValue.textContent = `${this.brightness}%`;
-            this.applyBrightness();
-        });
-        // 測試顯示按鈕
-        panel.querySelector('#testDisplayBtn').addEventListener('click', () => {
-            if (this.testPattern) {
-                this.stopTestPattern();
-            } else {
-                this.startTestPattern();
-            }
-        });
-        // 動態更新系統資訊
-        this.updateSystemInfo(panel.querySelector('#systemInfo'));
-        window.addEventListener('resize', this._sysinfoResize = () => this.updateSystemInfo(panel.querySelector('#systemInfo')));
-        document.addEventListener('fullscreenchange', this._sysinfoFS = () => this.updateSystemInfo(panel.querySelector('#systemInfo')));
-        window.addEventListener('online', this._sysinfoNet = () => this.updateSystemInfo(panel.querySelector('#systemInfo')));
-        window.addEventListener('offline', this._sysinfoNet);
-    },
-
-    // 關閉面板與遮罩
-    closeDevModePanel() {
-        if (this.panel) this.panel.remove();
-        if (this.overlay) this.overlay.remove();
-        this.panel = null;
-        this.overlay = null;
-        this.isEnabled = false;
-        // 移除事件監聽
-        window.removeEventListener('resize', this._sysinfoResize);
-        document.removeEventListener('fullscreenchange', this._sysinfoFS);
-        window.removeEventListener('online', this._sysinfoNet);
-        window.removeEventListener('offline', this._sysinfoNet);
-        // 停止測試顯示
-        this.stopTestPattern();
     },
 
     // 套用亮度設定
@@ -254,101 +116,9 @@ const DevMode = {
 // 初始化開發者模式
 DevMode.init();
 
-// 檢查裝置識別碼
-async function checkDeviceId() {
-    if (!deviceId) {
-        showDeviceSetupDialog();
-    } else {
-        await verifyDeviceId();
-    }
-}
-
-// 顯示裝置設定對話框
-function showDeviceSetupDialog() {
-    if (document.querySelector('.device-setup-dialog')) return;
-
-    const overlay = document.createElement('div');
-    overlay.className = 'device-setup-overlay';
-    
-    const dialog = document.createElement('div');
-    dialog.className = 'device-setup-dialog';
-    dialog.innerHTML = `
-        <div class="dialog-content">
-            <h2>請輸入裝置識別碼</h2>
-            <p>請輸入您的裝置識別碼，例如：drvice-Taipai01</p>
-            <input type="text" id="deviceIdInput" placeholder="請輸入裝置識別碼">
-            <div class="dialog-buttons">
-                <button id="confirmDeviceId">確認</button>
-            </div>
-            <div id="deviceError" class="error-message"></div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-    document.body.appendChild(dialog);
-
-    const input = dialog.querySelector('#deviceIdInput');
-    const confirmBtn = dialog.querySelector('#confirmDeviceId');
-    const errorDiv = dialog.querySelector('#deviceError');
-
-    confirmBtn.addEventListener('click', async () => {
-        const newDeviceId = input.value.trim();
-        if (!newDeviceId) {
-            errorDiv.textContent = '請輸入裝置識別碼';
-            return;
-        }
-
-        deviceId = newDeviceId;
-        localStorage.setItem('deviceId', deviceId);
-
-        if (await verifyDeviceId()) {
-            overlay.remove();
-            dialog.remove();
-            location.reload();
-        } else {
-            errorDiv.textContent = '無效的裝置識別碼';
-        }
-    });
-
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            confirmBtn.click();
-        }
-    });
-}
-
-// 驗證裝置識別碼
-async function verifyDeviceId() {
-    try {
-        const response = await fetch(MARKET_API);
-        const devices = await response.json();
-        const device = devices.find(d => d.devicesID === deviceId);
-        
-        if (!device) {
-            showError('無效的裝置識別碼');
-            localStorage.removeItem('deviceId');
-            return false;
-        }
-
-        // 使用對應表轉換市場名稱
-        marketName = MARKET_NAME_MAP[device.market_name] || device.market_name;
-        document.getElementById('marketName').textContent = marketName;
-        
-        // 儲存市場代碼供後續使用
-        localStorage.setItem('marketName', marketName);
-        
-        return true;
-    } catch (error) {
-        console.error('驗證裝置識別碼時發生錯誤:', error);
-        showError('驗證裝置識別碼失敗，請檢查網路連線');
-        return false;
-    }
-}
-
 // 更新市場資訊
 function updateMarketInfo() {
     document.getElementById('marketName').textContent = marketName;
-    document.getElementById('deviceId').textContent = deviceId;
 }
 
 // 顯示錯誤訊息
@@ -596,23 +366,21 @@ function updateChart(cropData) {
     Plotly.newPlot('mainDisplay', [trace1, trace2], layout);
 }
 
-// 主程式
+// 修改主程式
 async function main() {
     try {
         // 啟動時鐘
         startClock();
 
-        // 檢查裝置識別碼
-        if (!deviceId) {
-            showDeviceSetupDialog();
+        // 檢查市場設定
+        if (!marketName) {
+            console.log('未設定市場，顯示選擇對話框');
+            showMarketSelectionDialog();
             return;
         }
 
-        // 驗證裝置識別碼
-        if (!await verifyDeviceId()) {
-            showDeviceSetupDialog();
-            return;
-        }
+        console.log('已設定市場:', marketName);
+        document.getElementById('marketName').textContent = marketName;
 
         // 開始作物輪播
         await startCropRotation();
@@ -630,8 +398,20 @@ async function main() {
     }
 }
 
-// 頁面載入完成後啟動
-document.addEventListener('DOMContentLoaded', main);
+// 修改頁面載入事件
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('頁面載入完成');
+    // 清除舊的市場設定（測試用，之後可以移除）
+    // localStorage.removeItem(STORAGE_KEYS.MARKET_NAME);
+    
+    // 獲取市場設定
+    marketName = localStorage.getItem(STORAGE_KEYS.MARKET_NAME);
+    console.log('從本地儲存讀取的市場:', marketName);
+    
+    // 啟動主程式
+    main();
+    addDevModeTriggerArea();
+});
 
 // ===== 通知動態產生（橘色卡片） =====
 function showNotifications(notifications) {
@@ -695,7 +475,6 @@ let cropIndex = 0;
 let cropTimer = null;
 
 async function fetchAndStartCropRotation() {
-    if (!(await ensureDeviceIdAndMarket())) return;
     try {
         // 使用新的資料獲取方式
         const data = await checkAndUpdateLocalData();
@@ -766,27 +545,9 @@ function updateClock() {
 
 // ====== 啟動流程修正 ======
 window.addEventListener('DOMContentLoaded', async () => {
-    deviceId = localStorage.getItem('deviceId');
-    if (!deviceId) {
-        showDeviceSetupDialog();
-        return;
-    }
-    // 檢查 deviceId 是否有效
-    try {
-        const res = await fetch(MARKET_API);
-        const list = await res.json();
-        const found = list.find(d => d.devicesID === deviceId);
-        if (!found) {
-            showDeviceSetupDialog();
-            return;
-        }
-        marketName = found.market_name;
-        document.getElementById('marketName').textContent = marketName;
-        startClock();
-        fetchAndStartCropRotation();
-    } catch (e) {
-        showNotifications(['無法取得市場對照表，請檢查網路']);
-    }
+    // 啟動主程式
+    main();
+    addDevModeTriggerArea();
 });
 
 // 錯誤處理函數
@@ -980,4 +741,93 @@ async function checkAndUpdateLocalData() {
         }
         throw new Error('本地無資料');
     }
+}
+
+// 修改市場選擇對話框函數
+function showMarketSelectionDialog() {
+    console.log('顯示市場選擇對話框');
+    if (document.querySelector('.market-selection-dialog')) {
+        console.log('對話框已存在，不重複顯示');
+        return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'market-selection-overlay';
+    
+    const dialog = document.createElement('div');
+    dialog.className = 'market-selection-dialog';
+    dialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>請選擇市場</h2>
+            <div class="market-list">
+                ${Object.entries(MARKET_NAME_MAP).map(([key, value]) => `
+                    <button class="market-button" data-market="${value}">${key}</button>
+                `).join('')}
+            </div>
+            <div class="dialog-buttons">
+                <button id="confirmMarket">確認</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(dialog);
+    console.log('對話框已添加到頁面');
+
+    // 綁定市場選擇事件
+    const marketButtons = dialog.querySelectorAll('.market-button');
+    marketButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            marketButtons.forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            console.log('選擇市場:', button.dataset.market);
+        });
+    });
+
+    // 確認按鈕事件
+    const confirmBtn = dialog.querySelector('#confirmMarket');
+    confirmBtn.addEventListener('click', () => {
+        const selectedButton = dialog.querySelector('.market-button.selected');
+        if (selectedButton) {
+            const newMarketName = selectedButton.dataset.market;
+            console.log('確認選擇市場:', newMarketName);
+            marketName = newMarketName;
+            localStorage.setItem(STORAGE_KEYS.MARKET_NAME, marketName);
+            document.getElementById('marketName').textContent = marketName;
+            overlay.remove();
+            dialog.remove();
+            location.reload();
+        } else {
+            console.log('未選擇市場');
+            alert('請選擇一個市場');
+        }
+    });
+}
+
+// 新增右下角隱藏觸發區
+function addDevModeTriggerArea() {
+    const trigger = document.createElement('div');
+    trigger.className = 'devmode-trigger-area';
+    document.body.appendChild(trigger);
+    let timer = null;
+    let isTouch = false;
+
+    function startPress() {
+        timer = setTimeout(() => {
+            DevMode.enableDevMode();
+        }, 3000);
+    }
+    function cancelPress() {
+        if (timer) clearTimeout(timer);
+    }
+
+    trigger.addEventListener('mousedown', startPress);
+    trigger.addEventListener('mouseup', cancelPress);
+    trigger.addEventListener('mouseleave', cancelPress);
+    trigger.addEventListener('touchstart', (e) => {
+        isTouch = true;
+        startPress();
+    });
+    trigger.addEventListener('touchend', cancelPress);
+    trigger.addEventListener('touchcancel', cancelPress);
 }

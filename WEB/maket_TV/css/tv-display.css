@@ -1,0 +1,90 @@
+/* 市場選擇對話框樣式 */
+.market-selection-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.market-selection-dialog {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.market-selection-dialog .dialog-content {
+    text-align: center;
+}
+
+.market-selection-dialog h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.market-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.market-button {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.market-button:hover {
+    border-color: #1a237e;
+    color: #1a237e;
+}
+
+.market-button.selected {
+    background-color: #1a237e;
+    color: #fff;
+    border-color: #1a237e;
+}
+
+.dialog-buttons {
+    margin-top: 20px;
+}
+
+.dialog-buttons button {
+    padding: 10px 20px;
+    background-color: #1a237e;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.dialog-buttons button:hover {
+    background-color: #0d47a1;
+}
+
+/* 右下角隱藏開發者模式觸發區 */
+.devmode-trigger-area {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: 48px;
+    height: 48px;
+    z-index: 9999;
+    opacity: 0.01;
+    /* 幾乎不可見，但可點擊 */
+    background: transparent;
+} 

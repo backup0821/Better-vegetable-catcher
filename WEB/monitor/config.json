@@ -20,7 +20,7 @@
             "url": "https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json",
             "description": "TV 版本驗證系統",
             "icon": "fa-tv",
-            "forceStatus": "503"
+            "forceStatus": "410"
         },
         {
             "name": "4 主系統",
