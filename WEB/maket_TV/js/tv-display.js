@@ -540,8 +540,8 @@ function showCropInfo(cropName) {
 // 更新圖表
 function updateChart(cropData) {
     const dates = cropData.map(item => item.交易日期);
-    const prices = cropData.map(item => Number(item.平均價));
-    const volumes = cropData.map(item => Number(item.交易量));
+    const prices = cropData.map(item => Number(item.Avg_Price));
+    const volumes = cropData.map(item => Number(item.Trans_Quantity));
     
     const trace1 = {
         x: dates,
