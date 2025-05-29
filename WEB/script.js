@@ -223,7 +223,7 @@ async function fetchData(retryCount = 3) {
             console.log('開始獲取新資料...');
             
             // 使用新的 API URL
-            const apiUrl = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json&$top=1000';
+            const apiUrl = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json';
             console.log('API URL:', apiUrl);
             
             const response = await fetch(apiUrl, {
@@ -2531,7 +2531,7 @@ async function showApiData() {
         closeBtn.addEventListener('click', () => dialog.remove());
         
         // 獲取 API 資料
-        const apiUrl = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json&$top=1000';
+        const apiUrl = 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx?$format=json';
         console.log('正在請求 API:', apiUrl);
         
         const response = await fetch(apiUrl, {
