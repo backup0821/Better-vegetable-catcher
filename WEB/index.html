@@ -540,6 +540,173 @@
         .result-item.success {
             border-left-color: #4CAF50;
         }
+
+        /* 開發者模式按鈕樣式 */
+        .dev-mode-btn {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            padding: 10px 20px !important;
+            background-color: #333 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 5px !important;
+            cursor: pointer !important;
+            z-index: 9999 !important;
+            opacity: 0.7 !important;
+            transition: opacity 0.3s !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+            display: block !important;
+        }
+
+        .dev-mode-btn:hover {
+            opacity: 1 !important;
+        }
+
+        /* 開發者模式面板樣式 */
+        .dev-mode-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 1001;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .dev-mode-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dev-mode-panel .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .dev-mode-panel .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .dev-mode-panel .action-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .dev-mode-panel .action-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* CORS 設定對話框樣式 */
+        .cors-settings-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+        }
+
+        .cors-settings-dialog .dialog-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .cors-settings-dialog .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .cors-settings-dialog .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cors-settings-dialog .api-select,
+        .cors-settings-dialog .cors-select {
+            margin-bottom: 15px;
+        }
+
+        .cors-settings-dialog select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .cors-settings-dialog .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .cors-settings-dialog .test-btn,
+        .cors-settings-dialog .save-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .cors-settings-dialog .test-btn {
+            background-color: #2196F3;
+        }
+
+        .cors-settings-dialog .save-btn {
+            background-color: #4CAF50;
+        }
+
+        .cors-settings-dialog .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .cors-settings-dialog .test-result.success {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            display: block;
+        }
+
+        .cors-settings-dialog .test-result.error {
+            background-color: #FFEBEE;
+            color: #C62828;
+            display: block;
+        }
     </style>
     <!-- start webpushr code -->
     <script>
@@ -570,6 +737,9 @@
                 <button id="closeNotificationBtn" class="close-notification-btn">我知道了</button>
             </div>
         </div>
+
+        <!-- 開發者模式按鈕 -->
+        <button id="devModeBtn" class="dev-mode-btn">開發者模式</button>
 
         <header>
             <h1>農產品交易資料分析系統</h1>

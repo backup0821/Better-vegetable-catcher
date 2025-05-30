@@ -216,104 +216,33 @@ document.addEventListener('DOMContentLoaded', () => {
 // 從農產品交易行情站獲取資料
 async function fetchData(retryCount = 3) {
     try {
-        const lastFetchDate = localStorage.getItem('last_fetch_date');
-        const today = new Date().toDateString();
+        const apiUrl = localStorage.getItem('selectedApi') || 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/';
+        const corsMode = localStorage.getItem('corsMode') || 'direct';
         
-        if (lastFetchDate !== today) {
-            console.log('開始獲取新資料...');
-            
-            // 直接使用農業部 API，不使用 CORS Proxy
-            const apiUrl = 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/';
-            console.log('API URL:', apiUrl);
-            
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                },
-                mode: 'cors',
-                credentials: 'omit'
-            });
-            
-            if (!response.ok) {
-                console.error('API 回應狀態:', response.status, response.statusText);
-                if (retryCount > 0) {
-                    console.log(`重試中... 剩餘重試次數: ${retryCount - 1}`);
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒後重試
-                    return fetchData(retryCount - 1);
-                }
-                throw new Error(`API 請求失敗: ${response.status} ${response.statusText}`);
-            }
-            
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                console.error('API 回應內容類型:', contentType);
-                throw new Error('API 回應不是 JSON 格式');
-            }
-            
-            const data = await response.json();
-            console.log('API 回應資料:', data);
-            
-            // 檢查資料結構
-            if (!data || typeof data !== 'object') {
-                console.error('API 回應格式不正確:', data);
-                throw new Error('API 回應格式不正確');
-            }
-            
-            // 檢查是否有 Data 屬性
-            if (!data.Data) {
-                console.error('API 回應缺少 Data 屬性:', data);
-                throw new Error('API 回應缺少 Data 屬性');
-            }
-            
-            // 檢查 Data 是否為陣列
-            if (!Array.isArray(data.Data)) {
-                console.error('API 回應 Data 不是陣列:', data.Data);
-                throw new Error('API 回應 Data 不是陣列');
-            }
-            
-            if (data.Data.length === 0) {
-                console.error('API 回應資料為空');
-                throw new Error('API 回應為空');
-            }
-            
-            // 處理資料格式
-            const processedData = data.Data.map(item => {
-                try {
-                    return {
-                        交易日期: item.TransDate,
-                        作物名稱: item.CropName,
-                        市場名稱: item.MarketName,
-                        平均價: Number(item.Avg_Price),
-                        交易量: Number(item.Trans_Quantity)
-                    };
-                } catch (error) {
-                    console.error('資料處理錯誤:', error, '原始資料:', item);
-                    return null;
-                }
-            }).filter(item => item !== null);
-            
-            if (processedData.length === 0) {
-                throw new Error('資料處理後為空');
-            }
-            
-            // 儲存資料
-            localStorage.setItem('crop_data', JSON.stringify(processedData));
-            localStorage.setItem('last_fetch_date', today);
-            
-            return processedData;
-        } else {
-            console.log('使用快取資料');
-            const cachedData = localStorage.getItem('crop_data');
-            return cachedData ? JSON.parse(cachedData) : [];
+        let finalUrl = apiUrl;
+        if (corsMode === 'proxy') {
+            finalUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
         }
+
+        const response = await fetch(finalUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
     } catch (error) {
-        console.error('資料獲取錯誤:', error);
+        console.error('Error fetching data:', error);
         if (retryCount > 0) {
-            console.log(`重試中... 剩餘次數: ${retryCount - 1}`);
+            console.log(`Retrying... ${retryCount} attempts remaining`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             return fetchData(retryCount - 1);
         }
@@ -2314,23 +2243,33 @@ const CLICK_TIMEOUT = 2000; // 點擊超時時間（毫秒）
 
 // 初始化開發者模式
 function initDevMode() {
-    // 創建開發者模式按鈕
-    const devModeBtn = document.createElement('button');
-    devModeBtn.textContent = '開發者模式';
-    devModeBtn.className = 'dev-mode-btn';
+    console.log('開始初始化開發者模式');
+    
+    // 獲取已存在的按鈕
+    const devModeBtn = document.getElementById('devModeBtn');
+    if (!devModeBtn) {
+        console.error('找不到開發者模式按鈕');
+        return;
+    }
+
+    // 設置按鈕樣式
     devModeBtn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 10px 20px;
-        background-color: #333;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        z-index: 1000;
-        opacity: 0.7;
-        transition: opacity 0.3s;
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        padding: 10px 20px !important;
+        background-color: #333 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 5px !important;
+        cursor: pointer !important;
+        z-index: 9999 !important;
+        opacity: 0.7 !important;
+        transition: opacity 0.3s !important;
+        font-size: 14px !important;
+        font-weight: bold !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+        display: block !important;
     `;
     
     // 滑鼠懸停效果
@@ -2343,6 +2282,7 @@ function initDevMode() {
     
     // 點擊事件
     devModeBtn.addEventListener('click', () => {
+        console.log('開發者模式按鈕被點擊');
         const devModePanel = document.getElementById('devModePanel');
         if (devModePanel) {
             devModePanel.style.display = devModePanel.style.display === 'none' ? 'block' : 'none';
@@ -2351,8 +2291,20 @@ function initDevMode() {
         }
     });
     
-    document.body.appendChild(devModeBtn);
+    console.log('開發者模式按鈕初始化完成');
 }
+
+// 確保在頁面載入完成後初始化開發者模式
+window.addEventListener('load', () => {
+    console.log('頁面完全載入，準備初始化開發者模式');
+    initDevMode();
+});
+
+// 同時也在 DOMContentLoaded 時初始化
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM 內容載入完成，準備初始化開發者模式');
+    initDevMode();
+});
 
 // 創建開發者模式面板
 function createDevModePanel() {
@@ -2385,6 +2337,7 @@ function createDevModePanel() {
             <button class="action-btn" style="background-color: #2196F3;">查看資料庫</button>
             <button class="action-btn" style="background-color: #FF9800;">功能設定</button>
             <button class="action-btn" style="background-color: #9C27B0;">主題設定</button>
+            <button class="action-btn" style="background-color: #607D8B;">CORS 設定</button>
         </div>
     `;
     
@@ -2441,6 +2394,7 @@ function createDevModePanel() {
     buttons[1].addEventListener('click', viewDatabase);
     buttons[2].addEventListener('click', showFeatureSettings);
     buttons[3].addEventListener('click', showThemeSettings);
+    buttons[4].addEventListener('click', showCORSSettings);
     
     document.body.appendChild(panel);
 }
@@ -5424,3 +5378,223 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchData();
 });
 // ... existing code ...
+
+// 顯示 CORS 設定
+function showCORSSettings() {
+    const dialog = document.createElement('div');
+    dialog.className = 'cors-settings-dialog';
+    dialog.innerHTML = `
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>CORS 設定</h3>
+                <button class="close-btn">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="api-select">
+                    <label for="apiSelect">選擇 API：</label>
+                    <select id="apiSelect">
+                        <option value="https://data.moa.gov.tw/api/v1/AgriProductsTransType/">農業部原始 API</option>
+                        <option value="https://bvc-api.deno.dev">備用 API</option>
+                        <option value="https://backup0821.github.io/API/Better-vegetable-catcher/marketTV-drvice.json">TV 版本 API</option>
+                    </select>
+                </div>
+                <div class="cors-select">
+                    <label for="corsMode">CORS 模式：</label>
+                    <select id="corsMode">
+                        <option value="direct">直連</option>
+                        <option value="proxy">CORS Proxy</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button id="testConnectionBtn" class="test-btn">測試連線</button>
+                    <button id="saveCORSSettingsBtn" class="save-btn">儲存設定</button>
+                </div>
+                <div id="corsTestResult" class="test-result"></div>
+            </div>
+        </div>
+    `;
+
+    // 添加樣式
+    const style = document.createElement('style');
+    style.textContent = `
+        .cors-settings-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+        }
+        
+        .cors-settings-dialog .dialog-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .cors-settings-dialog .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .cors-settings-dialog .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .cors-settings-dialog .api-select,
+        .cors-settings-dialog .cors-select {
+            margin-bottom: 15px;
+        }
+        
+        .cors-settings-dialog select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .cors-settings-dialog .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .cors-settings-dialog .test-btn,
+        .cors-settings-dialog .save-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+        
+        .cors-settings-dialog .test-btn {
+            background-color: #2196F3;
+        }
+        
+        .cors-settings-dialog .save-btn {
+            background-color: #4CAF50;
+        }
+        
+        .cors-settings-dialog .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .cors-settings-dialog .test-result.success {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            display: block;
+        }
+        
+        .cors-settings-dialog .test-result.error {
+            background-color: #FFEBEE;
+            color: #C62828;
+            display: block;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 添加到頁面
+    document.body.appendChild(dialog);
+
+    // 載入已儲存的設定
+    const savedApi = localStorage.getItem('selectedApi') || 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/';
+    const savedCorsMode = localStorage.getItem('corsMode') || 'direct';
+    
+    document.getElementById('apiSelect').value = savedApi;
+    document.getElementById('corsMode').value = savedCorsMode;
+
+    // 關閉按鈕事件
+    const closeBtn = dialog.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => dialog.remove());
+
+    // 測試連線按鈕事件
+    const testBtn = document.getElementById('testConnectionBtn');
+    testBtn.addEventListener('click', async () => {
+        const apiUrl = document.getElementById('apiSelect').value;
+        const corsMode = document.getElementById('corsMode').value;
+        const resultDiv = document.getElementById('corsTestResult');
+        
+        try {
+            resultDiv.textContent = '測試中...';
+            resultDiv.className = 'test-result';
+            resultDiv.style.display = 'block';
+            
+            const response = await testApiConnection(apiUrl, corsMode);
+            
+            resultDiv.textContent = '連線測試成功！';
+            resultDiv.className = 'test-result success';
+        } catch (error) {
+            resultDiv.textContent = `連線測試失敗：${error.message}`;
+            resultDiv.className = 'test-result error';
+        }
+    });
+
+    // 儲存設定按鈕事件
+    const saveBtn = document.getElementById('saveCORSSettingsBtn');
+    saveBtn.addEventListener('click', () => {
+        const apiUrl = document.getElementById('apiSelect').value;
+        const corsMode = document.getElementById('corsMode').value;
+        
+        localStorage.setItem('selectedApi', apiUrl);
+        localStorage.setItem('corsMode', corsMode);
+        
+        dialog.remove();
+        showNotification('設定已儲存', 'CORS 設定已成功更新');
+    });
+}
+
+// 測試 API 連線
+async function testApiConnection(apiUrl, corsMode) {
+    const options = {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+        }
+    };
+
+    if (corsMode === 'proxy') {
+        apiUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
+    }
+
+    const response = await fetch(apiUrl, options);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response;
+}
+
+// ... existing code ...
+// 初始化事件監聽器
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化開發者模式
+    initDevMode();
+    
+    // 初始化其他功能
+    initEnvironmentSettings();
+    initDevModeFeatures();
+    initNotificationCheck();
+    initMarketRestCheck();
+    initUpdateCheck();
+    initVersionCheck();
+    initETagStatusCheck();
+    initThemeSettings();
+});
