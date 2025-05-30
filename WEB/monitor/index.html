@@ -7,10 +7,7 @@
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="ETag 監看系統 - 即時監控網站更新狀態">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="ETag 監看系統">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -1090,48 +1087,6 @@
             initialize();
             initializePages();
             startPageRotation();
-        });
-
-        // 註冊 Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker 註冊成功:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker 註冊失敗:', error);
-                    });
-            });
-        }
-
-        // 安裝提示
-        let deferredPrompt;
-        const installButton = document.createElement('button');
-        installButton.style.display = 'none';
-        installButton.className = 'fixed bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-        installButton.innerHTML = '安裝應用程式';
-        document.body.appendChild(installButton);
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installButton.style.display = 'block';
-        });
-
-        installButton.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`使用者選擇: ${outcome}`);
-                deferredPrompt = null;
-                installButton.style.display = 'none';
-            }
-        });
-
-        window.addEventListener('appinstalled', (evt) => {
-            installButton.style.display = 'none';
-            console.log('應用程式已成功安裝');
         });
     </script>
     <script src="monitor.js"></script>
