@@ -4,6 +4,8 @@ const refreshBtn = document.getElementById('refreshBtn');
 const loadingIndicator = document.getElementById('loadingIndicator');
 const lastUpdateTime = document.getElementById('lastUpdateTime');
 const apiSelect = document.getElementById('apiSelect');
+const corsMode = document.getElementById('corsMode');
+const errorMessage = document.getElementById('errorMessage');
 
 // 顯示載入中
 function showLoading() {
@@ -13,6 +15,18 @@ function showLoading() {
 // 隱藏載入中
 function hideLoading() {
     loadingIndicator.style.display = 'none';
+}
+
+// 顯示錯誤訊息
+function showError(msg) {
+    errorMessage.textContent = msg;
+    errorMessage.style.display = 'block';
+}
+
+// 隱藏錯誤訊息
+function hideError() {
+    errorMessage.textContent = '';
+    errorMessage.style.display = 'none';
 }
 
 // 更新最後更新時間
@@ -68,12 +82,23 @@ function processApiData(data, apiUrl) {
     }
 }
 
+// 取得實際要 fetch 的 API URL
+function getFetchUrl() {
+    let url = apiSelect.value;
+    if (corsMode.value === 'proxy') {
+        // 使用 CORS Proxy
+        url = 'https://cors-anywhere.herokuapp.com/' + url;
+    }
+    return url;
+}
+
 // 獲取資料
 async function fetchData() {
     try {
         showLoading();
+        hideError();
         
-        const apiUrl = apiSelect.value;
+        const apiUrl = getFetchUrl();
         console.log('使用 API:', apiUrl);
         
         const response = await fetch(apiUrl, {
@@ -93,7 +118,7 @@ async function fetchData() {
         const data = await response.json();
         
         // 處理資料
-        const processedData = processApiData(data, apiUrl);
+        const processedData = processApiData(data, apiSelect.value);
 
         if (!processedData || processedData.length === 0) {
             throw new Error('沒有資料');
@@ -105,7 +130,7 @@ async function fetchData() {
 
     } catch (error) {
         console.error('獲取資料失敗:', error);
-        alert('獲取資料失敗: ' + error.message);
+        showError('獲取資料失敗: ' + error.message + (corsMode.value === 'proxy' ? '\n如第一次使用 CORS Proxy，請先到 https://cors-anywhere.herokuapp.com/corsdemo 申請臨時權限。' : ''));
     } finally {
         hideLoading();
     }
@@ -118,6 +143,7 @@ async function init() {
     
     // 綁定 API 選擇變更事件
     apiSelect.addEventListener('change', fetchData);
+    corsMode.addEventListener('change', fetchData);
 
     // 首次載入資料
     await fetchData();

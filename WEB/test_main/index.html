@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>農產品交易資料測試頁面</title>
+    <title>CORS 測試頁面</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>農產品交易資料測試頁面</h1>
+            <h1>CORS 測試頁面</h1>
             <div class="controls">
                 <div class="api-select">
                     <label for="apiSelect">選擇 API：</label>
@@ -19,12 +19,20 @@
                         <option value="https://backup0821.github.io/API/Better-vegetable-catcher/marketTV-drvice.json">TV 版本 API</option>
                     </select>
                 </div>
+                <div class="cors-select">
+                    <label for="corsMode">CORS 模式：</label>
+                    <select id="corsMode">
+                        <option value="direct">直連</option>
+                        <option value="proxy">CORS Proxy</option>
+                    </select>
+                </div>
                 <button id="refreshBtn">重新整理資料</button>
                 <div class="loading" id="loadingIndicator" style="display: none;">載入中...</div>
             </div>
         </header>
 
         <main>
+            <div class="error-message" id="errorMessage" style="display:none;"></div>
             <div class="table-container">
                 <table id="dataTable">
                     <thead>
