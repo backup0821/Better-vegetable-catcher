@@ -222,9 +222,8 @@ async function fetchData(retryCount = 3) {
         if (lastFetchDate !== today) {
             console.log('開始獲取新資料...');
             
-            // 使用 CORS Proxy 來繞過跨域限制
-            const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-            const apiUrl = 'https://data.moa.gov.tw/api/v1/AgriProductsTransType';
+            // 直接使用農業部 API，不使用 CORS Proxy
+            const apiUrl = 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/';
             console.log('API URL:', apiUrl);
             
             const response = await fetch(apiUrl, {
@@ -233,8 +232,7 @@ async function fetchData(retryCount = 3) {
                     'Accept': 'application/json',
                     'Cache-Control': 'no-cache',
                     'Pragma': 'no-cache',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Origin': window.location.origin
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 },
                 mode: 'cors',
                 credentials: 'omit'
@@ -242,6 +240,11 @@ async function fetchData(retryCount = 3) {
             
             if (!response.ok) {
                 console.error('API 回應狀態:', response.status, response.statusText);
+                if (retryCount > 0) {
+                    console.log(`重試中... 剩餘重試次數: ${retryCount - 1}`);
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒後重試
+                    return fetchData(retryCount - 1);
+                }
                 throw new Error(`API 請求失敗: ${response.status} ${response.statusText}`);
             }
             
