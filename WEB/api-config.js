@@ -2,7 +2,7 @@
 const API_CONFIG = {
     // 主要資料 API
     DATA_API: {
-        url: 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/',
+        url: 'https://bvc-api.deno.dev/proxy/moa',  // 使用代理伺服器
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -36,7 +36,7 @@ const API_CONFIG = {
 
     // 農業部資料 API
     MOA_API: {
-        url: 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/',
+        url: 'https://bvc-api.deno.dev/proxy/moa',  // 使用代理伺服器
         method: 'GET'
     },
 
