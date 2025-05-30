@@ -43,4 +43,5 @@ ENV/
 Thumbs.db 
 
 #測試系統
-test/
+alpha/
+beta/
