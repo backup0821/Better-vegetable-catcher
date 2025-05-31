@@ -35,7 +35,7 @@ const API_CONFIG = {
 
     // 農業部資料 API
     MOA_API: {
-        url: 'https://bvc-api.deno.dev/proxy/moa',  // 主資料 API
+        url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',  // 主資料 API
         method: 'GET',
         headers: {
             'Accept': 'application/json',
