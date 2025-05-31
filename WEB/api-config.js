@@ -1,3 +1,4 @@
+console.log('API JS loaded!');
 // API 配置文件
 const API_CONFIG = {
     // 主要資料 API
