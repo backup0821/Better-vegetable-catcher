@@ -2,7 +2,7 @@
 const API_CONFIG = {
     // 主要資料 API
     DATA_API: {
-        url: 'https://bvc-api.deno.dev/proxy/moa',  // 使用代理伺服器
+        url: 'https://bvc-api.deno.dev/proxy/moa',  // 主資料 API
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -36,8 +36,13 @@ const API_CONFIG = {
 
     // 農業部資料 API
     MOA_API: {
-        url: 'https://bvc-api.deno.dev/proxy/moa',  // 使用代理伺服器
-        method: 'GET'
+        url: 'https://bvc-api.deno.dev/proxy/moa',  // 主資料 API
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        }
     },
 
     // TV 驗證系統 API
@@ -47,14 +52,91 @@ const API_CONFIG = {
     }
 };
 
+// CORS 代理設定
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
+// 修改 API 請求函數
+async function fetchWithCorsProxy(url, options = {}) {
+    const proxyUrl = CORS_PROXY + encodeURIComponent(url);
+    try {
+        const response = await fetch(proxyUrl, options);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('CORS 代理請求失敗:', error);
+        throw error;
+    }
+}
+
+// 除錯函數
+function debugLog(message, data = null) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${message}`, data || '');
+}
+
+// 統一的 API 請求函數
+async function fetchApi(apiName, options = {}) {
+    const apiConfig = API_CONFIG[apiName];
+    if (!apiConfig) {
+        throw new Error(`找不到 API 配置: ${apiName}`);
+    }
+
+    debugLog(`開始請求 API: ${apiName}`, {
+        url: apiConfig.url,
+        method: apiConfig.method,
+        headers: apiConfig.headers
+    });
+
+    try {
+        // 添加 CORS 模式
+        const fetchOptions = {
+            method: apiConfig.method,
+            headers: {
+                ...apiConfig.headers,
+                ...options.headers
+            },
+            mode: 'cors',  // 明確指定 CORS 模式
+            credentials: 'omit',  // 不發送認證資訊
+            ...options
+        };
+
+        debugLog('發送請求', fetchOptions);
+
+        const response = await fetch(apiConfig.url, fetchOptions);
+        
+        debugLog('收到回應', {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        debugLog('解析回應資料成功', { dataLength: data?.Data?.length || 0 });
+
+        return apiConfig.processData ? apiConfig.processData(data) : data;
+    } catch (error) {
+        debugLog('API 請求失敗', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    }
+}
+
 // API 更新函數
 function updateApiEndpoint(apiName, newUrl) {
     if (API_CONFIG[apiName]) {
         API_CONFIG[apiName].url = newUrl;
-        console.log(`已更新 ${apiName} API 端點為: ${newUrl}`);
+        debugLog(`已更新 ${apiName} API 端點`, { newUrl });
         return true;
     }
-    console.error(`找不到 API: ${apiName}`);
+    debugLog(`找不到 API: ${apiName}`);
     return false;
 }
 
@@ -73,5 +155,6 @@ export {
     API_CONFIG,
     updateApiEndpoint,
     getApiConfig,
-    getAllApiConfigs
+    getAllApiConfigs,
+    fetchApi
 }; 

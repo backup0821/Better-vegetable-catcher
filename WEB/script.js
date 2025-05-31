@@ -1,3 +1,5 @@
+import { fetchApi } from './api-config.js';
+
 // 版本資訊
 const VERSION = 'v2.4.web.2';
 console.log(`當前版本：${VERSION}`);
@@ -216,37 +218,58 @@ document.addEventListener('DOMContentLoaded', () => {
 // 從農產品交易行情站獲取資料
 async function fetchData(retryCount = 3) {
     try {
-        const apiUrl = localStorage.getItem('selectedApi') || 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/';
-        const corsMode = localStorage.getItem('corsMode') || 'direct';
+        // 顯示載入中提示
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'flex';
+        }
+
+        // 嘗試從快取獲取資料
+        const cachedData = localStorage.getItem('crop_data');
+        const lastFetchDate = localStorage.getItem('last_fetch_date');
+        const today = new Date().toDateString();
+
+        // 如果今天已經獲取過資料，且快取中有資料，則使用快取
+        if (lastFetchDate === today && cachedData) {
+            console.log('使用快取資料');
+            return JSON.parse(cachedData);
+        }
+
+        // 獲取新資料
+        console.log('開始獲取新資料...');
+        const data = await fetchApi('MOA_API');
         
-        let finalUrl = apiUrl;
-        if (corsMode === 'proxy') {
-            finalUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
-        }
-
-        const response = await fetch(finalUrl, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        // 儲存到快取
+        localStorage.setItem('crop_data', JSON.stringify(data));
+        localStorage.setItem('last_fetch_date', today);
+        
+        console.log('資料獲取成功');
         return data;
     } catch (error) {
         console.error('Error fetching data:', error);
+        
+        // 如果快取中有舊資料，在重試失敗後使用快取
+        const cachedData = localStorage.getItem('crop_data');
+        if (retryCount === 0 && cachedData) {
+            console.log('使用快取資料（新資料獲取失敗）');
+            return JSON.parse(cachedData);
+        }
+
         if (retryCount > 0) {
-            console.log(`Retrying... ${retryCount} attempts remaining`);
+            console.log(`重試中... 剩餘 ${retryCount} 次嘗試`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             return fetchData(retryCount - 1);
         }
+
+        // 顯示錯誤通知
+        showNotification('錯誤', `無法獲取資料: ${error.message}`);
         throw error;
+    } finally {
+        // 隱藏載入中提示
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'none';
+        }
     }
 }
 
