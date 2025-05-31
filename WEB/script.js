@@ -1,5 +1,5 @@
 import { fetchApi } from './api-config.js';
-
+console.log('JS loaded!');
 // 版本資訊
 const VERSION = 'v2.4.web.2';
 console.log(`當前版本：${VERSION}`);
