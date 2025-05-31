@@ -50,24 +50,6 @@ const API_CONFIG = {
     }
 };
 
-// CORS 代理設定
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-
-// 修改 API 請求函數
-async function fetchWithCorsProxy(url, options = {}) {
-    const proxyUrl = CORS_PROXY + encodeURIComponent(url);
-    try {
-        const response = await fetch(proxyUrl, options);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('CORS 代理請求失敗:', error);
-        throw error;
-    }
-}
-
 // 除錯函數
 function debugLog(message, data = null) {
     const timestamp = new Date().toISOString();
@@ -88,7 +70,6 @@ async function fetchApi(apiName, options = {}) {
     });
 
     try {
-        // 添加 CORS 模式
         const fetchOptions = {
             method: apiConfig.method,
             headers: {
