@@ -5406,13 +5406,6 @@ function showCORSSettings() {
                         <option value="https://backup0821.github.io/API/Better-vegetable-catcher/marketTV-drvice.json">TV 版本 API</option>
                     </select>
                 </div>
-                <div class="cors-select">
-                    <label for="corsMode">CORS 模式：</label>
-                    <select id="corsMode">
-                        <option value="direct">直連</option>
-                        <option value="proxy">CORS Proxy</option>
-                    </select>
-                </div>
                 <div class="button-group">
                     <button id="testConnectionBtn" class="test-btn">測試連線</button>
                     <button id="saveCORSSettingsBtn" class="save-btn">儲存設定</button>
@@ -5422,153 +5415,30 @@ function showCORSSettings() {
         </div>
     `;
 
-    // 添加樣式
-    const style = document.createElement('style');
-    style.textContent = `
-        .cors-settings-dialog {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1002;
-        }
-        
-        .cors-settings-dialog .dialog-content {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-        }
-        
-        .cors-settings-dialog .dialog-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .cors-settings-dialog .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        
-        .cors-settings-dialog .api-select,
-        .cors-settings-dialog .cors-select {
-            margin-bottom: 15px;
-        }
-        
-        .cors-settings-dialog select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .cors-settings-dialog .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .cors-settings-dialog .test-btn,
-        .cors-settings-dialog .save-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-        }
-        
-        .cors-settings-dialog .test-btn {
-            background-color: #2196F3;
-        }
-        
-        .cors-settings-dialog .save-btn {
-            background-color: #4CAF50;
-        }
-        
-        .cors-settings-dialog .test-result {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            display: none;
-        }
-        
-        .cors-settings-dialog .test-result.success {
-            background-color: #E8F5E9;
-            color: #2E7D32;
-            display: block;
-        }
-        
-        .cors-settings-dialog .test-result.error {
-            background-color: #FFEBEE;
-            color: #C62828;
-            display: block;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // 添加到頁面
-    document.body.appendChild(dialog);
+    // ... existing code ...
 
     // 載入已儲存的設定
     const savedApi = localStorage.getItem('selectedApi') || 'https://data.moa.gov.tw/api/v1/AgriProductsTransType/';
-    const savedCorsMode = localStorage.getItem('corsMode') || 'direct';
+    localStorage.setItem('corsMode', 'direct');  // 強制設定為直連模式
     
     document.getElementById('apiSelect').value = savedApi;
-    document.getElementById('corsMode').value = savedCorsMode;
 
-    // 關閉按鈕事件
-    const closeBtn = dialog.querySelector('.close-btn');
-    closeBtn.addEventListener('click', () => dialog.remove());
-
-    // 測試連線按鈕事件
-    const testBtn = document.getElementById('testConnectionBtn');
-    testBtn.addEventListener('click', async () => {
-        const apiUrl = document.getElementById('apiSelect').value;
-        const corsMode = document.getElementById('corsMode').value;
-        const resultDiv = document.getElementById('corsTestResult');
-        
-        try {
-            resultDiv.textContent = '測試中...';
-            resultDiv.className = 'test-result';
-            resultDiv.style.display = 'block';
-            
-            const response = await testApiConnection(apiUrl, corsMode);
-            
-            resultDiv.textContent = '連線測試成功！';
-            resultDiv.className = 'test-result success';
-        } catch (error) {
-            resultDiv.textContent = `連線測試失敗：${error.message}`;
-            resultDiv.className = 'test-result error';
-        }
-    });
+    // ... existing code ...
 
     // 儲存設定按鈕事件
     const saveBtn = document.getElementById('saveCORSSettingsBtn');
     saveBtn.addEventListener('click', () => {
         const apiUrl = document.getElementById('apiSelect').value;
-        const corsMode = document.getElementById('corsMode').value;
-        
         localStorage.setItem('selectedApi', apiUrl);
-        localStorage.setItem('corsMode', corsMode);
+        localStorage.setItem('corsMode', 'direct');  // 強制設定為直連模式
         
         dialog.remove();
-        showNotification('設定已儲存', 'CORS 設定已成功更新');
+        showNotification('設定已儲存', 'API 設定已成功更新');
     });
 }
 
 // 測試 API 連線
-async function testApiConnection(apiUrl, corsMode) {
+async function testApiConnection(apiUrl) {
     const options = {
         method: 'GET',
         headers: {
@@ -5576,10 +5446,6 @@ async function testApiConnection(apiUrl, corsMode) {
             'Cache-Control': 'no-cache'
         }
     };
-
-    if (corsMode === 'proxy') {
-        apiUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
-    }
 
     const response = await fetch(apiUrl, options);
     
@@ -5589,6 +5455,7 @@ async function testApiConnection(apiUrl, corsMode) {
     
     return response;
 }
+// ... existing code ...
 
 // ... existing code ...
 // 初始化事件監聽器
