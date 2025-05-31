@@ -24,10 +24,10 @@
         },
         {
             "name": "4 主系統",
-            "url": "https://backup0821.github.io/Better-vegetable-catcher/web",
+            "url": "https://backup0821.github.io/Better-vegetable-catcher/WEB",
             "description": "農產分析 主要系統",
             "icon": "fa-analytics",
-            "forceStatus": "503"
+            "forceStatus": "auto"
         },
         {
             "name": "5 農業部 主API - 原API",
