@@ -1,5 +1,5 @@
 import { fetchApi } from './api-config.js';
-
+console.log('script.js loaded!');
 // 版本資訊
 const VERSION = 'v2.4.web.2';
 console.log(`當前版本：${VERSION}`);
@@ -310,7 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // 初始化資料載入
-    fetchData();
+    fetchData().then(data => {
+        cropData = data;
+        updateCropList();
+    });
 });
 
 // 顯示通知函數
@@ -2457,20 +2460,38 @@ function initEnvironmentSettings() {
 
 // 初始化開發者模式功能
 function initDevModeFeatures() {
-    // 添加查看 API 資料按鈕
+    // 取得開發者面板內容區塊
     const devModePanel = document.getElementById('devModePanel');
-    if (devModePanel) {
+    const devModeContent = document.querySelector('.dev-mode-content') || devModePanel;
+    if (!devModeContent) return;
+
+    // --- API 資料按鈕 ---
+    if (!devModeContent.querySelector('.action-btn.api-viewer')) {
         const apiViewerBtn = document.createElement('button');
         apiViewerBtn.textContent = '查看 API 資料';
-        apiViewerBtn.className = 'action-btn';
+        apiViewerBtn.className = 'action-btn api-viewer';
         apiViewerBtn.style.backgroundColor = '#9C27B0';
         apiViewerBtn.addEventListener('click', showApiData);
-        
-        // 將按鈕添加到操作按鈕組
-        const actionButtons = devModePanel.querySelector('.action-buttons');
+        // 嘗試插入到 action-buttons 區塊
+        const actionButtons = devModeContent.querySelector('.action-buttons');
         if (actionButtons) {
             actionButtons.appendChild(apiViewerBtn);
+        } else {
+            devModeContent.appendChild(apiViewerBtn);
         }
+    }
+
+    // --- 農業氣象區塊/按鈕 ---
+    if (!devModeContent.querySelector('.dev-mode-section.weather-section')) {
+        const weatherSection = document.createElement('div');
+        weatherSection.className = 'dev-mode-section weather-section';
+        weatherSection.innerHTML = '<h3>農業氣象</h3>';
+        const weatherButton = document.createElement('button');
+        weatherButton.id = 'showAgriculturalWeather';
+        weatherButton.textContent = '今日農業氣象';
+        weatherButton.addEventListener('click', showAgriculturalWeatherVideo);
+        weatherSection.appendChild(weatherButton);
+        devModeContent.appendChild(weatherSection);
     }
 }
 
@@ -2655,9 +2676,6 @@ document.head.appendChild(style);
 document.addEventListener('DOMContentLoaded', () => {
     // ... 其他初始化程式碼 ...
     
-    // 初始化開發者模式功能
-    initDevModeFeatures();
-});
 
 // 初始化抓取更多資料按鈕
 function initFetchMoreDataButton() {
@@ -3060,24 +3078,7 @@ async function restoreIndexedDBData(storeName, data) {
     });
 }
 
-// 修改開發者模式功能初始化
-function initDevModeFeatures() {
-    const devModeContent = document.querySelector('.dev-mode-content');
-    
-    // 新增農業氣象影片區塊
-    const weatherSection = document.createElement('div');
-    weatherSection.className = 'dev-mode-section';
-    weatherSection.innerHTML = `
-        <h3>農業氣象</h3>
-        <button id="showAgriculturalWeather">今日農業氣象</button>
-    `;
-    devModeContent.appendChild(weatherSection);
 
-    // 綁定農業氣象按鈕事件
-    document.getElementById('showAgriculturalWeather').addEventListener('click', showAgriculturalWeatherVideo);
-    
-    // ... existing code ...
-}
 
 // ... existing code ...
 
@@ -4534,25 +4535,6 @@ async function showAgriculturalWeatherVideo() {
 }
 
 // 在開發者模式中新增農業氣象按鈕
-function initDevModeFeatures() {
-    // ... existing code ...
-    
-    // 新增農業氣象按鈕
-    const weatherButton = document.createElement('button');
-    weatherButton.id = 'showWeatherVideo';
-    weatherButton.textContent = '今日農業氣象';
-    weatherButton.addEventListener('click', showAgriculturalWeatherVideo);
-    
-    // 將按鈕加入到開發者模式介面中
-    const devModeContent = document.querySelector('.dev-mode-content');
-    if (devModeContent) {
-        const weatherSection = document.createElement('div');
-        weatherSection.className = 'dev-mode-section';
-        weatherSection.innerHTML = '<h3>農業氣象</h3>';
-        weatherSection.appendChild(weatherButton);
-        devModeContent.appendChild(weatherSection);
-    }
-}
 
 // ... existing code ...
 
@@ -5398,7 +5380,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
     
     // 初始化資料載入
-    fetchData();
+    fetchData().then(data => {
+        cropData = data;
+        updateCropList();
+    });
 });
 // ... existing code ...
 
@@ -5620,4 +5605,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
-});
+})})
