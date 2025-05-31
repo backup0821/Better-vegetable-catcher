@@ -310,7 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // 初始化資料載入
-    fetchData();
+    fetchData().then(data => {
+        cropData = data;
+        updateCropList();
+    });
 });
 
 // 顯示通知函數
@@ -5398,7 +5401,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
     
     // 初始化資料載入
-    fetchData();
+    fetchData().then(data => {
+        cropData = data;
+        updateCropList();
+    });
 });
 // ... existing code ...
 
