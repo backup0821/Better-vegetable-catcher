@@ -4546,8 +4546,16 @@ document.addEventListener('DOMContentLoaded', () => {
 async function fetchAgriculturalWeatherVideo() {
     try {
         const response = await fetch('https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx');
-        if (!response.ok) throw new Error('無法獲取農業氣象影片資料');
+        if (!response.ok) {
+            console.error('農業氣象影片 API 回應錯誤:', response.status);
+            return null;
+        }
+        
         const data = await response.json();
+        if (!Array.isArray(data) || data.length === 0) {
+            console.log('農業氣象影片資料為空');
+            return null;
+        }
         
         // 獲取今天的日期
         const today = new Date();
@@ -4557,13 +4565,14 @@ async function fetchAgriculturalWeatherVideo() {
         const todayStr = `${year}${month}${day}`;
         
         // 尋找今天的影片
-        const todayVideo = data.find(item => item.title.includes(todayStr));
+        const todayVideo = data.find(item => item.title && item.title.includes(todayStr));
         
-        if (todayVideo) {
+        if (todayVideo && todayVideo.link) {
             // 從 YouTube 連結中提取影片 ID
             const videoId = todayVideo.link.split('/').pop();
             return videoId;
         }
+        console.log('未找到今日農業氣象影片');
         return null;
     } catch (error) {
         console.error('獲取農業氣象影片時發生錯誤:', error);
@@ -4576,18 +4585,25 @@ async function showAgriculturalWeatherVideo() {
     try {
         const videoId = await fetchAgriculturalWeatherVideo();
         const mainContent = document.querySelector('.display-panel');
+        if (!mainContent) {
+            console.error('找不到顯示面板元素');
+            return;
+        }
+
         // 插入前先移除舊的影音區塊
         const oldVideo = mainContent.querySelector('.video-container');
         if (oldVideo) oldVideo.remove();
+
         const videoContainer = document.createElement('div');
         videoContainer.className = 'video-container';
+        
         if (!videoId) {
             // 沒有今日影片，顯示預設圖片
             console.log('[農業氣象影音] 今日無影片，顯示 NO_VIDEO.jpg');
             videoContainer.innerHTML = `
-                <div style="width:100%;text-align:center;">
+                <div style="width:100%;text-align:center;background:#f5f5f5;padding:20px;border-radius:8px;">
                     <img src="image/NO_VIDEO.jpg" alt="今日無農業氣象影音" style="max-width:100%;height:315px;object-fit:contain;">
-                    <div style="color:#888;margin-top:8px;">今日無農業氣象影音</div>
+                    <div style="color:#666;margin-top:12px;font-size:16px;">今日無農業氣象影音</div>
                 </div>
             `;
         } else {
@@ -4600,17 +4616,26 @@ async function showAgriculturalWeatherVideo() {
                     src="https://www.youtube.com/embed/${videoId}" 
                     frameborder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
+                    allowfullscreen
+                    style="border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
                 </iframe>
             `;
         }
+
         // 將影片容器插入到圖表區域之前
-        mainContent.insertBefore(videoContainer, document.getElementById('chartArea'));
+        const chartArea = document.getElementById('chartArea');
+        if (chartArea) {
+            mainContent.insertBefore(videoContainer, chartArea);
+        } else {
+            mainContent.appendChild(videoContainer);
+        }
     } catch (error) {
         console.error('顯示農業氣象影片時發生錯誤:', error);
-        showNotification('無法顯示農業氣象影片');
+        showNotification('無法顯示農業氣象影片', 'error');
     }
 }
+
+// ... existing code ...
 
 // 在開發者模式中新增農業氣象按鈕
 
