@@ -37,6 +37,16 @@ const API_CONFIG = {
                     交易量: Number(item.交易量 || item.Trans_Quantity)
                 }));
             }
+            // 備用API格式（單一物件）
+            if (typeof data === 'object' && data !== null) {
+                return [{
+                    交易日期: data.交易日期 || data.TransDate,
+                    作物名稱: data.作物名稱 || data.CropName,
+                    市場名稱: data.市場名稱 || data.MarketName,
+                    平均價: Number(data.平均價 || data.Avg_Price),
+                    交易量: Number(data.交易量 || data.Trans_Quantity)
+                }];
+            }
             // 其他情況
             console.error('API 回傳格式錯誤', data);
             return [];
