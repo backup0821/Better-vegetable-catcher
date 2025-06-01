@@ -4580,6 +4580,7 @@ async function showAgriculturalWeatherVideo() {
         videoContainer.className = 'video-container';
         if (!videoId) {
             // 沒有今日影片，顯示預設圖片
+            console.log('[農業氣象影音] 今日無影片，顯示 NO_VIDEO.jpg');
             videoContainer.innerHTML = `
                 <div style="width:100%;text-align:center;">
                     <img src="image/NO_VIDEO.jpg" alt="今日無農業氣象影音" style="max-width:100%;height:315px;object-fit:contain;">
@@ -4588,6 +4589,7 @@ async function showAgriculturalWeatherVideo() {
             `;
         } else {
             // 有今日影片，顯示 YouTube 影片
+            console.log(`[農業氣象影音] 今日影片ID: ${videoId}`);
             videoContainer.innerHTML = `
                 <iframe 
                     width="100%" 
