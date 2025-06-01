@@ -17,14 +17,24 @@ const API_CONFIG = {
         timeout: 10000,   // 10 秒（主API）
         // 資料格式處理函數
         processData: (data) => {
-            // 主API與備用API格式一致
+            // 主API格式
             if (data && Array.isArray(data.Data)) {
                 return data.Data.map(item => ({
-                    交易日期: item.TransDate,
-                    作物名稱: item.CropName,
-                    市場名稱: item.MarketName,
-                    平均價: Number(item.Avg_Price),
-                    交易量: Number(item.Trans_Quantity)
+                    交易日期: item.交易日期 || item.TransDate,
+                    作物名稱: item.作物名稱 || item.CropName,
+                    市場名稱: item.市場名稱 || item.MarketName,
+                    平均價: Number(item.平均價 || item.Avg_Price),
+                    交易量: Number(item.交易量 || item.Trans_Quantity)
+                }));
+            }
+            // 備用API格式（直接是陣列）
+            if (Array.isArray(data)) {
+                return data.map(item => ({
+                    交易日期: item.交易日期 || item.TransDate,
+                    作物名稱: item.作物名稱 || item.CropName,
+                    市場名稱: item.市場名稱 || item.MarketName,
+                    平均價: Number(item.平均價 || item.Avg_Price),
+                    交易量: Number(item.交易量 || item.Trans_Quantity)
                 }));
             }
             // 其他情況
