@@ -4584,14 +4584,21 @@ async function fetchAgriculturalWeatherVideo() {
 async function showAgriculturalWeatherVideo() {
     try {
         const videoId = await fetchAgriculturalWeatherVideo();
-        const mainContent = document.querySelector('.display-panel');
+        let mainContent = document.querySelector('.display-panel');
+        let chartArea = document.getElementById('chartArea');
+
+        // 如果找不到 display-panel，則用 body
         if (!mainContent) {
-            console.error('找不到顯示面板元素');
-            return;
+            console.warn('找不到 .display-panel，將使用 body');
+            mainContent = document.body;
         }
 
         // 插入前先移除舊的影音區塊
-        const oldVideo = mainContent.querySelector('.video-container');
+        let oldVideo = mainContent.querySelector('.video-container');
+        if (!oldVideo && mainContent !== document.body) {
+            // 若 display-panel 沒有，嘗試從 body 移除
+            oldVideo = document.body.querySelector('.video-container');
+        }
         if (oldVideo) oldVideo.remove();
 
         const videoContainer = document.createElement('div');
@@ -4622,12 +4629,13 @@ async function showAgriculturalWeatherVideo() {
             `;
         }
 
-        // 將影片容器插入到圖表區域之前
-        const chartArea = document.getElementById('chartArea');
-        if (chartArea) {
+        // 優先插 chartArea 前，否則插 mainContent 最前面，否則插 body 最前面
+        if (chartArea && mainContent.contains(chartArea)) {
             mainContent.insertBefore(videoContainer, chartArea);
+        } else if (mainContent.firstChild) {
+            mainContent.insertBefore(videoContainer, mainContent.firstChild);
         } else {
-            mainContent.appendChild(videoContainer);
+            document.body.insertBefore(videoContainer, document.body.firstChild);
         }
     } catch (error) {
         console.error('顯示農業氣象影片時發生錯誤:', error);
@@ -5578,6 +5586,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showAgriculturalWeatherVideo();
     console.log('[農業氣象影音] 初始化完成');
 })
-
+window.showAgriculturalWeatherVideo = showAgriculturalWeatherVideo;
 window.removePermissionPrompt = removePermissionPrompt;
 })
