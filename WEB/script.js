@@ -4575,26 +4575,30 @@ async function fetchAgriculturalWeatherVideo() {
 async function showAgriculturalWeatherVideo() {
     try {
         const videoId = await fetchAgriculturalWeatherVideo();
-        if (!videoId) {
-            showNotification('無法獲取今日農業氣象影片');
-            return;
-        }
-
-        // 在主畫面中顯示影片
         const mainContent = document.querySelector('.display-panel');
         const videoContainer = document.createElement('div');
         videoContainer.className = 'video-container';
-        videoContainer.innerHTML = `
-            <iframe 
-                width="100%" 
-                height="315" 
-                src="https://www.youtube.com/embed/${videoId}" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-        `;
-        
+        if (!videoId) {
+            // 沒有今日影片，顯示預設圖片
+            videoContainer.innerHTML = `
+                <div style="width:100%;text-align:center;">
+                    <img src="image/NO_VIDEO.jpg" alt="今日無農業氣象影音" style="max-width:100%;height:315px;object-fit:contain;">
+                    <div style="color:#888;margin-top:8px;">今日無農業氣象影音</div>
+                </div>
+            `;
+        } else {
+            // 有今日影片，顯示 YouTube 影片
+            videoContainer.innerHTML = `
+                <iframe 
+                    width="100%" 
+                    height="315" 
+                    src="https://www.youtube.com/embed/${videoId}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            `;
+        }
         // 將影片容器插入到圖表區域之前
         mainContent.insertBefore(videoContainer, document.getElementById('chartArea'));
     } catch (error) {
