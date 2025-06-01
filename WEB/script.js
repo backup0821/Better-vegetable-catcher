@@ -5542,4 +5542,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initETagStatusCheck();
     initThemeSettings();
 })
+
+window.removePermissionPrompt = removePermissionPrompt;
 })
