@@ -5536,7 +5536,7 @@ async function testApiConnection(apiUrl) {
 // 初始化事件監聽器
 document.addEventListener('DOMContentLoaded', () => {
     // 初始化開發者模式
-    initDevMode();
+    // initDevMode();
     
     // 初始化其他功能
     initEnvironmentSettings();
