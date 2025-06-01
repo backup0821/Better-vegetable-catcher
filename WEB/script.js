@@ -5548,6 +5548,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initETagStatusCheck();
     initThemeSettings();
     showAgriculturalWeatherVideo();
+    console.log('[農業氣象影音] 初始化完成');
 })
 
 window.removePermissionPrompt = removePermissionPrompt;
