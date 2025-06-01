@@ -4576,6 +4576,9 @@ async function showAgriculturalWeatherVideo() {
     try {
         const videoId = await fetchAgriculturalWeatherVideo();
         const mainContent = document.querySelector('.display-panel');
+        // 插入前先移除舊的影音區塊
+        const oldVideo = mainContent.querySelector('.video-container');
+        if (oldVideo) oldVideo.remove();
         const videoContainer = document.createElement('div');
         videoContainer.className = 'video-container';
         if (!videoId) {
