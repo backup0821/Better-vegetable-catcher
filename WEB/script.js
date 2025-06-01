@@ -5547,6 +5547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
+    showAgriculturalWeatherVideo();
 })
 
 window.removePermissionPrompt = removePermissionPrompt;
