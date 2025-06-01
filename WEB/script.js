@@ -1,7 +1,7 @@
 import { fetchApi } from './api-config.js';
 console.log('script.js loaded!');
 // 版本資訊
-const VERSION = 'v2.4.web.2';
+const VERSION = 'v2.4.web.4';
 console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 const MAINTENANCE_CHECK_URL = 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json';
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 從農產品交易行情站獲取資料
-async function fetchData(retryCount = 3) {
+async function fetchData() {
     try {
         // 顯示載入中提示
         const loadingSpinner = document.getElementById('loadingSpinner');
@@ -237,7 +237,7 @@ async function fetchData(retryCount = 3) {
 
         // 如果不是今天的資料，立即開始獲取新資料
         console.log('開始獲取新資料...');
-        const data = await fetchApi('MOA_API');
+        const data = await fetchApi('DATA_API');
         
         // 儲存到快取
         localStorage.setItem('crop_data', JSON.stringify(data));
@@ -247,22 +247,6 @@ async function fetchData(retryCount = 3) {
         return data;
     } catch (error) {
         console.error('Error fetching data:', error);
-        
-        // 如果快取中有舊資料，在重試失敗後使用快取
-        const cachedData = localStorage.getItem('crop_data');
-        if (retryCount === 0 && cachedData) {
-            console.log('使用快取資料（新資料獲取失敗）');
-            return JSON.parse(cachedData);
-        }
-
-        if (retryCount > 0) {
-            console.log(`重試中... 剩餘 ${retryCount} 次嘗試`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return fetchData(retryCount - 1);
-        }
-
-        // 顯示錯誤通知
-        showNotification('錯誤', `無法獲取資料: ${error.message}`);
         throw error;
     } finally {
         // 隱藏載入中提示

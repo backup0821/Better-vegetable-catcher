@@ -3,12 +3,18 @@ console.log('API JS loaded!');
 const API_CONFIG = {
     // 主要資料 API
     DATA_API: {
-        url: 'https://bvc-api.deno.dev/proxy/moa',  // 主資料 API
+        primaryUrl: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',  // 主資料 API
+        backupUrl: 'https://bvc-api.deno.dev/proxy/moa',  // 備用資料 API
+        currentUrl: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',  // 當前使用的 URL
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         },
+        retryCount: 0,
+        maxRetries: 3,
+        retryDelay: 2000, // 2 秒
+        timeout: 10000,   // 10 秒
         // 資料格式處理函數
         processData: (data) => {
             return data.Data.map(item => ({
@@ -63,11 +69,19 @@ async function fetchApi(apiName, options = {}) {
         throw new Error(`找不到 API 配置: ${apiName}`);
     }
 
-    debugLog(`開始請求 API: ${apiName}`, {
-        url: apiConfig.url,
-        method: apiConfig.method,
-        headers: apiConfig.headers
-    });
+    // 如果是 DATA_API，使用重試機制
+    if (apiName === 'DATA_API') {
+        return await fetchWithRetry(apiConfig, options);
+    }
+
+    // 其他 API 使用原有的請求方式
+    return await fetchWithoutRetry(apiConfig, options);
+}
+
+// 帶重試機制的請求函數
+async function fetchWithRetry(apiConfig, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
 
     try {
         const fetchOptions = {
@@ -76,21 +90,19 @@ async function fetchApi(apiName, options = {}) {
                 ...apiConfig.headers,
                 ...options.headers
             },
-            mode: 'cors',  // 明確指定 CORS 模式
-            credentials: 'omit',  // 不發送認證資訊
+            mode: 'cors',
+            credentials: 'omit',
+            signal: controller.signal,
             ...options
         };
 
-        debugLog('發送請求', fetchOptions);
-
-        const response = await fetch(apiConfig.url, fetchOptions);
-        
-        debugLog('收到回應', {
-            status: response.status,
-            statusText: response.statusText,
-            headers: Object.fromEntries(response.headers.entries())
+        debugLog(`嘗試請求 API (嘗試 ${apiConfig.retryCount + 1}/${apiConfig.maxRetries})`, {
+            url: apiConfig.currentUrl,
+            method: apiConfig.method
         });
 
+        const response = await fetch(apiConfig.currentUrl, fetchOptions);
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -98,14 +110,113 @@ async function fetchApi(apiName, options = {}) {
         const data = await response.json();
         debugLog('解析回應資料成功', { dataLength: data?.Data?.length || 0 });
 
+        // 重置重試計數
+        apiConfig.retryCount = 0;
+        
+        // 如果當前使用的是備用 API，檢查主要 API 是否恢復
+        if (apiConfig.currentUrl === apiConfig.backupUrl) {
+            checkPrimaryApi(apiConfig);
+        }
+
         return apiConfig.processData ? apiConfig.processData(data) : data;
     } catch (error) {
-        debugLog('API 請求失敗', {
-            error: error.message,
-            stack: error.stack
-        });
+        clearTimeout(timeoutId);
+        
+        if (error.name === 'AbortError') {
+            debugLog('請求超時');
+        } else {
+            debugLog('API 請求失敗', {
+                error: error.message,
+                stack: error.stack
+            });
+        }
+
+        // 如果還有重試次數，等待後重試
+        if (apiConfig.retryCount < apiConfig.maxRetries - 1) {
+            apiConfig.retryCount++;
+            debugLog(`等待 ${apiConfig.retryDelay}ms 後重試...`);
+            await new Promise(resolve => setTimeout(resolve, apiConfig.retryDelay));
+            return fetchWithRetry(apiConfig, options);
+        }
+
+        // 如果已經用完重試次數，切換到備用 API
+        if (apiConfig.currentUrl === apiConfig.primaryUrl) {
+            debugLog('切換到備用 API');
+            apiConfig.currentUrl = apiConfig.backupUrl;
+            apiConfig.retryCount = 0;
+            showApiSwitchNotification('已切換至備用資料來源');
+            return fetchWithRetry(apiConfig, options);
+        }
+
         throw error;
     }
+}
+
+// 檢查主要 API 是否恢復
+async function checkPrimaryApi(apiConfig) {
+    try {
+        const response = await fetch(apiConfig.primaryUrl, {
+            method: apiConfig.method,
+            headers: apiConfig.headers,
+            mode: 'cors',
+            credentials: 'omit',
+            signal: AbortSignal.timeout(5000) // 5 秒超時
+        });
+
+        if (response.ok) {
+            debugLog('主要 API 已恢復');
+            apiConfig.currentUrl = apiConfig.primaryUrl;
+            showApiSwitchNotification('已恢復使用主要資料來源');
+        }
+    } catch (error) {
+        debugLog('主要 API 尚未恢復', { error: error.message });
+    }
+}
+
+// 顯示 API 切換通知
+function showApiSwitchNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'api-switch-notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // 5 秒後自動移除通知
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// 一般請求函數（不帶重試機制）
+async function fetchWithoutRetry(apiConfig, options = {}) {
+    const fetchOptions = {
+        method: apiConfig.method,
+        headers: {
+            ...apiConfig.headers,
+            ...options.headers
+        },
+        mode: 'cors',
+        credentials: 'omit',
+        ...options
+    };
+
+    debugLog('發送請求', fetchOptions);
+
+    const response = await fetch(apiConfig.url, fetchOptions);
+    
+    debugLog('收到回應', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    debugLog('解析回應資料成功', { dataLength: data?.Data?.length || 0 });
+
+    return apiConfig.processData ? apiConfig.processData(data) : data;
 }
 
 // API 更新函數
