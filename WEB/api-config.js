@@ -4,7 +4,7 @@ const API_CONFIG = {
     // 主要資料 API
     DATA_API: {
         primaryUrl: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',  // 主資料 API
-        backupUrl: 'https://bvc-api.deno.dev/proxy/moa',  // 備用資料 API
+        backupUrl: 'https://bvc-api.deno.dev',  // 備用資料 API
         currentUrl: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',  // 當前使用的 URL
         method: 'GET',
         headers: {
@@ -14,20 +14,22 @@ const API_CONFIG = {
         retryCount: 0,
         maxRetries: 3,
         retryDelay: 2000, // 2 秒
-        timeout: 10000,   // 10 秒
+        timeout: 10000,   // 10 秒（主API）
         // 資料格式處理函數
         processData: (data) => {
-            if (!data || !data.Data) {
-                console.error('無效的資料格式:', data);
-                return [];
+            // 主API與備用API格式一致
+            if (data && Array.isArray(data.Data)) {
+                return data.Data.map(item => ({
+                    交易日期: item.TransDate,
+                    作物名稱: item.CropName,
+                    市場名稱: item.MarketName,
+                    平均價: Number(item.Avg_Price),
+                    交易量: Number(item.Trans_Quantity)
+                }));
             }
-            return data.Data.map(item => ({
-                交易日期: item.TransDate,
-                作物名稱: item.CropName,
-                市場名稱: item.MarketName,
-                平均價: Number(item.Avg_Price),
-                交易量: Number(item.Trans_Quantity)
-            }));
+            // 其他情況
+            console.error('API 回傳格式錯誤', data);
+            return [];
         }
     },
 
@@ -85,7 +87,9 @@ async function fetchApi(apiName, options = {}) {
 // 帶重試機制的請求函數
 async function fetchWithRetry(apiConfig, options = {}) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), apiConfig.timeout);
+    // 根據目前 URL 決定 timeout
+    const timeoutValue = (apiConfig.currentUrl === apiConfig.backupUrl) ? 20000 : apiConfig.timeout;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutValue);
 
     try {
         const fetchOptions = {
@@ -114,7 +118,7 @@ async function fetchWithRetry(apiConfig, options = {}) {
         const data = await response.json();
         
         // 檢查資料是否有效
-        if (!data || !data.Data) {
+        if (!data || !Array.isArray(data.Data)) {
             throw new Error('無效的資料格式');
         }
 
