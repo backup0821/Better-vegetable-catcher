@@ -5588,4 +5588,13 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 window.showAgriculturalWeatherVideo = showAgriculturalWeatherVideo;
 window.removePermissionPrompt = removePermissionPrompt;
+
+// 自動補上影音區塊，防止被移除或沒載入
+setInterval(() => {
+    if (!document.querySelector('.video-container')) {
+      console.log('[農業氣象影音] 影音區塊消失，自動補上');
+      showAgriculturalWeatherVideo();
+    }
+  }, 2000);
+
 })
