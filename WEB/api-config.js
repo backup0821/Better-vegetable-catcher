@@ -17,6 +17,10 @@ const API_CONFIG = {
         timeout: 10000,   // 10 秒
         // 資料格式處理函數
         processData: (data) => {
+            if (!data || !data.Data) {
+                console.error('無效的資料格式:', data);
+                return [];
+            }
             return data.Data.map(item => ({
                 交易日期: item.TransDate,
                 作物名稱: item.CropName,
@@ -108,7 +112,13 @@ async function fetchWithRetry(apiConfig, options = {}) {
         }
 
         const data = await response.json();
-        debugLog('解析回應資料成功', { dataLength: data?.Data?.length || 0 });
+        
+        // 檢查資料是否有效
+        if (!data || !data.Data) {
+            throw new Error('無效的資料格式');
+        }
+
+        debugLog('解析回應資料成功', { dataLength: data.Data.length });
 
         // 重置重試計數
         apiConfig.retryCount = 0;
@@ -148,6 +158,7 @@ async function fetchWithRetry(apiConfig, options = {}) {
             return fetchWithRetry(apiConfig, options);
         }
 
+        // 如果已經在使用備用 API 但仍然失敗，拋出錯誤
         throw error;
     }
 }
