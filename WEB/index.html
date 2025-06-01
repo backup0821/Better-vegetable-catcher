@@ -417,7 +417,7 @@
 
         /* ETag 開發者工具樣式 */
         .dev-mode-panel {
-            display: none;
+            display: none !important;
             position: fixed;
             top: 50%;
             left: 50%;
@@ -428,8 +428,8 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
             z-index: 1001;
             width: 80%;
-            max-width: 800px;
-            max-height: 90vh;
+            max-width: 600px;
+            max-height: 80vh;
             overflow-y: auto;
         }
 
@@ -571,58 +571,6 @@
 
         .dev-mode-btn:hover {
             opacity: 1 !important;
-        }
-
-        /* 開發者模式面板樣式 */
-        .dev-mode-panel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
-            z-index: 1001;
-            width: 80%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .dev-mode-panel .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .dev-mode-panel .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .dev-mode-panel .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .dev-mode-panel .action-btn {
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        .dev-mode-panel .action-btn:hover {
-            opacity: 0.8;
         }
 
         /* CORS 設定對話框樣式 */
