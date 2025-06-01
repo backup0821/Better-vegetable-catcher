@@ -243,6 +243,14 @@ async function fetchData() {
         localStorage.setItem('crop_data', JSON.stringify(data));
         localStorage.setItem('last_fetch_date', today);
         
+        // 新增休市判斷
+        if (Array.isArray(data) && data.some(item => item.作物代號 === 'rest' || item.作物名稱 === '休市')) {
+            showNotification('系統通知', '今天休市，無交易資料！');
+        }
+        if (typeof data === 'object' && data !== null && !Array.isArray(data) && (data.作物代號 === 'rest' || data.作物名稱 === '休市')) {
+            showNotification('系統通知', '今天休市，無交易資料！');
+        }
+        
         console.log('資料獲取成功');
         return data;
     } catch (error) {
