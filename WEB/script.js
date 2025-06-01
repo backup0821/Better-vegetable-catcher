@@ -231,11 +231,11 @@ async function fetchData(retryCount = 3) {
 
         // 如果今天已經獲取過資料，且快取中有資料，則使用快取
         if (lastFetchDate === today && cachedData) {
-            console.log('使用快取資料');
+            console.log('使用今日快取資料');
             return JSON.parse(cachedData);
         }
 
-        // 獲取新資料
+        // 如果不是今天的資料，立即開始獲取新資料
         console.log('開始獲取新資料...');
         const data = await fetchApi('MOA_API');
         
@@ -272,6 +272,75 @@ async function fetchData(retryCount = 3) {
         }
     }
 }
+
+// 清除快取並重新獲取資料
+async function clearCacheAndFetch() {
+    try {
+        // 清除所有相關快取
+        localStorage.removeItem('crop_data');
+        localStorage.removeItem('last_fetch_date');
+        
+        // 清除 ETag 相關快取
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+            if (key.startsWith('etag_') || key.startsWith('hash_') || key.startsWith('modified_')) {
+                localStorage.removeItem(key);
+            }
+        });
+
+        // 顯示通知
+        showNotification('系統訊息', '已清除快取，開始重新獲取資料...');
+        
+        // 重新獲取資料
+        const data = await fetchData();
+        showNotification('系統訊息', '資料已成功更新');
+        return data;
+    } catch (error) {
+        console.error('清除快取並重新獲取資料失敗:', error);
+        showNotification('錯誤', `更新資料失敗: ${error.message}`);
+        throw error;
+    }
+}
+
+// 初始化事件監聽器
+document.addEventListener('DOMContentLoaded', () => {
+    // ... 其他初始化程式碼 ...
+    
+    // 添加清除快取按鈕
+    const clearCacheBtn = document.createElement('button');
+    clearCacheBtn.textContent = '清除快取';
+    clearCacheBtn.className = 'clear-cache-btn';
+    clearCacheBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 5px 10px;
+        background-color: #f0f0f0;
+        color: #666;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        opacity: 0.3;
+        transition: opacity 0.3s;
+        z-index: 999;
+    `;
+    clearCacheBtn.addEventListener('mouseover', () => {
+        clearCacheBtn.style.opacity = '1';
+    });
+    clearCacheBtn.addEventListener('mouseout', () => {
+        clearCacheBtn.style.opacity = '0.3';
+    });
+    clearCacheBtn.addEventListener('click', clearCacheAndFetch);
+    
+    document.body.appendChild(clearCacheBtn);
+    
+    // 初始化資料載入
+    fetchData().then(data => {
+        cropData = data;
+        updateCropList();
+    });
+});
 
 // 強制更新資料
 async function forceUpdateData() {
@@ -5472,4 +5541,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
-})})
+})
+})
