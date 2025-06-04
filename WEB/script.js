@@ -224,24 +224,13 @@ async function fetchData(retryCount = 3) {
             loadingSpinner.style.display = 'flex';
         }
 
-        // 嘗試從快取獲取資料
-        const cachedData = localStorage.getItem('crop_data');
-        const lastFetchDate = localStorage.getItem('last_fetch_date');
-        const today = new Date().toDateString();
-
-        // 如果今天已經獲取過資料，且快取中有資料，則使用快取
-        if (lastFetchDate === today && cachedData) {
-            console.log('使用今日快取資料');
-            return JSON.parse(cachedData);
-        }
-
-        // 如果不是今天的資料，立即開始獲取新資料
+        // 立即嘗試獲取新資料
         console.log('開始獲取新資料...');
         const data = await fetchApi('MOA_API');
         
         // 儲存到快取
         localStorage.setItem('crop_data', JSON.stringify(data));
-        localStorage.setItem('last_fetch_date', today);
+        localStorage.setItem('last_fetch_date', new Date().toDateString());
         
         console.log('資料獲取成功');
         return data;
@@ -265,7 +254,7 @@ async function fetchData(retryCount = 3) {
         showNotification('錯誤', `無法獲取資料: ${error.message}`);
         throw error;
     } finally {
-        // 隱藏載入中提示
+        // 隱藏載入動畫
         const loadingSpinner = document.getElementById('loadingSpinner');
         if (loadingSpinner) {
             loadingSpinner.style.display = 'none';
@@ -5541,5 +5530,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
-})
-})
+})})

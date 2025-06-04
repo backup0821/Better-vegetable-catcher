@@ -20,18 +20,18 @@
             "url": "https://backup0821.github.io/API/Better-vegetable-catcher/TV-drvice.json",
             "description": "TV 版本驗證系統",
             "icon": "fa-tv",
-            "forceStatus": "410"
-        },
-        {
-            "name": "4 主系統",
-            "url": "https://backup0821.github.io/Better-vegetable-catcher/web",
-            "description": "農產分析 主要系統",
-            "icon": "fa-analytics",
             "forceStatus": "503"
         },
         {
+            "name": "4 主系統",
+            "url": "https://backup0821.github.io/Better-vegetable-catcher/WEB/",
+            "description": "農產分析 主要系統",
+            "icon": "fa-analytics",
+            "forceStatus": "auto"
+        },
+        {
             "name": "5 農業部 主API - 原API",
-            "url": "https://data.moa.gov.tw/api/v1/AgriProductsTransType/",
+            "url": "https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx",
             "description": "系統備份服務",
             "icon": "fa-database",
             "forceStatus": "auto"
