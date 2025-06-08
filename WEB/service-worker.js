@@ -63,33 +63,50 @@ self.addEventListener('activate', (event) => {
 
 // ETag 處理
 self.addEventListener('fetch', function(event) {
-    event.respondWith(
-        fetch(event.request, {
-            headers: {
-                'Cache-Control': 'no-cache',
-                'If-None-Match': event.request.headers.get('If-None-Match') || ''
-            }
-        }).then(function(response) {
-            // 如果是 304 Not Modified，從快取中獲取
-            if (response.status === 304) {
+    // 檢查是否為 API 請求
+    const isApiRequest = event.request.url.includes('/api/') || 
+                        event.request.url.includes('data.moa.gov.tw') ||
+                        event.request.url.includes('market-rest');
+
+    if (isApiRequest) {
+        // API 請求直接發送，不進行快取
+        event.respondWith(
+            fetch(event.request, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            }).catch(function() {
+                return new Response('Network error', { status: 503 });
+            })
+        );
+    } else {
+        // 非 API 請求使用原本的快取策略
+        event.respondWith(
+            fetch(event.request, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'If-None-Match': event.request.headers.get('If-None-Match') || ''
+                }
+            }).then(function(response) {
+                if (response.status === 304) {
+                    return caches.match(event.request);
+                }
+                
+                const etag = response.headers.get('ETag');
+                if (etag) {
+                    const clonedResponse = response.clone();
+                    caches.open('etag-cache').then(function(cache) {
+                        cache.put(event.request, clonedResponse);
+                    });
+                }
+                
+                return response;
+            }).catch(function() {
                 return caches.match(event.request);
-            }
-            
-            // 如果有 ETag，保存它
-            const etag = response.headers.get('ETag');
-            if (etag) {
-                const clonedResponse = response.clone();
-                caches.open('etag-cache').then(function(cache) {
-                    cache.put(event.request, clonedResponse);
-                });
-            }
-            
-            return response;
-        }).catch(function() {
-            // 如果網路請求失敗，嘗試從快取中獲取
-            return caches.match(event.request);
-        })
-    );
+            })
+        );
+    }
 });
 
 // 處理推播事件
