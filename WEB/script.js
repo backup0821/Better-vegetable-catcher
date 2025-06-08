@@ -4615,12 +4615,33 @@ async function checkMaintenanceStatus() {
         const data = await response.json();
         console.log('收到的維護資訊:', data);
         
-        if (data.maintenanceInfo && data.maintenanceInfo.isActive) {
-            console.log('顯示維護橫幅');
-            showMaintenanceBanner(data.maintenanceInfo);
-            if (data.maintenanceInfo.stopService) {
-                console.log('顯示維護對話框');
-                showMaintenanceDialog(data.maintenanceInfo);
+        if (data.maintenanceInfo) {
+            const now = new Date();
+            const startTime = new Date(data.maintenanceInfo.startTime);
+            const endTime = new Date(data.maintenanceInfo.endTime);
+            
+            // 檢查是否在維護時間範圍內
+            const isInMaintenancePeriod = now >= startTime && now <= endTime;
+            
+            if (data.maintenanceInfo.isActive && isInMaintenancePeriod) {
+                console.log('顯示維護橫幅');
+                showMaintenanceBanner(data.maintenanceInfo);
+                if (data.maintenanceInfo.stopService) {
+                    console.log('顯示維護對話框');
+                    showMaintenanceDialog(data.maintenanceInfo);
+                }
+            } else {
+                console.log('目前沒有維護公告或維護時間已過期');
+                // 移除現有的維護橫幅（如果有的話）
+                const existingBanner = document.querySelector('.maintenance-banner');
+                if (existingBanner) {
+                    existingBanner.remove();
+                }
+                // 移除現有的維護對話框（如果有的話）
+                const existingOverlay = document.querySelector('.maintenance-overlay');
+                if (existingOverlay) {
+                    existingOverlay.remove();
+                }
             }
         } else {
             console.log('目前沒有維護公告');
