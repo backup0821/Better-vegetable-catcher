@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta http-equiv="Access-Control-Allow-Methods" content="GET, POST, OPTIONS">
+    <meta http-equiv="Access-Control-Allow-Headers" content="Content-Type, Authorization">
+    <title>農產品交易資料分析系統 v2.4.web.3</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="農產分析">
+    <link rel="apple-touch-icon" href="/Better-vegetable-catcher/image/png/icon-192.png">
+    <link rel="icon" type="image/png" href="/Better-vegetable-catcher/image/png/icon-192.png">
+    <link rel="icon" type="image/x-icon" href="/Better-vegetable-catcher/image/png/favicon.ico">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 快取控制標籤 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="0">
+    <script type="module" src="api-config.js"></script>
+    <script type="module" src="script.js"></script>
+    <script src="notification.js"></script>
+    <script src="notification-checker.js"></script>
+    <style>
+        .notification-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .notification-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .notification-modal-content h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .notification-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .notification-item h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+
+        .notification-item p {
+            margin: 0;
+            color: #666;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .notification-item .remaining-time {
+            color: #4CAF50;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: right;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .close-notification-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .close-notification-btn:hover {
+            background-color: #45a049;
+        }
+
+        .check-update-btn,
+        .tv-version-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .check-update-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .tv-version-btn {
+            background-color: #FF9800;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .version-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* 添加通知測試區域的樣式 */
+        .notification-test-area {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-notification-btn {
+            display: block;
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .test-notification-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .test-notification-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 更新通知樣式 */
+        .update-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .update-content {
+            text-align: center;
+        }
+
+        .update-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .update-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .update-content button {
+            background-color: white;
+            color: #4CAF50;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .update-content button:hover {
+            background-color: #f0f0f0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ETag 狀態檢查樣式更新 */
+        .etag-status-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 1001;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 600px;
+        }
+
+        .etag-status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .etag-status-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f5f5f5;
+            transition: all 0.3s ease;
+        }
+
+        .etag-status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .etag-status-item.latest {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .etag-status-item.outdated {
+            border-left: 4px solid #FF9800;
+        }
+
+        .etag-status-item.error {
+            border-left: 4px solid #F44336;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .status-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .status-title {
+            font-weight: bold;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .status-details {
+            font-size: 14px;
+            color: #666;
+            padding-left: 30px;
+        }
+
+        .status-details p {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+
+        .refresh-status-btn,
+        .close-status-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-status-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .close-status-btn {
+            background-color: #F44336;
+            color: white;
+        }
+
+        .refresh-status-btn:hover,
+        .close-status-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* 遮罩層 */
+        .etag-status-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .etag-status-container {
+                width: 95%;
+                margin: 10px;
+            }
+
+            .status-details {
+                padding-left: 15px;
+            }
+        }
+
+        /* ETag 狀態按鈕樣式 */
+        .etag-status-btn-container {
+            display: none !important;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .etag-status-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .etag-status-btn:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .etag-status-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* CORS 設定對話框樣式 */
+        .cors-settings-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+        }
+
+        .cors-settings-dialog .dialog-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .cors-settings-dialog .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .cors-settings-dialog .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cors-settings-dialog .api-select,
+        .cors-settings-dialog .cors-select {
+            margin-bottom: 15px;
+        }
+
+        .cors-settings-dialog select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .cors-settings-dialog .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .cors-settings-dialog .test-btn,
+        .cors-settings-dialog .save-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .cors-settings-dialog .test-btn {
+            background-color: #2196F3;
+        }
+
+        .cors-settings-dialog .save-btn {
+            background-color: #4CAF50;
+        }
+
+        .cors-settings-dialog .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .cors-settings-dialog .test-result.success {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            display: block;
+        }
+
+        .cors-settings-dialog .test-result.error {
+            background-color: #FFEBEE;
+            color: #C62828;
+            display: block;
+        }
+
+        /* 移除開發者模式相關樣式 */
+        .dev-mode-panel,
+        .dev-mode-header,
+        .dev-mode-content,
+        .etag-controls,
+        .control-group,
+        .endpoint-list,
+        .endpoint-item,
+        .check-options,
+        .option-item,
+        .action-buttons,
+        .etag-results,
+        .results-container,
+        .result-item,
+        .dev-mode-btn {
+            display: none !important;
+        }
+    </style>
+    <!-- start webpushr code -->
+    <script>
+        (function(w,d, s, id) {
+            if(typeof(w.webpushr)!=='undefined') return;
+            w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};
+            var js, fjs = d.getElementsByTagName(s)[0];
+            js = d.createElement(s); 
+            js.id = id;
+            js.async=1;
+            js.src = "https://cdn.webpushr.com/app.min.js";
+            fjs.parentNode.appendChild(js);
+        }(window,document, 'script', 'webpushr-jssdk'));
+        webpushr('setup',{
+            'key':'BJRxEWk2LsfD-uq6nHeb9E_UuLc1x6MsWqG34wFESI8EAGj_d2DOJiJvcbndQaOaOt8VHurO5kxCJ7Ip3xmQHr4'
+        });
+    </script>
+    <!-- end webpushr code -->
+</head>
+<body>
+    <div class="container">
+
+        <!-- 新增通知介面 -->
+        <div id="notificationModal" class="notification-modal" style="display: none;">
+            <div class="notification-modal-content">
+                <h2>系統通知</h2>
+                <div id="notificationList"></div>
+                <button id="closeNotificationBtn" class="close-notification-btn">我知道了</button>
+            </div>
+        </div>
+
+        <header>
+            <h1>農產品交易資料分析系統</h1>
+            <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
+            <div class="version-info">
+                <p class="version">版本：<span id="versionNumber">v2.4.web.3</span></p>
+                <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
+                <div class="button-group">
+                    <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
+                    <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
+                    <a href="./monitor/index.html" class="tv-version-btn">監管介面</a>
+                </div>
+                <!-- 新增 Web Pushr 訂閱按鈕 -->
+                <div id="webpushrsubscription-button" data-button-text="訂閱通知" data-subscriber-counttext="已經訂閱了"></div>
+            </div>
+        </header>
+
+        <main>
+            <div class="control-panel">
+                    <h2>作物選擇</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
+                    </div>
+                    <div class="crop-select">
+                        <select id="cropSelect">
+                            <option value="">請選擇作物</option>
+                        </select>
+                    </div>
+                    <div class="market-select">
+                        <select id="marketSelect" multiple size="6">
+                            <option value="all" selected>全部市場</option>
+                            <optgroup label="北部地區">
+                                <option value="台北一">台北第一果菜批發市場</option>
+                                <option value="台北二">台北第二果菜批發市場</option>
+                                <option value="新北">新北市果菜批發市場</option>
+                                <option value="桃園">桃園果菜批發市場</option>
+                                <option value="新竹">新竹果菜批發市場</option>
+                            </optgroup>
+                            <optgroup label="中部地區">
+                                <option value="台中">台中果菜批發市場</option>
+                                <option value="彰化">彰化果菜批發市場</option>
+                                <option value="南投">南投果菜批發市場</option>
+                                <option value="雲林">雲林果菜批發市場</option>
+                            </optgroup>
+                            <optgroup label="南部地區">
+                                <option value="嘉義">嘉義果菜批發市場</option>
+                                <option value="台南">台南果菜批發市場</option>
+                                <option value="高雄">高雄果菜批發市場</option>
+                                <option value="屏東">屏東果菜批發市場</option>
+                            </optgroup>
+                        </select>
+                        <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
+                    </div>
+
+                <!-- 載入動畫區塊 -->
+                <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+                  <div class="spinner"></div>
+                  <div class="loading-text">資料載入中...</div>
+                </div>
+
+                <div class="analysis-section">
+                    <h2>分析功能</h2>
+                    <div class="analysis-buttons">
+                        <button id="showPriceTrend">📈 價格趨勢</button>
+                        <button id="showVolumeDist">📊 交易量分布</button>
+                        <button id="showPriceDist">📉 價格分布</button>
+                        <button id="showSeasonal">📅 季節性分析</button>
+                        <button id="showPricePrediction">🔮 價格預測</button>
+                        <button id="fetchMoreData" class="dev-only" style="display: none;">📥 抓取更多資料</button>
+                    </div>
+                </div>
+
+                <div class="export-section">
+                    <h2>資料匯出</h2>
+                    <div class="export-buttons">
+                        <button id="exportExcel">📥 匯出 Excel</button>
+                        <button id="exportCSV">📥 匯出 CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="display-panel">
+                <div id="chartArea" class="chart-area"></div>
+                <!-- 新增：往下滑指引 -->
+                <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
+                <!-- 新增：基本統計資訊卡片區塊 -->
+                <div id="statsArea" class="stats-area">
+                    <h3>基本統計資訊</h3>
+                    <div class="stats-cards">
+                        <div class="stat-card" id="avgPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📊</div>
+                            <div class="stat-label">平均價格</div>
+                            <div class="stat-value" id="avgPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="minPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📉</div>
+                            <div class="stat-label">最低價格</div>
+                            <div class="stat-value" id="minPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="maxPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📈</div>
+                            <div class="stat-label">最高價格</div>
+                            <div class="stat-value" id="maxPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="totalVolumeCard">
+                            <div class="stat-icon" style="font-size:2em;">⚖️</div>
+                            <div class="stat-label">總交易量</div>
+                            <div class="stat-value" id="totalVolume">--</div>
+                            <div class="stat-unit">公斤</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="detailTableArea" class="detail-table-area">
+                    <h3>詳細價格資料</h3>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>市場</th>
+                                <th>價格</th>
+                                <th>交易量</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody">
+                            <!-- 資料由 JS 動態產生 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="resultArea" class="result-area">
+                    <p>請選擇作物以查看分析結果</p>
+                </div>
+            </div>
+        </main>
+
+        <div id="notificationArea"></div>
+        
+        <!-- 休市日曆按鈕 -->
+        <button id="checkRestButton" style="position: fixed; bottom: 80px; right: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000;">休市日曆</button>
+        
+        <!-- 休市日曆容器 -->
+        <div id="calendarContainer" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 1001; max-width: 90%; max-height: 90vh; overflow-y: auto;">
+        </div>
+        
+        <!-- 遮罩層 -->
+        <div id="calendarOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;"></div>
+
+        <footer>
+            <p>資料來源：行政院農業委員會農產品交易行情站</p>
+            <p>資料更新時間：<span id="dataUpdateTime">載入中...</span></p>
+            <p><a href="license.html" target="_blank">授權與開源說明</a></p>
+            <p>
+                <a href="https://github.com/backup0821/Better-vegetable-catcher">農產品分析</a>© 2025 by 
+                <a href="https://creativecommons.org">Yo-Code LKJH Maker</a>已獲得
+                <a href="https://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International 許可</a>
+                <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+                <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+                <img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+            </p>
+        </footer>
+
+        <div class="footer">
+            <p>© 2024 果菜市場總整理</p>
+            <div class="device-id-buttons">
+                <button id="deviceIdBtn" class="device-id-btn">裝置識別碼</button>
+                <button id="resetDeviceIdBtn" class="device-id-btn reset-btn">重設識別碼</button>
+            </div>
+        </div>
+    </div>
+    <!-- 開發者模式介面 -->
+    <div id="devModePanel" class="dev-mode-panel">
+        <div class="dev-mode-header">
+            <h2>ETag 開發者工具</h2>
+            <button id="closeDevMode" class="close-button">×</button>
+        </div>
+        <div class="dev-mode-content">
+            <div class="etag-controls">
+                <div class="control-group">
+                    <h3>API 端點</h3>
+                    <div class="endpoint-list">
+                        <div class="endpoint-item">
+                            <input type="checkbox" id="endpoint-data" checked>
+                            <label for="endpoint-data">資料 API</label>
+                        </div>
+                        <div class="endpoint-item">
+                            <input type="checkbox" id="endpoint-version" checked>
+                            <label for="endpoint-version">版本 API</label>
+                        </div>
+                        <div class="endpoint-item">
+                            <input type="checkbox" id="endpoint-notifications" checked>
+                            <label for="endpoint-notifications">通知 API</label>
+                        </div>
+                        <div class="endpoint-item">
+                            <input type="checkbox" id="endpoint-moa" checked>
+                            <label for="endpoint-moa">農業部資料</label>
+                        </div>
+                        <div class="endpoint-item">
+                            <input type="checkbox" id="endpoint-tv" checked>
+                            <label for="endpoint-tv">TV 驗證系統</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>檢查選項</h3>
+                    <div class="check-options">
+                        <div class="option-item">
+                            <input type="checkbox" id="check-etag" checked>
+                            <label for="check-etag">ETag</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="check-hash" checked>
+                            <label for="check-hash">內容雜湊</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="check-modified" checked>
+                            <label for="check-modified">最後修改時間</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>操作</h3>
+                    <div class="action-buttons">
+                        <button id="checkAllETags" class="action-btn">檢查所有</button>
+                        <button id="clearETagCache" class="action-btn">清除快取</button>
+                        <button id="forceRefresh" class="action-btn">強制更新</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="etag-results">
+                <h3>檢查結果</h3>
+                <div id="etagResults" class="results-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker 已註冊：', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker 註冊失敗：', error);
+                    });
+            });
+        }
+
+        // 處理安裝提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPromotion();
+        });
+
+        function showInstallPromotion() {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return;
+            }
+            
+            const installButton = document.createElement('button');
+            installButton.textContent = '安裝應用程式';
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 1000;
+            `;
+            
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`使用者選擇：${outcome}`);
+                    deferredPrompt = null;
+                }
+            });
+            
+            document.body.appendChild(installButton);
+        }
+    </script>
+    <!-- 工作人員退出按鈕 -->
+    <div class="staff-logout-section">
+        <button class="staff-logout-button">
+            <span class="icon">🚪</span>
+            工作人員退出
+        </button>
+    </div>
+
+    <!-- 退出確認對話框 -->
+    <div class="staff-logout-dialog">
+        <h3>確認退出</h3>
+        <p>您確定要以工作人員身份退出系統嗎？</p>
+        <div class="buttons">
+            <button class="confirm-btn">確認退出</button>
+            <button class="cancel-btn">取消</button>
+        </div>
+    </div>
+</body>
+</html> 

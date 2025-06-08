@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>農產品交易資料分析系統 - 電視看板</title>
+    <link rel="stylesheet" href="styles/tv-display.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- 先載入 YouTube API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+    <div class="tv-container">
+        <!-- 頁首 -->
+        <header class="tv-header">
+            <div class="tv-title">農產品交易資料分析系統 - <span id="marketName">XX市場</span></div>
+            <div class="tv-subtitle">資料來源：農業部資料開放平台　製作單位：鹿中創客</div>
+        </header>
+        <div class="tv-main-layout">
+            <!-- 左側區塊 -->
+            <div class="tv-left-panel">
+                <div class="tv-clock-card">
+                    <div class="tv-clock-icon">🕒</div>
+                    <div class="tv-clock-datetime">
+                        <div id="currentDate" class="tv-date">2025/5/9</div>
+                        <div id="currentTime" class="tv-time">20:00:00</div>
+                    </div>
+                </div>
+                <div class="tv-notify-card">
+                    <div class="tv-notify-title">🔔通知</div>
+                    <div class="tv-notify-list" id="notificationList">
+                        <!-- 通知動態產生（橘色卡片由 JS 產生） -->
+                    </div>
+                </div>
+            </div>
+            <!-- 中央主要顯示區 -->
+            <div class="tv-center-panel">
+                <div class="tv-main-display" id="mainDisplay">
+                </div>
+            </div>
+            <!-- 右側區塊 -->
+            <div class="tv-right-panel">
+                <div class="tv-price-card">
+                    <div class="tv-price-label">上價</div>
+                    <div class="tv-price-value" id="priceHigh">--</div>
+                </div>
+                <div class="tv-price-card">
+                    <div class="tv-price-label">下價</div>
+                    <div class="tv-price-value" id="priceLow">--</div>
+                </div>
+                <div class="video-container">
+                    <div id="player"></div>
+                </div>
+            </div>
+        </div>
+        <!-- 下方資訊列 -->
+        <div class="tv-bottom-bar">
+            <div class="tv-bottom-item">
+                <span class="tv-bottom-icon">🍅</span>
+                <span class="tv-bottom-label">作物名稱</span>
+                <span class="tv-bottom-value" id="cropName">--</span>
+            </div>
+            <div class="tv-bottom-item">
+                <span class="tv-bottom-icon">📊</span>
+                <span class="tv-bottom-label">交易量</span>
+                <span class="tv-bottom-value" id="tradeVolume">--</span>
+            </div>
+            <div class="tv-bottom-item">
+                <span class="tv-bottom-icon">📈</span>
+                <span class="tv-bottom-label">平均價</span>
+                <span class="tv-bottom-value" id="avgPrice">--</span>
+            </div>
+        </div>
+    </div>
+    <script src="js/tv-display.js"></script>
+    <script>
+        let player;
+        let currentVideoIndex = 0;
+        let videos = [];
+
+        // 當 YouTube API 準備好時
+        function onYouTubeIframeAPIReady() {
+            // 先獲取影片列表
+            fetch('https://data.moa.gov.tw/Service/OpenData/Agriculturalcoa_videoRss.aspx')
+                .then(response => response.json())
+                .then(data => {
+                    videos = data.map(item => {
+                        // 從 YouTube URL 提取影片 ID
+                        const videoId = item.link.split('/').pop();
+                        return videoId;
+                    });
+                    
+                    // 初始化播放器
+                    initPlayer();
+                })
+                .catch(error => {
+                    console.error('獲取影片列表失敗:', error);
+                    // 如果獲取失敗，使用預設影片
+                    videos = ['dQw4w9WgXcQ']; // 預設影片ID
+                    initPlayer();
+                });
+        }
+
+        function initPlayer() {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: videos[currentVideoIndex],
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'mute': 1,  // 自動播放需要靜音
+                    'loop': 1,  // 循環播放
+                    'playsinline': 1,  // 在 iOS 上內嵌播放
+                    'enablejsapi': 1,  // 啟用 JavaScript API
+                    'origin': window.location.origin,  // 設定來源
+                    'widget_referrer': window.location.href  // 設定引用來源
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            // 當影片結束時
+            if (event.data == YT.PlayerState.ENDED) {
+                // 播放下一個影片
+                currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+                player.loadVideoById(videos[currentVideoIndex]);
+            }
+        }
+
+        function onPlayerError(event) {
+            console.error('播放器錯誤:', event.data);
+            // 如果發生錯誤，嘗試播放下一個影片
+            currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+            player.loadVideoById(videos[currentVideoIndex]);
+        }
+    </script>
+</body>
+</html>
