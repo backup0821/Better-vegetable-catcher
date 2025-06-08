@@ -77,13 +77,30 @@ function displayNotifications(notifications) {
     const currentTime = new Date();
     const validNotifications = notifications
         .filter(notification => {
-            const startTime = new Date(notification.startTime);
-            const endTime = new Date(notification.endTime);
-            return currentTime >= startTime && 
-                   currentTime <= endTime && 
-                   (notification.public || 
-                    notification.targetDevices.includes('everyone') || 
-                    notification.targetDevices.includes(deviceId));
+            // 處理不同格式的時間字串
+            let startTimeStr = notification.startTime;
+            let endTimeStr = notification.endTime;
+            
+            // 如果時間字串沒有時區標記，添加本地時區
+            if (!startTimeStr.includes('Z') && !startTimeStr.includes('+')) {
+                startTimeStr = startTimeStr + 'Z';
+            }
+            if (!endTimeStr.includes('Z') && !endTimeStr.includes('+')) {
+                endTimeStr = endTimeStr + 'Z';
+            }
+            
+            const startTime = new Date(startTimeStr);
+            const endTime = new Date(endTimeStr);
+            
+            // 檢查時間是否在有效範圍內
+            const isInTimeRange = currentTime >= startTime && currentTime <= endTime;
+            
+            // 檢查目標裝置
+            const isTargetDevice = notification.public || 
+                                 notification.targetDevices.includes('everyone') || 
+                                 notification.targetDevices.includes(deviceId);
+            
+            return isInTimeRange && isTargetDevice;
         })
         .sort((a, b) => {
             // 根據優先級排序
@@ -103,16 +120,40 @@ function showNotificationModal(notifications) {
     const notificationList = document.getElementById('notificationList');
     
     notifications.forEach(notification => {
-        const endTime = new Date(notification.endTime);
+        // 處理不同格式的時間字串
+        let endTimeStr = notification.endTime;
+        if (!endTimeStr.includes('Z') && !endTimeStr.includes('+')) {
+            endTimeStr = endTimeStr + 'Z';
+        }
+        
+        const endTime = new Date(endTimeStr);
         const currentTime = new Date();
-        const remainingDays = Math.ceil((endTime - currentTime) / (1000 * 60 * 60 * 24));
+        
+        // 計算剩餘時間（精確到小時）
+        const timeDiff = endTime - currentTime;
+        const remainingHours = Math.ceil(timeDiff / (1000 * 60 * 60));
+        const remainingDays = Math.floor(remainingHours / 24);
+        const remainingHoursInDay = remainingHours % 24;
+        
+        // 格式化剩餘時間顯示
+        let remainingTimeText = '';
+        if (remainingDays > 0) {
+            remainingTimeText = `剩餘 ${remainingDays} 天`;
+            if (remainingHoursInDay > 0) {
+                remainingTimeText += ` ${remainingHoursInDay} 小時`;
+            }
+        } else if (remainingHours > 0) {
+            remainingTimeText = `剩餘 ${remainingHours} 小時`;
+        } else {
+            remainingTimeText = '即將結束';
+        }
         
         const notificationItem = document.createElement('div');
         notificationItem.className = 'notification-item';
         notificationItem.innerHTML = `
             <h3>${notification.title}</h3>
             <p>${notification.message}</p>
-            <div class="remaining-time">有效期限：剩餘 ${remainingDays} 天</div>
+            <div class="remaining-time">有效期限：${remainingTimeText}</div>
         `;
         notificationList.appendChild(notificationItem);
     });
