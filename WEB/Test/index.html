@@ -663,6 +663,97 @@
             color: #C62828;
             display: block;
         }
+
+        /* 新增 LOGO 樣式 */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        /* 移動裝置優化 */
+        @media (max-width: 768px) {
+            .button-group button,
+            .analysis-buttons button,
+            .export-buttons button,
+            .check-update-btn,
+            .tv-version-btn,
+            #checkRestButton,
+            .staff-logout-button {
+                padding: 15px 25px !important;
+                font-size: 16px !important;
+                margin: 10px 0 !important;
+                width: 100% !important;
+                max-width: 300px !important;
+            }
+
+            .market-select select {
+                font-size: 16px !important;
+                padding: 10px !important;
+            }
+
+            .search-box input {
+                font-size: 16px !important;
+                padding: 12px !important;
+            }
+
+            .stats-cards {
+                grid-template-columns: 1fr !important;
+            }
+
+            .stat-card {
+                margin: 10px 0 !important;
+            }
+
+            .detail-table {
+                font-size: 14px !important;
+            }
+
+            .detail-table th,
+            .detail-table td {
+                padding: 12px !important;
+            }
+        }
+
+        /* 按鈕通用樣式優化 */
+        button {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 表格響應式設計 */
+        @media (max-width: 768px) {
+            .detail-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+
+        /* 統計卡片響應式設計 */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 15px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
     </style>
     <!-- start webpushr code -->
     <script>
@@ -698,6 +789,9 @@
         <button id="devModeBtn" class="dev-mode-btn">開發者模式</button>
 
         <header>
+            <div class="logo-container">
+                <img src="image/png/icon-192.png" alt="農產品交易資料分析系統 LOGO">
+            </div>
             <h1>農產品交易資料分析系統</h1>
             <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
             <div class="version-info">
