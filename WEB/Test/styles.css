@@ -6,33 +6,45 @@
 }
 
 body {
-    background-color: #f0f2f5;
-    color: #333;
+    background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+    color: var(--text-color);
     line-height: 1.6;
+    min-height: 100vh;
 }
 
 .container {
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 20px auto;
     padding: 20px;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: var(--card-background);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: transform var(--transition-speed);
+}
+
+.container:hover {
+    transform: translateY(-5px);
 }
 
 header {
     text-align: center;
     margin-bottom: 30px;
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #e0e0e0;
+    padding: 30px;
+    background: var(--card-background);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.8s ease-out;
 }
 
 header h1 {
-    color: #1a73e8;
-    margin-bottom: 10px;
-    font-size: 2.2em;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 2.5em;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .version {
@@ -89,22 +101,18 @@ main {
     margin-bottom: 30px;
 }
 
-.control-panel {
-    flex: 1;
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #e0e0e0;
+.control-panel, .display-panel {
+    background: var(--card-background);
+    backdrop-filter: blur(10px);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-speed);
 }
 
-.display-panel {
-    flex: 2;
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #e0e0e0;
+.control-panel:hover, .display-panel:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 h2 {
@@ -124,20 +132,18 @@ h2 {
 
 .search-box input, .crop-select select, .market-select select {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    padding: 12px 15px;
+    border: 2px solid rgba(74, 144, 226, 0.2);
+    border-radius: 10px;
     font-size: 16px;
-    transition: border-color 0.3s;
-    background-color: white;
-    color: #333;
-    cursor: pointer;
+    transition: all var(--transition-speed);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .search-box input:focus, .crop-select select:focus, .market-select select:focus {
-    border-color: #1a73e8;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
 }
 
 .crop-select select:hover, .market-select select:hover {
@@ -161,18 +167,25 @@ h2 {
 }
 
 button {
-    padding: 12px;
-    background-color: #1a73e8;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s;
+    font-weight: 600;
+    transition: all var(--transition-speed);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
 }
 
 button:hover {
-    background-color: #1557b0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(74, 144, 226, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 .chart-area {
@@ -199,8 +212,21 @@ footer {
         flex-direction: column;
     }
     
+    .container {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    header {
+        padding: 20px;
+    }
+    
+    header h1 {
+        font-size: 2em;
+    }
+    
     .control-panel, .display-panel {
-        width: 100%;
+        padding: 15px;
     }
     
     .analysis-buttons {
@@ -702,26 +728,12 @@ footer {
 
 /* 設定主題變數 */
 :root {
-    /* 顏色 */
-    --primary-color: #1a73e8;
-    --secondary-color: #34a853;
-    --background-color: #ffffff;
-    --text-color: #333333;
-    --accent-color: #fbbc05;
-    --error-color: #ea4335;
-
-    /* 字型 */
-    --font-family: 'Microsoft JhengHei', sans-serif;
-    --base-font-size: 16px;
-    --line-height: 1.5;
-
-    /* 間距 */
-    --spacing-unit: 8px;
-    --border-radius: 4px;
-
-    /* 動畫 */
-    --animation-duration: 300ms;
-    --animation-curve: ease;
+    --primary-color: #4a90e2;
+    --secondary-color: #6c5ce7;
+    --background-color: #f8f9fa;
+    --text-color: #2d3436;
+    --card-background: rgba(255, 255, 255, 0.7);
+    --transition-speed: 0.3s;
 }
 
 /* 使用主題變數的元素樣式 */
