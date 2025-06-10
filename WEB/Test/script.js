@@ -4615,33 +4615,12 @@ async function checkMaintenanceStatus() {
         const data = await response.json();
         console.log('收到的維護資訊:', data);
         
-        if (data.maintenanceInfo) {
-            const now = new Date();
-            const startTime = new Date(data.maintenanceInfo.startTime);
-            const endTime = new Date(data.maintenanceInfo.endTime);
-            
-            // 檢查是否在維護時間範圍內
-            const isInMaintenancePeriod = now >= startTime && now <= endTime;
-            
-            if (data.maintenanceInfo.isActive && isInMaintenancePeriod) {
-                console.log('顯示維護橫幅');
-                showMaintenanceBanner(data.maintenanceInfo);
-                if (data.maintenanceInfo.stopService) {
-                    console.log('顯示維護對話框');
-                    showMaintenanceDialog(data.maintenanceInfo);
-                }
-            } else {
-                console.log('目前沒有維護公告或維護時間已過期');
-                // 移除現有的維護橫幅（如果有的話）
-                const existingBanner = document.querySelector('.maintenance-banner');
-                if (existingBanner) {
-                    existingBanner.remove();
-                }
-                // 移除現有的維護對話框（如果有的話）
-                const existingOverlay = document.querySelector('.maintenance-overlay');
-                if (existingOverlay) {
-                    existingOverlay.remove();
-                }
+        if (data.maintenanceInfo && data.maintenanceInfo.isActive) {
+            console.log('顯示維護橫幅');
+            showMaintenanceBanner(data.maintenanceInfo);
+            if (data.maintenanceInfo.stopService) {
+                console.log('顯示維護對話框');
+                showMaintenanceDialog(data.maintenanceInfo);
             }
         } else {
             console.log('目前沒有維護公告');
@@ -4710,25 +4689,10 @@ function showMaintenanceDialog(maintenanceInfo) {
 
     // 創建對話框
     const dialog = document.createElement('div');
-    dialog.className = 'maintenance-dialog';
+    dialog.className = 'maintenance-dialog'; // 移除嚴重性等級 class
 
-    // 格式化時間
-    const formatDateTime = (dateString) => {
-        if (!dateString) return '未定';
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return '未定';
-        return date.toLocaleString('zh-TW', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-    };
-
-    const startTime = formatDateTime(maintenanceInfo.startTime);
-    const endTime = formatDateTime(maintenanceInfo.endTime);
+    const startTime = maintenanceInfo.startTime ? new Date(maintenanceInfo.startTime).toLocaleString('zh-TW') : '未定';
+    const endTime = maintenanceInfo.endTime ? new Date(maintenanceInfo.endTime).toLocaleString('zh-TW') : '未定';
 
     // 如果不是停用服務，添加關閉按鈕
     if (!maintenanceInfo.stopService) {
@@ -4755,14 +4719,35 @@ function showMaintenanceDialog(maintenanceInfo) {
     timeInfo.textContent = `維護時間：${startTime} ~ ${endTime}`;
     dialog.appendChild(timeInfo);
 
+    // 不再顯示嚴重性等級
+    // if (maintenanceInfo.severity) { ... }
+
     if (maintenanceInfo.contact) {
         const contactInfo = document.createElement('p');
-        contactInfo.textContent = `聯絡方式：${maintenanceInfo.contact.email}`;
+        if (maintenanceInfo.contact.email) {
+            const emailLink = document.createElement('a');
+            emailLink.href = `mailto:${maintenanceInfo.contact.email}`;
+            emailLink.textContent = maintenanceInfo.contact.email;
+            contactInfo.appendChild(document.createTextNode('聯絡方式：'));
+            contactInfo.appendChild(emailLink);
+        } else {
+            contactInfo.textContent = '聯絡方式：無';
+        }
         dialog.appendChild(contactInfo);
     }
 
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
+    console.log('維護對話框已顯示');
+
+    // 如果是停用服務，禁用所有互動元素
+    if (maintenanceInfo.stopService) {
+        const interactiveElements = document.querySelectorAll('button, input, select, a');
+        interactiveElements.forEach(element => {
+            element.style.pointerEvents = 'none';
+            element.style.opacity = '0.5';
+        });
+    }
 }
 
 // 確保在頁面完全載入後檢查維護狀態和通知
