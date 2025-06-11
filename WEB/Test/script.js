@@ -4633,6 +4633,16 @@ async function checkMaintenanceStatus() {
 // 顯示維護橫幅
 function showMaintenanceBanner(maintenanceInfo) {
     console.log('準備顯示維護橫幅:', maintenanceInfo);
+    
+    // 檢查維護時間是否已結束
+    const now = new Date();
+    const endTime = new Date(maintenanceInfo.endTime);
+    
+    if (now > endTime) {
+        console.log('維護時間已結束，不顯示橫幅');
+        return;
+    }
+    
     // 移除現有的維護橫幅（如果有的話）
     const existingBanner = document.querySelector('.maintenance-banner');
     if (existingBanner) {
