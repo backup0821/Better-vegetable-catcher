@@ -5530,4 +5530,29 @@ document.addEventListener('DOMContentLoaded', () => {
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
+})
+
+// 更新最後更新時間
+function updateLastUpdateTime() {
+    const lastUpdateElem = document.getElementById('lastUpdate');
+    if (lastUpdateElem) {
+        const now = new Date();
+        const formattedDate = now.toLocaleString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        lastUpdateElem.textContent = formattedDate;
+    }
+}
+
+// 在頁面載入時更新時間
+document.addEventListener('DOMContentLoaded', () => {
+    updateLastUpdateTime();
+    // 每分鐘更新一次時間
+    setInterval(updateLastUpdateTime, 60000);
 })})
