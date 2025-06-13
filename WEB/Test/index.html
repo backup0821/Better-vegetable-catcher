@@ -6,7 +6,7 @@
     <meta http-equiv="Access-Control-Allow-Origin" content="*">
     <meta http-equiv="Access-Control-Allow-Methods" content="GET, POST, OPTIONS">
     <meta http-equiv="Access-Control-Allow-Headers" content="Content-Type, Authorization">
-    <title>農產品交易資料分析系統 v2.4.web.3</title>
+    <title>農產分析</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -47,12 +47,15 @@
             line-height: 1.6;
             margin: 0;
             padding: 0;
+            min-height: 100vh;
+            width: 100%;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         /* 新版 Header 樣式 */
@@ -61,7 +64,6 @@
             color: white;
             padding: 40px 20px;
             text-align: center;
-            border-radius: 20px;
             margin-bottom: 30px;
             box-shadow: 0 4px 15px var(--shadow-color);
         }
@@ -98,7 +100,6 @@
         /* 新版控制面板樣式 */
         .control-panel {
             background: var(--card-background);
-            border-radius: 15px;
             padding: 25px;
             margin-bottom: 30px;
             box-shadow: 0 4px 15px var(--shadow-color);
@@ -144,6 +145,8 @@
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 25px;
             padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .stat-card {
@@ -179,7 +182,6 @@
             border-collapse: separate;
             border-spacing: 0;
             margin: 20px 0;
-            border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 15px var(--shadow-color);
         }
@@ -219,12 +221,11 @@
         /* 移動裝置優化 */
         @media (max-width: 768px) {
             .container {
-                padding: 10px;
+                padding: 0;
             }
 
             header {
                 padding: 30px 15px;
-                border-radius: 15px;
             }
 
             .logo-container img {
@@ -241,6 +242,7 @@
 
             .stats-cards {
                 grid-template-columns: 1fr;
+                padding: 10px;
             }
 
             .analysis-buttons {
@@ -286,7 +288,6 @@
             background: var(--card-background);
             padding: 30px;
             text-align: center;
-            border-radius: 20px;
             margin-top: 40px;
             box-shadow: 0 -4px 15px var(--shadow-color);
         }
@@ -331,18 +332,14 @@
             </div>
         </div>
 
-        <!-- 開發者模式按鈕 -->
-        <button id="devModeBtn" class="dev-mode-btn">開發者模式</button>
-
         <header>
             <div class="logo-container">
-                <img src="image/png/icon-192.png" alt="農產品交易資料分析系統 LOGO">
+                <img src="image/png/icon-192.png" alt="農產分析 LOGO">
             </div>
-            <h1>農產品交易資料分析系統</h1>
+            <h1>農產分析</h1>
             <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
             <div class="version-info">
                 <p class="version">版本：<span id="versionNumber">v2.4.web.3</span></p>
-                <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
                 <div class="button-group">
                     <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
                     <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
@@ -352,6 +349,8 @@
                 <div id="webpushrsubscription-button" data-button-text="訂閱通知" data-subscriber-counttext="已經訂閱了"></div>
             </div>
         </header>
+
+
 
         <main>
             <div class="control-panel">
@@ -404,7 +403,6 @@
                         <button id="showPriceDist">📉 價格分布</button>
                         <button id="showSeasonal">📅 季節性分析</button>
                         <button id="showPricePrediction">🔮 價格預測</button>
-                        <button id="fetchMoreData" class="dev-only" style="display: none;">📥 抓取更多資料</button>
                     </div>
                 </div>
 
@@ -504,74 +502,6 @@
             <div class="device-id-buttons">
                 <button id="deviceIdBtn" class="device-id-btn">裝置識別碼</button>
                 <button id="resetDeviceIdBtn" class="device-id-btn reset-btn">重設識別碼</button>
-            </div>
-        </div>
-    </div>
-    <!-- 開發者模式介面 -->
-    <div id="devModePanel" class="dev-mode-panel">
-        <div class="dev-mode-header">
-            <h2>ETag 開發者工具</h2>
-            <button id="closeDevMode" class="close-button">×</button>
-        </div>
-        <div class="dev-mode-content">
-            <div class="etag-controls">
-                <div class="control-group">
-                    <h3>API 端點</h3>
-                    <div class="endpoint-list">
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-data" checked>
-                            <label for="endpoint-data">資料 API</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-version" checked>
-                            <label for="endpoint-version">版本 API</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-notifications" checked>
-                            <label for="endpoint-notifications">通知 API</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-moa" checked>
-                            <label for="endpoint-moa">農業部資料</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-tv" checked>
-                            <label for="endpoint-tv">TV 驗證系統</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h3>檢查選項</h3>
-                    <div class="check-options">
-                        <div class="option-item">
-                            <input type="checkbox" id="check-etag" checked>
-                            <label for="check-etag">ETag</label>
-                        </div>
-                        <div class="option-item">
-                            <input type="checkbox" id="check-hash" checked>
-                            <label for="check-hash">內容雜湊</label>
-                        </div>
-                        <div class="option-item">
-                            <input type="checkbox" id="check-modified" checked>
-                            <label for="check-modified">最後修改時間</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h3>操作</h3>
-                    <div class="action-buttons">
-                        <button id="checkAllETags" class="action-btn">檢查所有</button>
-                        <button id="clearETagCache" class="action-btn">清除快取</button>
-                        <button id="forceRefresh" class="action-btn">強制更新</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="etag-results">
-                <h3>檢查結果</h3>
-                <div id="etagResults" class="results-container"></div>
             </div>
         </div>
     </div>

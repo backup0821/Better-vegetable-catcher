@@ -10,22 +10,21 @@ body {
     color: var(--text-color);
     line-height: 1.6;
     min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .container {
+    width: 100%;
     max-width: 1200px;
-    margin: 20px auto;
+    margin: 0 auto;
     padding: 20px;
-    background: var(--card-background);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    transition: transform var(--transition-speed);
-}
-
-.container:hover {
-    transform: translateY(-5px);
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 header {
@@ -34,14 +33,21 @@ header {
     padding: 40px 20px;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
-    border-radius: 20px;
+    border-radius: 15px;
     box-shadow: 0 4px 15px var(--shadow-color);
     animation: fadeIn 0.8s ease-out;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .logo-container {
     margin-bottom: 20px;
     animation: float 3s ease-in-out infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @keyframes float {
@@ -54,12 +60,15 @@ header {
     max-width: 150px;
     height: auto;
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 header h1 {
     font-size: 2.5em;
     margin: 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    text-align: center;
 }
 
 .version-info {
@@ -67,6 +76,11 @@ header h1 {
     padding: 15px;
     border-radius: 10px;
     margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
 }
 
 .button-group {
@@ -75,6 +89,7 @@ header h1 {
     justify-content: center;
     flex-wrap: wrap;
     margin-top: 15px;
+    width: 100%;
 }
 
 .check-update-btn,
@@ -98,8 +113,12 @@ header h1 {
 
 main {
     display: flex;
-    gap: 20px;
-    margin-bottom: 30px;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
 }
 
 .control-panel,
@@ -107,15 +126,33 @@ main {
     background: var(--card-background);
     backdrop-filter: blur(10px);
     padding: 25px;
+    margin-bottom: 30px;
     border-radius: 15px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     transition: all var(--transition-speed);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .control-panel:hover,
 .display-panel:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.search-box {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.crop-select,
+.market-select {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .search-box input,
@@ -143,6 +180,7 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
     margin: 20px 0;
+    width: 100%;
 }
 
 .analysis-buttons button {
@@ -172,6 +210,9 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 25px;
     padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .stat-card {
@@ -206,7 +247,7 @@ main {
     border-collapse: separate;
     border-spacing: 0;
     margin: 20px 0;
-    border-radius: 10px;
+    border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 4px 15px var(--shadow-color);
 }
@@ -231,9 +272,15 @@ footer {
     background: var(--card-background);
     padding: 30px;
     text-align: center;
-    border-radius: 20px;
     margin-top: 40px;
+    border-radius: 15px;
     box-shadow: 0 -4px 15px var(--shadow-color);
+    max-width: 1200px;
+    margin: 40px auto 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 footer a {
@@ -248,12 +295,11 @@ footer a:hover {
 
 @media (max-width: 768px) {
     .container {
-        margin: 10px;
-        padding: 15px;
+        padding: 10px;
     }
 
-    header {
-        padding: 30px 15px;
+    main {
+        padding: 0 10px;
     }
 
     .logo-container img {
@@ -266,15 +312,13 @@ footer a:hover {
 
     .button-group {
         flex-direction: column;
+        align-items: center;
     }
 
-    .check-update-btn,
-    .tv-version-btn {
+    .button-group a,
+    .button-group button {
         width: 100%;
-    }
-
-    main {
-        flex-direction: column;
+        max-width: 300px;
     }
 
     .control-panel,
@@ -288,11 +332,18 @@ footer a:hover {
 
     .stats-cards {
         grid-template-columns: 1fr;
+        padding: 10px;
     }
 
     .detail-table {
         display: block;
         overflow-x: auto;
+    }
+
+    .search-box,
+    .crop-select,
+    .market-select {
+        max-width: 100%;
     }
 }
 

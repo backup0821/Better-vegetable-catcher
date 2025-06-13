@@ -4633,6 +4633,16 @@ async function checkMaintenanceStatus() {
 // 顯示維護橫幅
 function showMaintenanceBanner(maintenanceInfo) {
     console.log('準備顯示維護橫幅:', maintenanceInfo);
+    
+    // 檢查維護時間是否已結束
+    const now = new Date();
+    const endTime = new Date(maintenanceInfo.endTime);
+    
+    if (now > endTime) {
+        console.log('維護時間已結束，不顯示橫幅');
+        return;
+    }
+    
     // 移除現有的維護橫幅（如果有的話）
     const existingBanner = document.querySelector('.maintenance-banner');
     if (existingBanner) {
@@ -5530,4 +5540,29 @@ document.addEventListener('DOMContentLoaded', () => {
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
+})
+
+// 更新最後更新時間
+function updateLastUpdateTime() {
+    const lastUpdateElem = document.getElementById('lastUpdate');
+    if (lastUpdateElem) {
+        const now = new Date();
+        const formattedDate = now.toLocaleString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        lastUpdateElem.textContent = formattedDate;
+    }
+}
+
+// 在頁面載入時更新時間
+document.addEventListener('DOMContentLoaded', () => {
+    updateLastUpdateTime();
+    // 每分鐘更新一次時間
+    setInterval(updateLastUpdateTime, 60000);
 })})
