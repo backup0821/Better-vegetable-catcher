@@ -5541,10 +5541,24 @@ function updateAppIcon(selected) {
   // apple-touch-icon
   let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
   if (appleIcon) appleIcon.href = iconPath;
+  // 切換液態玻璃主題
+  if (selected === 'icon2') {
+    document.body.classList.add('glass-theme');
+  } else {
+    document.body.classList.remove('glass-theme');
+  }
+}
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
 function initAppIconSelector() {
   const radios = document.querySelectorAll('input[name="appIcon"]');
+  // iOS 預設立體質感
+  if (isIOS() && !localStorage.getItem('selectedAppIcon')) {
+    localStorage.setItem('selectedAppIcon', 'icon2');
+  }
   radios.forEach(radio => {
     radio.addEventListener('change', function() {
       const selected = this.value;
@@ -5553,14 +5567,15 @@ function initAppIconSelector() {
     });
   });
   // 頁面載入時自動套用
-  const savedIcon = localStorage.getItem('selectedAppIcon') || 'icon1';
+  const savedIcon = localStorage.getItem('selectedAppIcon') || (isIOS() ? 'icon2' : 'icon1');
   updateAppIcon(savedIcon);
   const checkedRadio = document.querySelector(`input[name="appIcon"][value="${savedIcon}"]`);
   if (checkedRadio) checkedRadio.checked = true;
 }
+// ... existing code ...
 
 document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('iconSelectSection')) {
     initAppIconSelector();
   }
-});
+})})

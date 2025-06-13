@@ -1705,3 +1705,72 @@ input:checked + .slider:before {
   font-size: 15px;
   color: #333;
 }
+
+/* 液態玻璃主題 glass-theme */
+body.glass-theme {
+  background: linear-gradient(135deg, #e0f7fa 0%, #fffde4 100%) !important;
+}
+body.glass-theme .container,
+body.glass-theme .control-panel,
+body.glass-theme .display-panel,
+body.glass-theme .stat-card,
+body.glass-theme .icon-select-section,
+body.glass-theme .version-info,
+body.glass-theme .export-section,
+body.glass-theme .analysis-section,
+body.glass-theme .stats-area,
+body.glass-theme .detail-table-area,
+body.glass-theme .result-area {
+  background: rgba(255,255,255,0.35);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  border: 1.5px solid rgba(255,255,255,0.25);
+}
+body.glass-theme header,
+body.glass-theme footer,
+body.glass-theme .footer {
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.10);
+}
+body.glass-theme button,
+body.glass-theme .stat-card,
+body.glass-theme .icon-options label {
+  background: rgba(255,255,255,0.45) !important;
+  box-shadow: 0 2px 8px rgba(31,38,135,0.10);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+body.glass-theme .stat-card {
+  color: #1976d2;
+}
+body.glass-theme .icon-options label {
+  border-color: #90caf9;
+}
+body.glass-theme .icon-options input[type="radio"]:checked + img {
+  box-shadow: 0 0 0 4px #1976d2;
+  border-color: #1976d2;
+}
+body.glass-theme .icon-options label:hover {
+  border-color: #1976d2;
+}
+body.glass-theme .icon-options img {
+  border: 2px solid #90caf9;
+}
+body.glass-theme .stat-label, body.glass-theme .stat-unit {
+  color: #1976d2;
+}
+body.glass-theme .stat-value {
+  color: #0288d1;
+}
+body.glass-theme .version-info {
+  color: #0288d1;
+}
+body.glass-theme .market-select-hint {
+  color: #0288d1;
+}
