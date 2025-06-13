@@ -1665,3 +1665,43 @@ input:checked + .slider:before {
 .stat-unit {
     color: #111 !important;
 }
+
+/* 應用程式圖示選擇區塊 */
+.icon-select-section {
+  margin: 24px 0;
+  text-align: center;
+}
+.icon-options {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+.icon-options label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 12px 16px;
+  border-radius: 18px;
+  border: 2px solid transparent;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+.icon-options label:hover {
+  box-shadow: 0 4px 16px rgba(76,175,80,0.15);
+  border-color: #8bc34a;
+}
+.icon-options input[type="radio"]:checked + img {
+  box-shadow: 0 0 0 4px #4CAF50;
+  border-color: #4CAF50;
+}
+.icon-options img {
+  border-radius: 16px;
+  border: 2px solid #bbb;
+  margin-bottom: 8px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.icon-options div {
+  margin-top: 4px;
+  font-size: 15px;
+  color: #333;
+}

@@ -5530,4 +5530,37 @@ document.addEventListener('DOMContentLoaded', () => {
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
-})})
+})
+
+// ===== 應用程式圖示選擇功能 =====
+function updateAppIcon(selected) {
+  let iconPath = selected === 'icon2' ? 'image/png/icon2-192.png' : 'image/png/icon-192.png';
+  // favicon
+  let favicon = document.querySelector('link[rel="icon"]');
+  if (favicon) favicon.href = iconPath;
+  // apple-touch-icon
+  let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+  if (appleIcon) appleIcon.href = iconPath;
+}
+
+function initAppIconSelector() {
+  const radios = document.querySelectorAll('input[name="appIcon"]');
+  radios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      const selected = this.value;
+      localStorage.setItem('selectedAppIcon', selected);
+      updateAppIcon(selected);
+    });
+  });
+  // 頁面載入時自動套用
+  const savedIcon = localStorage.getItem('selectedAppIcon') || 'icon1';
+  updateAppIcon(savedIcon);
+  const checkedRadio = document.querySelector(`input[name="appIcon"][value="${savedIcon}"]`);
+  if (checkedRadio) checkedRadio.checked = true;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('iconSelectSection')) {
+    initAppIconSelector();
+  }
+});
