@@ -728,6 +728,11 @@
               <div>立體質感</div>
             </label>
           </div>
+          <!-- 新增預覽和重設按鈕 -->
+          <div style="margin-top: 16px;">
+            <button id="previewIconBtn" class="test-notification-btn" style="margin-right: 10px;">預覽圖示</button>
+            <button id="resetIconBtn" class="test-notification-btn" style="background-color: #FF9800;">重設為預設</button>
+          </div>
         </div>
 
         <main>
@@ -953,6 +958,28 @@
         </div>
     </div>
 
+    <!-- 圖示預覽 Modal -->
+    <div id="iconPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
+      <div style="background:white; border-radius:12px; padding:32px 24px; min-width:300px; max-width:90vw; text-align:center; position:relative;">
+        <button class="close-preview-btn" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:24px; cursor:pointer;">×</button>
+        <h3>圖示預覽</h3>
+        <div style="display:flex; justify-content:center; gap:32px; margin-top:20px;">
+          <div>
+            <div>Favicon</div>
+            <div class="preview-favicon" style="margin:8px 0;"></div>
+          </div>
+          <div>
+            <div>桌面</div>
+            <div class="preview-desktop" style="margin:8px 0;"></div>
+          </div>
+          <div>
+            <div>行動裝置</div>
+            <div class="preview-mobile" style="margin:8px 0;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
         // 註冊 Service Worker
         if ('serviceWorker' in navigator) {
@@ -1024,5 +1051,170 @@
             <button class="cancel-btn">取消</button>
         </div>
     </div>
+
+    <script>
+    // --- App Icon 選擇功能完善 ---
+    const iconMap = {
+      icon1: {
+        favicon: 'image/png/icon-192.png',
+        manifest: 'manifest.json', // 預設
+        apple: 'image/png/icon-192.png',
+        label: '經典扁平',
+        desktop: 'image/png/icon-192.png',
+        mobile: 'image/png/icon-192.png',
+      },
+      icon2: {
+        favicon: 'image/png/icon2-192.png',
+        manifest: 'manifest.json', // 若有不同manifest可換
+        apple: 'image/png/icon2-192.png',
+        label: '立體質感',
+        desktop: 'image/png/icon2-192.png',
+        mobile: 'image/png/icon2-192.png',
+      },
+      icon3: {
+        favicon: 'image/png/icon-512.png',
+        manifest: 'manifest.json',
+        apple: 'image/png/icon-512.png',
+        label: '高清版本',
+        desktop: 'image/png/icon-512.png',
+        mobile: 'image/png/icon-512.png',
+      }
+    };
+
+    const ICON_KEY = 'selectedAppIcon';
+
+    function setFavicon(url) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = url;
+    }
+
+    function setAppleIcon(url) {
+      let link = document.querySelector("link[rel='apple-touch-icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'apple-touch-icon';
+        document.head.appendChild(link);
+      }
+      link.href = url;
+    }
+
+    function setManifest(url) {
+      let link = document.querySelector("link[rel='manifest']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'manifest';
+        document.head.appendChild(link);
+      }
+      link.href = url;
+    }
+
+    function applyIcon(iconKey) {
+      const icon = iconMap[iconKey] || iconMap.icon1;
+      setFavicon(icon.favicon);
+      setAppleIcon(icon.apple);
+      setManifest(icon.manifest);
+      // 預覽區同步
+      updatePreview(iconKey);
+    }
+
+    function updatePreview(iconKey) {
+      const icon = iconMap[iconKey] || iconMap.icon1;
+      // 預覽區
+      const faviconPreview = document.querySelector('.preview-favicon');
+      const desktopPreview = document.querySelector('.preview-desktop');
+      const mobilePreview = document.querySelector('.preview-mobile');
+      
+      if (faviconPreview) {
+        faviconPreview.innerHTML = `<img src='${icon.favicon}' width='32' height='32' style='border-radius:6px;'>`;
+      }
+      if (desktopPreview) {
+        desktopPreview.innerHTML = `<img src='${icon.desktop}' width='48' height='48' style='border-radius:10px;'>`;
+      }
+      if (mobilePreview) {
+        mobilePreview.innerHTML = `<img src='${icon.mobile}' width='48' height='48' style='border-radius:10px;'>`;
+      }
+    }
+
+    function saveIconChoice(iconKey) {
+      localStorage.setItem(ICON_KEY, iconKey);
+    }
+
+    function loadIconChoice() {
+      return localStorage.getItem(ICON_KEY) || 'icon1';
+    }
+
+    // 初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      // 載入已儲存的選擇
+      const savedIcon = loadIconChoice();
+      
+      // 設定 radio 選中狀態
+      const radioButton = document.querySelector(`input[name='appIcon'][value='${savedIcon}']`);
+      if (radioButton) {
+        radioButton.checked = true;
+      }
+      
+      // 應用圖示
+      applyIcon(savedIcon);
+
+      // radio 綁定
+      document.querySelectorAll('input[name="appIcon"]').forEach(radio => {
+        radio.addEventListener('change', e => {
+          const iconKey = e.target.value;
+          applyIcon(iconKey);
+          saveIconChoice(iconKey);
+        });
+      });
+
+      // 重設按鈕
+      const resetBtn = document.getElementById('resetIconBtn');
+      if (resetBtn) {
+        resetBtn.onclick = () => {
+          document.querySelector(`input[name='appIcon'][value='icon1']`).checked = true;
+          applyIcon('icon1');
+          saveIconChoice('icon1');
+        };
+      }
+
+      // 預覽按鈕
+      const previewBtn = document.getElementById('previewIconBtn');
+      if (previewBtn) {
+        previewBtn.onclick = () => {
+          const iconKey = document.querySelector('input[name="appIcon"]:checked').value;
+          updatePreview(iconKey);
+          const modal = document.getElementById('iconPreviewModal');
+          if (modal) {
+            modal.style.display = 'flex';
+          }
+        };
+      }
+      
+      // 關閉預覽
+      const closePreviewBtn = document.querySelector('.close-preview-btn');
+      if (closePreviewBtn) {
+        closePreviewBtn.onclick = () => {
+          const modal = document.getElementById('iconPreviewModal');
+          if (modal) {
+            modal.style.display = 'none';
+          }
+        };
+      }
+
+      // 點擊modal外部關閉
+      const modal = document.getElementById('iconPreviewModal');
+      if (modal) {
+        modal.addEventListener('click', e => {
+          if (e.target === e.currentTarget) {
+            e.currentTarget.style.display = 'none';
+          }
+        });
+      }
+    });
+    </script>
 </body>
 </html> 
