@@ -801,44 +801,7 @@
         <header>
             <h1>農產品交易資料分析系統</h1>
             <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
-            <div class="version-info">
-                <p class="version">版本：<span id="versionNumber">v2.4.web.3</span></p>
-                <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
-                <div class="button-group">
-                    <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
-                    <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
-                    <a href="./monitor/index.html" class="tv-version-btn">監管介面</a>
-                </div>
-                <!-- 新增 Web Pushr 訂閱按鈕 -->
-                <div id="webpushrsubscription-button" data-button-text="訂閱通知" data-subscriber-counttext="已經訂閱了"></div>
-            </div>
         </header>
-
-        <!-- 應用程式圖示選擇區塊（可放在設定區或 header 下方） -->
-        <div id="iconSelectSection" class="icon-select-section" style="margin: 20px 0; text-align: center;">
-          <h3>選擇應用程式圖示</h3>
-          <div class="icon-options" style="display: flex; justify-content: center; gap: 40px;">
-            <label style="cursor:pointer;">
-              <input type="radio" name="appIcon" value="icon1" style="margin-right:8px;" checked>
-              <img src="image/png/icon-192.png" alt="icon1" width="64" style="border-radius:16px; border:2px solid #4CAF50;">
-              <div>經典扁平</div>
-            </label>
-            <label style="cursor:pointer;">
-              <input type="radio" name="appIcon" value="icon2" style="margin-right:8px;">
-              <img src="image/png/icon2-192.png" alt="icon2" width="64" style="border-radius:16px; border:2px solid #2196F3;">
-              <div>立體質感</div>
-              <div style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3); background-size: 300% 300%; animation: gradientShift 3s ease infinite; color: white; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 12px; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">New! UI3.0(beta)</div>
-            </label>
-          </div>
-          <!-- 新增預覽和重設按鈕 -->
-          <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-            <button id="previewIconBtn" class="test-notification-btn" style="min-width: 120px; padding: 10px 20px; font-size: 14px;">預覽圖示</button>
-            <button id="resetIconBtn" class="test-notification-btn" style="background-color: #FF9800; min-width: 120px; padding: 10px 20px; font-size: 14px;">重設為預設</button>
-            <button id="reinstallBtn" class="test-notification-btn" style="background-color: #2196F3; min-width: 120px; padding: 10px 20px; font-size: 14px;">重新安裝應用</button>
-          </div>
-        </div>
-
-
 
         <div id="notificationArea"></div>
         
@@ -1112,6 +1075,67 @@
                 <div class="settings-panel">
                     <h2>⚙️ 系統設定</h2>
                     <div class="settings-grid">
+                        <div class="setting-card">
+                            <h3>版本資訊</h3>
+                            <div class="setting-options">
+                                <div class="version-info">
+                                    <p class="version">版本：<span id="versionNumber">v2.4.web.3</span></p>
+                                    <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
+                                    <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-card">
+                            <h3>應用程式圖示</h3>
+                            <div id="iconSelectSection" class="icon-select-section" style="margin: 0; text-align: center;">
+                                <div class="icon-options" style="display: flex; justify-content: center; gap: 40px;">
+                                    <label style="cursor:pointer;">
+                                        <input type="radio" name="appIcon" value="icon1" style="margin-right:8px;" checked>
+                                        <img src="image/png/icon-192.png" alt="icon1" width="64" style="border-radius:16px; border:2px solid #4CAF50;">
+                                        <div>經典扁平</div>
+                                    </label>
+                                    <label style="cursor:pointer;">
+                                        <input type="radio" name="appIcon" value="icon2" style="margin-right:8px;">
+                                        <img src="image/png/icon2-192.png" alt="icon2" width="64" style="border-radius:16px; border:2px solid #2196F3;">
+                                        <div>立體質感</div>
+                                        <div style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3); background-size: 300% 300%; animation: gradientShift 3s ease infinite; color: white; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 12px; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">New! UI3.0(beta)</div>
+                                    </label>
+                                </div>
+                                <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                                    <button id="previewIconBtn" class="test-notification-btn" style="min-width: 120px; padding: 10px 20px; font-size: 14px;">預覽圖示</button>
+                                    <button id="resetIconBtn" class="test-notification-btn" style="background-color: #FF9800; min-width: 120px; padding: 10px 20px; font-size: 14px;">重設為預設</button>
+                                    <button id="reinstallBtn" class="test-notification-btn" style="background-color: #2196F3; min-width: 120px; padding: 10px 20px; font-size: 14px;">重新安裝應用</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-card">
+                            <h3>推播通知</h3>
+                            <div class="setting-options">
+                                <div id="webpushrsubscription-button" data-button-text="訂閱通知" data-subscriber-counttext="已經訂閱了"></div>
+                            </div>
+                        </div>
+                        <div class="setting-card">
+                            <h3>相關連結</h3>
+                            <div class="setting-options">
+                                <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
+                                <a href="./monitor/index.html" class="tv-version-btn">監管介面</a>
+                            </div>
+                        </div>
+                        <div class="setting-card">
+                            <h3>授權與開源</h3>
+                            <div class="setting-options">
+                                <p>資料來源：行政院農業委員會農產品交易行情站</p>
+                                <p><a href="license.html" target="_blank">授權與開源說明</a></p>
+                                <p>
+                                    <a href="https://github.com/backup0821/Better-vegetable-catcher">農產品分析</a>© 2025 by 
+                                    <a href="https://creativecommons.org">Yo-Code LKJH Maker</a>已獲得
+                                    <a href="https://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International 許可</a>
+                                    <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+                                    <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+                                    <img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+                                </p>
+                            </div>
+                        </div>
                         <div class="setting-card">
                             <h3>🎨 外觀設定</h3>
                             <div class="setting-options">
@@ -1674,3 +1698,4 @@
     </script>
 </body>
 </html> 
+
