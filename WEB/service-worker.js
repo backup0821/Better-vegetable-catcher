@@ -1,4 +1,5 @@
 const CACHE_NAME = 'vegetable-catcher-v1';
+const ICON_CACHE_NAME = 'icon-cache-v1';
 const ASSETS_TO_CACHE = [
     '/Better-vegetable-catcher/WEB/',
     '/Better-vegetable-catcher/WEB/index.html',
@@ -7,6 +8,7 @@ const ASSETS_TO_CACHE = [
     '/Better-vegetable-catcher/WEB/notification.js',
     '/Better-vegetable-catcher/WEB/manifest.json',
     '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
+    '/Better-vegetable-catcher/WEB/image/png/icon2-192.png',
     '/Better-vegetable-catcher/WEB/image/png/icon-512.png',
     '/Better-vegetable-catcher/WEB/image/png/favicon.ico'
 ];
@@ -34,35 +36,140 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// 獲取當前圖標
+async function getCurrentIcon() {
+  try {
+    // Service Worker 無法直接存取 localStorage，使用預設圖標
+    // 實際圖標會通過主線程傳遞
+    return '/Better-vegetable-catcher/WEB/image/png/icon-192.png';
+  } catch (error) {
+    console.error('獲取圖標失敗:', error);
+    return '/Better-vegetable-catcher/WEB/image/png/icon-192.png';
+  }
+}
+
+// 當前圖標快取
+let currentIconPath = '/Better-vegetable-catcher/WEB/image/png/icon-192.png';
+
+// 更新當前圖標
+function updateCurrentIcon(iconKey) {
+  const iconMap = {
+    icon1: '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
+    icon2: '/Better-vegetable-catcher/WEB/image/png/icon2-192.png',
+    icon3: '/Better-vegetable-catcher/WEB/image/png/icon-512.png'
+  };
+  currentIconPath = iconMap[iconKey] || iconMap.icon1;
+  console.log('✅ Service Worker 圖標已更新為:', currentIconPath);
+}
+
 // 安裝 Service Worker
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('快取已開啟');
-                return cache.addAll(ASSETS_TO_CACHE);
-            })
+        Promise.all([
+            caches.open(CACHE_NAME)
+                .then((cache) => {
+                    console.log('快取已開啟');
+                    return cache.addAll(ASSETS_TO_CACHE);
+                }),
+            caches.open(ICON_CACHE_NAME)
+                .then((cache) => {
+                    console.log('圖標快取已開啟');
+                    return cache.addAll([
+                        '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
+                        '/Better-vegetable-catcher/WEB/image/png/icon2-192.png',
+                        '/Better-vegetable-catcher/WEB/image/png/icon-512.png'
+                    ]);
+                })
+        ])
     );
 });
 
 // 啟動 Service Worker
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('刪除舊快取：', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+        Promise.all([
+            caches.keys().then((cacheNames) => {
+                return Promise.all(
+                    cacheNames.map((cacheName) => {
+                        if (cacheName !== CACHE_NAME && cacheName !== ICON_CACHE_NAME) {
+                            console.log('刪除舊快取：', cacheName);
+                            return caches.delete(cacheName);
+                        }
+                    })
+                );
+            }),
+            // 立即更新圖標快取
+            updateIconCache()
+        ])
     );
 });
 
+// 更新圖標快取
+async function updateIconCache() {
+    try {
+        const iconCache = await caches.open(ICON_CACHE_NAME);
+        const iconUrls = [
+            '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
+            '/Better-vegetable-catcher/WEB/image/png/icon2-192.png',
+            '/Better-vegetable-catcher/WEB/image/png/icon-512.png'
+        ];
+        
+        for (const url of iconUrls) {
+            try {
+                await iconCache.add(url);
+            } catch (error) {
+                console.warn('圖標快取失敗:', url, error);
+            }
+        }
+        
+        console.log('✅ 圖標快取已更新');
+    } catch (error) {
+        console.error('❌ 更新圖標快取失敗:', error);
+    }
+}
+
 // ETag 處理
 self.addEventListener('fetch', function(event) {
+    // 特殊處理 manifest.json 請求
+    if (event.request.url.includes('manifest.json')) {
+        event.respondWith(
+            fetch(event.request, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'If-None-Match': event.request.headers.get('If-None-Match') || ''
+                }
+            }).then(function(response) {
+                if (response.status === 304) {
+                    return caches.match(event.request);
+                }
+                return response;
+            }).catch(function() {
+                return caches.match(event.request);
+            })
+        );
+        return;
+    }
+    
+    // 處理圖標請求
+    if (event.request.url.includes('/image/png/')) {
+        event.respondWith(
+            caches.open(ICON_CACHE_NAME).then(function(cache) {
+                return cache.match(event.request).then(function(response) {
+                    if (response) {
+                        return response;
+                    }
+                    return fetch(event.request).then(function(response) {
+                        if (response.status === 200) {
+                            cache.put(event.request, response.clone());
+                        }
+                        return response;
+                    });
+                });
+            })
+        );
+        return;
+    }
+    
     event.respondWith(
         fetch(event.request, {
             headers: {
@@ -93,24 +200,25 @@ self.addEventListener('fetch', function(event) {
 });
 
 // 處理推播事件
-self.addEventListener('push', (event) => {
+self.addEventListener('push', async (event) => {
     if (event.data) {
         const data = event.data.json();
+        
         const options = {
             body: data.body,
-            icon: '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
-            badge: '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
+            icon: currentIconPath,
+            badge: currentIconPath,
             data: data.data || {},
             actions: [
                 {
                     action: 'explore',
                     title: '查看詳情',
-                    icon: '/Better-vegetable-catcher/WEB/image/png/icon-192.png'
+                    icon: currentIconPath
                 },
                 {
                     action: 'close',
                     title: '關閉',
-                    icon: '/Better-vegetable-catcher/WEB/image/png/icon-192.png'
+                    icon: currentIconPath
                 }
             ]
         };
@@ -133,18 +241,28 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // 處理背景訊息
-messaging.onBackgroundMessage((payload) => {
+messaging.onBackgroundMessage(async (payload) => {
   console.log('收到背景訊息:', payload);
   
   const notificationTitle = payload.notification.title;
+  
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/WEB/image/png/icon-192.png',
-    badge: '/WEB/image/png/icon-192.png',
+    icon: currentIconPath,
+    badge: currentIconPath,
     data: payload.data
   };
 
   return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// 監聽來自主線程的圖標更新訊息
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'UPDATE_ICON') {
+        console.log('收到圖標更新訊息:', event.data.iconKey);
+        updateCurrentIcon(event.data.iconKey);
+        updateIconCache();
+    }
 });
 
 // 背景通知檢查函數

@@ -989,6 +989,7 @@
           <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
             <button id="previewIconBtn" class="test-notification-btn" style="min-width: 120px; padding: 10px 20px; font-size: 14px;">預覽圖示</button>
             <button id="resetIconBtn" class="test-notification-btn" style="background-color: #FF9800; min-width: 120px; padding: 10px 20px; font-size: 14px;">重設為預設</button>
+            <button id="reinstallBtn" class="test-notification-btn" style="background-color: #2196F3; min-width: 120px; padding: 10px 20px; font-size: 14px;">重新安裝應用</button>
           </div>
         </div>
 
@@ -1340,6 +1341,130 @@
 
     const ICON_KEY = 'selectedAppIcon';
 
+    // 動態更新 manifest.json
+    async function updateManifest(iconKey) {
+      const icon = iconMap[iconKey] || iconMap.icon1;
+      
+      try {
+        // 讀取原始 manifest
+        const response = await fetch('manifest.json');
+        const manifest = await response.json();
+        
+        // 更新圖標路徑
+        manifest.icons = [
+          {
+            "src": icon.desktop,
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": icon.desktop,
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+          }
+        ];
+        
+        // 創建新的 manifest blob
+        const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], {
+          type: 'application/json'
+        });
+        
+        // 更新 manifest link
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        if (manifestLink) {
+          manifestLink.href = URL.createObjectURL(manifestBlob);
+        }
+        
+        console.log('✅ Manifest 已更新為:', iconKey);
+      } catch (error) {
+        console.error('❌ 更新 manifest 失敗:', error);
+      }
+    }
+
+    // 強制更新 PWA
+    async function forcePWAUpdate() {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            // 強制更新 Service Worker
+            await registration.update();
+            
+            // 清除快取
+            if ('caches' in window) {
+              const cacheNames = await caches.keys();
+              await Promise.all(
+                cacheNames.map(cacheName => caches.delete(cacheName))
+              );
+            }
+            
+            console.log('✅ PWA 已強制更新');
+            
+            // 顯示更新提示
+            showUpdateNotification();
+          }
+        } catch (error) {
+          console.error('❌ PWA 更新失敗:', error);
+        }
+      }
+    }
+
+    // 顯示更新提示
+    function showUpdateNotification() {
+      const notification = document.createElement('div');
+      notification.className = 'update-notification';
+      notification.innerHTML = `
+        <div class="update-content">
+          <h3>圖標已更新</h3>
+          <p>桌面圖標可能需要重新安裝才能顯示新圖標</p>
+          <p>請重新安裝應用程式以套用新圖標</p>
+          <button onclick="this.parentElement.parentElement.remove()">知道了</button>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // 5秒後自動移除
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 5000);
+    }
+
+    // 顯示重新安裝提示
+    function showReinstallNotification() {
+      const notification = document.createElement('div');
+      notification.className = 'update-notification';
+      notification.style.backgroundColor = '#2196F3';
+      notification.innerHTML = `
+        <div class="update-content">
+          <h3>正在重新安裝應用程式</h3>
+          <p>正在清除快取並重新載入...</p>
+          <p>請稍候，頁面將自動重新載入</p>
+          <div style="margin-top: 10px;">
+            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px;">
+              <div style="width: 0%; height: 100%; background: white; border-radius: 2px; animation: progress 2s linear forwards;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // 添加進度條動畫樣式
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes progress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
     function setFavicon(url) {
       let link = document.querySelector("link[rel~='icon']");
       if (!link) {
@@ -1370,11 +1495,13 @@
       link.href = url;
     }
 
-    function applyIcon(iconKey) {
+    async function applyIcon(iconKey) {
       const icon = iconMap[iconKey] || iconMap.icon1;
       setFavicon(icon.favicon);
       setAppleIcon(icon.apple);
-      setManifest(icon.manifest);
+      
+      // 動態更新 manifest
+      await updateManifest(iconKey);
       
       // 玻璃感 UI 切換
       const body = document.body;
@@ -1388,6 +1515,24 @@
       
       // 預覽區同步
       updatePreview(iconKey);
+      
+      // 通知 Service Worker 更新圖標
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration && registration.active) {
+            registration.active.postMessage({
+              type: 'UPDATE_ICON',
+              iconKey: iconKey
+            });
+          }
+        } catch (error) {
+          console.error('通知 Service Worker 失敗:', error);
+        }
+      }
+      
+      // 強制更新 PWA
+      await forcePWAUpdate();
     }
 
     function updatePreview(iconKey) {
@@ -1432,9 +1577,9 @@
 
       // radio 綁定
       document.querySelectorAll('input[name="appIcon"]').forEach(radio => {
-        radio.addEventListener('change', e => {
+        radio.addEventListener('change', async (e) => {
           const iconKey = e.target.value;
-          applyIcon(iconKey);
+          await applyIcon(iconKey);
           saveIconChoice(iconKey);
         });
       });
@@ -1442,10 +1587,46 @@
       // 重設按鈕
       const resetBtn = document.getElementById('resetIconBtn');
       if (resetBtn) {
-        resetBtn.onclick = () => {
+        resetBtn.onclick = async () => {
           document.querySelector(`input[name='appIcon'][value='icon1']`).checked = true;
-          applyIcon('icon1');
+          await applyIcon('icon1');
           saveIconChoice('icon1');
+        };
+      }
+
+      // 重新安裝按鈕
+      const reinstallBtn = document.getElementById('reinstallBtn');
+      if (reinstallBtn) {
+        reinstallBtn.onclick = async () => {
+          try {
+            // 清除所有快取
+            if ('caches' in window) {
+              const cacheNames = await caches.keys();
+              await Promise.all(
+                cacheNames.map(cacheName => caches.delete(cacheName))
+              );
+            }
+            
+            // 強制更新 Service Worker
+            if ('serviceWorker' in navigator) {
+              const registration = await navigator.serviceWorker.getRegistration();
+              if (registration) {
+                await registration.unregister();
+                console.log('✅ Service Worker 已卸載');
+              }
+            }
+            
+            // 顯示重新安裝提示
+            showReinstallNotification();
+            
+            // 延遲重新載入頁面
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+            
+          } catch (error) {
+            console.error('❌ 重新安裝失敗:', error);
+          }
         };
       }
 
