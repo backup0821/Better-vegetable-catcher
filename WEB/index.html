@@ -415,163 +415,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        /* ETag 開發者工具樣式 */
-        .dev-mode-panel {
-            display: none !important;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
-            z-index: 1001;
-            width: 80%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
 
-        .dev-mode-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
 
-        .dev-mode-header h2 {
-            margin: 0;
-            color: #333;
-        }
 
-        .close-button {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-        }
-
-        .etag-controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .control-group {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .control-group h3 {
-            margin: 0 0 10px 0;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .endpoint-list, .check-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .endpoint-item, .option-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .action-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        #checkAllETags {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        #clearETagCache {
-            background-color: #F44336;
-            color: white;
-        }
-
-        #forceRefresh {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .action-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .etag-results {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .results-container {
-            margin-top: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .result-item {
-            background: white;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            border-left: 4px solid #2196F3;
-        }
-
-        .result-item.error {
-            border-left-color: #F44336;
-        }
-
-        .result-item.success {
-            border-left-color: #4CAF50;
-        }
-
-        /* 開發者模式按鈕樣式 */
-        .dev-mode-btn {
-            display: none !important;
-            position: absolute !important;
-            bottom: 20px !important;
-            right: 20px !important;
-            padding: 10px 20px !important;
-            background-color: #333 !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 5px !important;
-            cursor: pointer !important;
-            z-index: 9999 !important;
-            opacity: 0.7 !important;
-            transition: opacity 0.3s !important;
-            font-size: 14px !important;
-            font-weight: bold !important;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-        }
-
-        .dev-mode-btn:hover {
-            opacity: 1 !important;
-        }
 
         /* CORS 設定對話框樣式 */
         .cors-settings-dialog {
@@ -950,8 +796,7 @@
             </div>
         </div>
 
-        <!-- 開發者模式按鈕 -->
-        <button id="devModeBtn" class="dev-mode-btn">開發者模式</button>
+
 
         <header>
             <h1>農產品交易資料分析系統</h1>
@@ -1147,74 +992,7 @@
             </div>
         </div>
     </div>
-    <!-- 開發者模式介面 -->
-    <div id="devModePanel" class="dev-mode-panel">
-        <div class="dev-mode-header">
-            <h2>ETag 開發者工具</h2>
-            <button id="closeDevMode" class="close-button">×</button>
-        </div>
-        <div class="dev-mode-content">
-            <div class="etag-controls">
-                <div class="control-group">
-                    <h3>API 端點</h3>
-                    <div class="endpoint-list">
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-data" checked>
-                            <label for="endpoint-data">資料 API</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-version" checked>
-                            <label for="endpoint-version">版本 API</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-notifications" checked>
-                            <label for="endpoint-notifications">通知 API</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-moa" checked>
-                            <label for="endpoint-moa">農業部資料</label>
-                        </div>
-                        <div class="endpoint-item">
-                            <input type="checkbox" id="endpoint-tv" checked>
-                            <label for="endpoint-tv">TV 驗證系統</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h3>檢查選項</h3>
-                    <div class="check-options">
-                        <div class="option-item">
-                            <input type="checkbox" id="check-etag" checked>
-                            <label for="check-etag">ETag</label>
-                        </div>
-                        <div class="option-item">
-                            <input type="checkbox" id="check-hash" checked>
-                            <label for="check-hash">內容雜湊</label>
-                        </div>
-                        <div class="option-item">
-                            <input type="checkbox" id="check-modified" checked>
-                            <label for="check-modified">最後修改時間</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h3>操作</h3>
-                    <div class="action-buttons">
-                        <button id="checkAllETags" class="action-btn">檢查所有</button>
-                        <button id="clearETagCache" class="action-btn">清除快取</button>
-                        <button id="forceRefresh" class="action-btn">強制更新</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="etag-results">
-                <h3>檢查結果</h3>
-                <div id="etagResults" class="results-container"></div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- 圖示預覽 Modal -->
     <div id="iconPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
