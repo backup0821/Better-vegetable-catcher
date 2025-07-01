@@ -836,124 +836,124 @@
             <!-- 主要資料分析區塊 -->
             <div id="main-section" class="content-section active">
                 <main>
-            <div class="control-panel">
-                    <h2>作物選擇</h2>
-                    <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
-                    </div>
-                    <div class="crop-select">
-                        <select id="cropSelect">
-                            <option value="">請選擇作物</option>
-                        </select>
-                    </div>
-                    <div class="market-select">
-                        <select id="marketSelect" multiple size="6">
-                            <option value="all" selected>全部市場</option>
-                            <optgroup label="北部地區">
-                                <option value="台北一">台北第一果菜批發市場</option>
-                                <option value="台北二">台北第二果菜批發市場</option>
-                                <option value="新北">新北市果菜批發市場</option>
-                                <option value="桃園">桃園果菜批發市場</option>
-                                <option value="新竹">新竹果菜批發市場</option>
-                            </optgroup>
-                            <optgroup label="中部地區">
-                                <option value="台中">台中果菜批發市場</option>
-                                <option value="彰化">彰化果菜批發市場</option>
-                                <option value="南投">南投果菜批發市場</option>
-                                <option value="雲林">雲林果菜批發市場</option>
-                            </optgroup>
-                            <optgroup label="南部地區">
-                                <option value="嘉義">嘉義果菜批發市場</option>
-                                <option value="台南">台南果菜批發市場</option>
-                                <option value="高雄">高雄果菜批發市場</option>
-                                <option value="屏東">屏東果菜批發市場</option>
-                            </optgroup>
-                        </select>
-                        <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
-                    </div>
-
-                <!-- 載入動畫區塊 -->
-                <div id="loadingSpinner" class="loading-spinner" style="display:none;">
-                  <div class="spinner"></div>
-                  <div class="loading-text">資料載入中...</div>
-                </div>
-
-                <div class="analysis-section">
-                    <h2>分析功能</h2>
-                    <div class="analysis-buttons">
-                        <button id="showPriceTrend">📈 價格趨勢</button>
-                        <button id="showVolumeDist">📊 交易量分布</button>
-                        <button id="showPriceDist">📉 價格分布</button>
-                        <button id="showSeasonal">📅 季節性分析</button>
-                        <button id="showPricePrediction">🔮 價格預測</button>
-                        <button id="fetchMoreData" class="dev-only" style="display: none;">📥 抓取更多資料</button>
-                    </div>
-                </div>
-
-                <div class="export-section">
-                    <h2>資料匯出</h2>
-                    <div class="export-buttons">
-                        <button id="exportExcel">📥 匯出 Excel</button>
-                        <button id="exportCSV">📥 匯出 CSV</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="display-panel">
-                <div id="chartArea" class="chart-area"></div>
-                <!-- 新增：往下滑指引 -->
-                <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
-                <!-- 新增：基本統計資訊卡片區塊 -->
-                <div id="statsArea" class="stats-area">
-                    <h3>基本統計資訊</h3>
-                    <div class="stats-cards">
-                        <div class="stat-card" id="avgPriceCard">
-                            <div class="stat-icon" style="font-size:2em;">📊</div>
-                            <div class="stat-label">平均價格</div>
-                            <div class="stat-value" id="avgPrice">--</div>
-                            <div class="stat-unit">元/公斤</div>
+                    <div class="control-panel">
+                        <h2>作物選擇</h2>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
                         </div>
-                        <div class="stat-card" id="minPriceCard">
-                            <div class="stat-icon" style="font-size:2em;">📉</div>
-                            <div class="stat-label">最低價格</div>
-                            <div class="stat-value" id="minPrice">--</div>
-                            <div class="stat-unit">元/公斤</div>
+                        <div class="crop-select">
+                            <select id="cropSelect">
+                                <option value="">請選擇作物</option>
+                            </select>
                         </div>
-                        <div class="stat-card" id="maxPriceCard">
-                            <div class="stat-icon" style="font-size:2em;">📈</div>
-                            <div class="stat-label">最高價格</div>
-                            <div class="stat-value" id="maxPrice">--</div>
-                            <div class="stat-unit">元/公斤</div>
+                        <div class="market-select">
+                            <select id="marketSelect" multiple size="6">
+                                <option value="all" selected>全部市場</option>
+                                <optgroup label="北部地區">
+                                    <option value="台北一">台北第一果菜批發市場</option>
+                                    <option value="台北二">台北第二果菜批發市場</option>
+                                    <option value="新北">新北市果菜批發市場</option>
+                                    <option value="桃園">桃園果菜批發市場</option>
+                                    <option value="新竹">新竹果菜批發市場</option>
+                                </optgroup>
+                                <optgroup label="中部地區">
+                                    <option value="台中">台中果菜批發市場</option>
+                                    <option value="彰化">彰化果菜批發市場</option>
+                                    <option value="南投">南投果菜批發市場</option>
+                                    <option value="雲林">雲林果菜批發市場</option>
+                                </optgroup>
+                                <optgroup label="南部地區">
+                                    <option value="嘉義">嘉義果菜批發市場</option>
+                                    <option value="台南">台南果菜批發市場</option>
+                                    <option value="高雄">高雄果菜批發市場</option>
+                                    <option value="屏東">屏東果菜批發市場</option>
+                                </optgroup>
+                            </select>
+                            <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
                         </div>
-                        <div class="stat-card" id="totalVolumeCard">
-                            <div class="stat-icon" style="font-size:2em;">⚖️</div>
-                            <div class="stat-label">總交易量</div>
-                            <div class="stat-value" id="totalVolume">--</div>
-                            <div class="stat-unit">公斤</div>
+
+                        <!-- 載入動畫區塊 -->
+                        <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+                            <div class="spinner"></div>
+                            <div class="loading-text">資料載入中...</div>
+                        </div>
+
+                        <div class="analysis-section">
+                            <h2>分析功能</h2>
+                            <div class="analysis-buttons">
+                                <button id="showPriceTrend">📈 價格趨勢</button>
+                                <button id="showVolumeDist">📊 交易量分布</button>
+                                <button id="showPriceDist">📉 價格分布</button>
+                                <button id="showSeasonal">📅 季節性分析</button>
+                                <button id="showPricePrediction">🔮 價格預測</button>
+                                <button id="fetchMoreData" class="dev-only" style="display: none;">📥 抓取更多資料</button>
+                            </div>
+                        </div>
+
+                        <div class="export-section">
+                            <h2>資料匯出</h2>
+                            <div class="export-buttons">
+                                <button id="exportExcel">📥 匯出 Excel</button>
+                                <button id="exportCSV">📥 匯出 CSV</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div id="detailTableArea" class="detail-table-area">
-                    <h3>詳細價格資料</h3>
-                    <table class="detail-table">
-                        <thead>
-                            <tr>
-                                <th>日期</th>
-                                <th>市場</th>
-                                <th>價格</th>
-                                <th>交易量</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailTableBody">
-                            <!-- 資料由 JS 動態產生 -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="resultArea" class="result-area">
-                    <p>請選擇作物以查看分析結果</p>
-                </div>
-            </div>
-        </main>
+
+                    <div class="display-panel">
+                        <div id="chartArea" class="chart-area"></div>
+                        <!-- 新增：往下滑指引 -->
+                        <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
+                        <!-- 新增：基本統計資訊卡片區塊 -->
+                        <div id="statsArea" class="stats-area">
+                            <h3>基本統計資訊</h3>
+                            <div class="stats-cards">
+                                <div class="stat-card" id="avgPriceCard">
+                                    <div class="stat-icon" style="font-size:2em;">📊</div>
+                                    <div class="stat-label">平均價格</div>
+                                    <div class="stat-value" id="avgPrice">--</div>
+                                    <div class="stat-unit">元/公斤</div>
+                                </div>
+                                <div class="stat-card" id="minPriceCard">
+                                    <div class="stat-icon" style="font-size:2em;">📉</div>
+                                    <div class="stat-label">最低價格</div>
+                                    <div class="stat-value" id="minPrice">--</div>
+                                    <div class="stat-unit">元/公斤</div>
+                                </div>
+                                <div class="stat-card" id="maxPriceCard">
+                                    <div class="stat-icon" style="font-size:2em;">📈</div>
+                                    <div class="stat-label">最高價格</div>
+                                    <div class="stat-value" id="maxPrice">--</div>
+                                    <div class="stat-unit">元/公斤</div>
+                                </div>
+                                <div class="stat-card" id="totalVolumeCard">
+                                    <div class="stat-icon" style="font-size:2em;">⚖️</div>
+                                    <div class="stat-label">總交易量</div>
+                                    <div class="stat-value" id="totalVolume">--</div>
+                                    <div class="stat-unit">公斤</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="detailTableArea" class="detail-table-area">
+                            <h3>詳細價格資料</h3>
+                            <table class="detail-table">
+                                <thead>
+                                    <tr>
+                                        <th>日期</th>
+                                        <th>市場</th>
+                                        <th>價格</th>
+                                        <th>交易量</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailTableBody">
+                                    <!-- 資料由 JS 動態產生 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="resultArea" class="result-area">
+                            <p>請選擇作物以查看分析結果</p>
+                        </div>
+                    </div>
+                </main>
             </div>
 
             <!-- 市場資訊區塊 -->

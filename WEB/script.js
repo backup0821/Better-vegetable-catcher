@@ -1,7 +1,7 @@
 import { fetchApi } from './api-config.js';
 console.log('script.js loaded!');
 // 版本資訊
-const VERSION = 'v2.4.web.2';
+const VERSION = 'vUI3.0';
 console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 const MAINTENANCE_CHECK_URL = 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json';
@@ -5469,17 +5469,12 @@ if (document.getElementById('iconSelectSection')) {
 
 // === 底部導航欄功能 ===
 function initBottomNavigation() {
-    console.log('初始化底部導航欄...');
     const navItems = document.querySelectorAll('.nav-item');
     const contentSections = document.querySelectorAll('.content-section');
-    
-    console.log('找到導航項目:', navItems.length);
-    console.log('找到內容區塊:', contentSections.length);
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const targetSection = item.getAttribute('data-section');
-            console.log('點擊導航項目:', targetSection);
             
             // 移除所有活動狀態
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -5490,9 +5485,6 @@ function initBottomNavigation() {
             const targetElement = document.getElementById(`${targetSection}-section`);
             if (targetElement) {
                 targetElement.classList.add('active');
-                console.log('切換到區塊:', targetSection);
-            } else {
-                console.error('找不到目標區塊:', `${targetSection}-section`);
             }
             
             // 儲存當前頁面狀態
@@ -5504,10 +5496,8 @@ function initBottomNavigation() {
     const lastSection = localStorage.getItem('currentSection') || 'main';
     const lastNavItem = document.querySelector(`[data-section="${lastSection}"]`);
     if (lastNavItem) {
-        console.log('載入上次選擇的頁面:', lastSection);
         lastNavItem.click();
     } else {
-        console.log('使用預設頁面: main');
         const mainNavItem = document.querySelector('[data-section="main"]');
         if (mainNavItem) mainNavItem.click();
     }
