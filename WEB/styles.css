@@ -2330,6 +2330,54 @@ body.glass-theme .market-select-hint {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+.favorite-header {
+    margin-bottom: 10px;
+}
+
+.favorite-header h4 {
+    margin: 0 0 5px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.favorite-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.view-btn, .remove-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.view-btn {
+    background: #1a73e8;
+    color: white;
+}
+
+.view-btn:hover {
+    background: #1557b0;
+}
+
+.remove-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.remove-btn:hover {
+    background: #c82333;
+}
+
+.favorite-meta {
+    color: #888;
+    font-size: 12px;
+}
+
 .empty-favorites {
     text-align: center;
     padding: 40px 20px;
@@ -2701,7 +2749,7 @@ body.glass-theme .market-select-hint {
     padding: 20px;
 }
 
-.coming-soon-card {
+.alert-status-card {
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -2713,7 +2761,7 @@ body.glass-theme .market-select-hint {
     margin: 20px 0;
 }
 
-.coming-soon-icon {
+.alert-status-icon {
     font-size: 64px;
     margin-bottom: 20px;
     animation: bounce 2s infinite;
@@ -2731,17 +2779,32 @@ body.glass-theme .market-select-hint {
     }
 }
 
-.coming-soon-card h3 {
+.alert-status-card h3 {
     font-size: 32px;
     color: #333;
     margin-bottom: 10px;
     font-weight: bold;
 }
 
-.coming-soon-card p {
+.alert-status-card p {
     font-size: 18px;
     color: #666;
     margin-bottom: 10px;
+}
+
+.alert-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    gap: 20px;
+}
+
+.alert-count, .alert-active {
+    background: rgba(76, 175, 80, 0.1);
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: #2e7d32;
+    font-weight: 500;
 }
 
 .coming-soon-desc {

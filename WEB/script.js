@@ -5818,63 +5818,69 @@ function loadFavorites() {
     emptyFavorites.style.display = 'none';
 
     favoritesGrid.innerHTML = favorites.map(favorite => `
-        <div class="favorite-item">
-            <div class="favorite-info">
-                <div class="crop-name" style="font-weight: 600; color: #333; font-size: 16px;">${favorite.cropName}</div>
-                <div class="market-name" style="color: #666; font-size: 14px;">${getMarketDisplayName(favorite.marketName)}</div>
-                <div class="favorite-date" style="color: #888; font-size: 12px;">新增時間：${new Date(favorite.addedAt || favorite.date).toLocaleDateString()}</div>
+        <div class="favorite-item" data-favorite-id="${favorite.id}">
+            <div class="favorite-header">
+                <h4 class="crop-name">${favorite.cropName}</h4>
+                <span class="market-name">${favorite.marketName === 'all' ? '全部市場' : favorite.marketName}</span>
             </div>
             <div class="favorite-actions">
-                <button onclick="viewFavoriteData('${favorite.cropName}', '${favorite.marketName}')" style="padding: 6px 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;">
-                    查看資料
+                <button onclick="viewFavoriteData('${favorite.cropName}', '${favorite.marketName}')" class="view-btn">
+                    📊 查看資料
                 </button>
-                <button onclick="removeFromFavorites('${favorite.id}')" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                    移除
+                <button onclick="removeFromFavorites('${favorite.id}')" class="remove-btn">
+                    🗑️ 移除
                 </button>
+            </div>
+            <div class="favorite-meta">
+                <small>新增時間：${new Date(favorite.createdAt).toLocaleDateString('zh-TW')}</small>
             </div>
         </div>
     `).join('');
 }
 
-function loadFavoriteData(cropName, marketName) {
-    // 切換到主頁面
-    const mainNavItem = document.querySelector('[data-section="main"]');
-    if (mainNavItem) {
-        mainNavItem.click();
+// 載入收藏項目的資料
+async function loadFavoriteData(cropName, marketName) {
+    try {
+        // 使用現有的資料載入邏輯
+        const data = await fetchData();
+        if (!data || !data[cropName]) {
+            showNotification('錯誤', '無法載入作物資料');
+            return null;
+        }
+        
+        let cropData = data[cropName];
+        
+        // 如果指定了特定市場，過濾資料
+        if (marketName && marketName !== 'all') {
+            cropData = cropData.filter(item => item.market === marketName);
+        }
+        
+        return cropData;
+    } catch (error) {
+        console.error('載入收藏資料失敗:', error);
+        showNotification('錯誤', '載入資料失敗');
+        return null;
     }
-
-    // 設定作物和市場
-    setTimeout(() => {
-        const cropSelect = document.getElementById('cropSelect');
-        const marketSelect = document.getElementById('marketSelect');
-        
-        if (cropSelect) {
-            cropSelect.value = cropName;
-            cropSelect.dispatchEvent(new Event('change'));
-        }
-        
-        if (marketSelect && marketName !== 'all') {
-            // 設定特定市場
-            Array.from(marketSelect.options).forEach(option => {
-                option.selected = option.value === marketName;
-            });
-            marketSelect.dispatchEvent(new Event('change'));
-        }
-    }, 300);
 }
 
-// 查看收藏資料（新版本）
-function viewFavoriteData(cropName, marketName) {
-    // 切換到主分析頁面並載入資料
+// 查看收藏項目資料
+async function viewFavoriteData(cropName, marketName) {
+    const data = await loadFavoriteData(cropName, marketName);
+    if (!data) return;
+    
+    // 切換到主頁面並載入資料
     switchToMainSection();
     
-    // 設定作物和市場選擇
+    // 設定作物選擇器
+    const cropSelect = document.getElementById('cropSelect');
     if (cropSelect) {
         cropSelect.value = cropName;
         cropSelect.dispatchEvent(new Event('change'));
     }
     
-    if (marketSelect) {
+    // 設定市場選擇器
+    const marketSelect = document.getElementById('marketSelect');
+    if (marketSelect && marketName !== 'all') {
         // 清除所有選擇
         Array.from(marketSelect.options).forEach(option => {
             option.selected = false;
@@ -5882,44 +5888,44 @@ function viewFavoriteData(cropName, marketName) {
         
         // 選擇指定市場
         const targetOption = Array.from(marketSelect.options).find(option => 
-            option.value === marketName || 
-            (marketName === 'all' && option.value === 'all')
+            option.value === marketName
         );
-        
         if (targetOption) {
             targetOption.selected = true;
             marketSelect.dispatchEvent(new Event('change'));
         }
     }
     
-    showNotification('已載入收藏資料', `正在載入 ${cropName} 的資料...`);
+    showNotification('成功', `已載入 ${cropName} 的資料`);
 }
 
-// 切換到主分析頁面
+// 切換到主頁面
 function switchToMainSection() {
-    // 移除所有 active 類別
-    document.querySelectorAll('.content-section').forEach(section => {
-        section.classList.remove('active');
-    });
+    // 移除所有活動狀態
+    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
     
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    // 啟用主分析頁面
+    // 添加活動狀態到主頁面
+    const mainNavItem = document.querySelector('[data-section="main"]');
     const mainSection = document.getElementById('main-section');
-    const mainNavItem = document.querySelector('.nav-item[data-section="main"]');
     
-    if (mainSection) mainSection.classList.add('active');
     if (mainNavItem) mainNavItem.classList.add('active');
+    if (mainSection) mainSection.classList.add('active');
+    
+    // 儲存當前頁面狀態
+    localStorage.setItem('currentSection', 'main');
 }
 
+// 移除收藏項目
 function removeFromFavorites(favoriteId) {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    const filteredFavorites = favorites.filter(f => f.id !== favoriteId);
-    localStorage.setItem('favorites', JSON.stringify(filteredFavorites));
-    loadFavorites();
-    showNotification('成功', '已從收藏夾移除');
+    if (confirm('確定要移除這個收藏項目嗎？')) {
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        const filteredFavorites = favorites.filter(f => f.id !== favoriteId);
+        localStorage.setItem('favorites', JSON.stringify(filteredFavorites));
+        
+        loadFavorites();
+        showNotification('成功', '收藏項目已移除');
+    }
 }
 
 // === 設定功能 ===
@@ -6591,4 +6597,4 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateCropList === 'function') updateCropList();
     });
     // 其他初始化（如有）
-})})}
+});

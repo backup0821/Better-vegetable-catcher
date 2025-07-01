@@ -100,43 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // 添加調試資訊
-    const debugInfo = document.createElement('div');
-    debugInfo.id = 'nav-debug-info';
-    debugInfo.style.cssText = `
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 12px;
-        z-index: 10000;
-        font-family: monospace;
-    `;
-    debugInfo.innerHTML = `
-        底部導航修復狀態<br>
-        導航項目: ${navItems.length}<br>
-        內容區塊: ${contentSections.length}<br>
-        當前區塊: ${lastSection}<br>
-        時間: ${new Date().toLocaleTimeString()}
-    `;
-    document.body.appendChild(debugInfo);
-    
-    // 每秒更新調試資訊
-    setInterval(() => {
-        const activeSection = document.querySelector('.content-section.active');
-        const activeNav = document.querySelector('.nav-item.active');
-        debugInfo.innerHTML = `
-            底部導航修復狀態<br>
-            導航項目: ${navItems.length}<br>
-            內容區塊: ${contentSections.length}<br>
-            當前區塊: ${activeSection ? activeSection.id : '無'}<br>
-            當前導航: ${activeNav ? activeNav.getAttribute('data-section') : '無'}<br>
-            時間: ${new Date().toLocaleTimeString()}
-        `;
-    }, 1000);
+    // 調試資訊已移除
     
     console.log('✅ 底部導航修復完成');
 });
