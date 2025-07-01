@@ -9,6 +9,10 @@
 [![版本](https://img.shields.io/badge/版本-v2.4.web.3-green.svg)](https://github.com/backup0821/Better-vegetable-catcher)
 [![授權](https://img.shields.io/badge/授權-CC4.0%20BY%20NC-blue.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![平台](https://img.shields.io/badge/平台-Web%20%7C%20PWA%20%7C%20TV-brightgreen.svg)](https://backup0821.github.io/Better-vegetable-catcher/)
+[![語言](https://img.shields.io/badge/語言-JavaScript%20%7C%20HTML%20%7C%20CSS-yellow.svg)](https://github.com/backup0821/Better-vegetable-catcher)</br>
+[![瀏覽器支援](https://img.shields.io/badge/瀏覽器-Chrome%20%7C%20Firefox%20%7C%20Safari-orange.svg)](https://github.com/backup0821/Better-vegetable-catcher)
+[![PWA支援](https://img.shields.io/badge/PWA-支援-success.svg)](https://github.com/backup0821/Better-vegetable-catcher)
+[![離線功能](https://img.shields.io/badge/離線功能-支援-lightgrey.svg)](https://github.com/backup0821/Better-vegetable-catcher)
 
 </div>
 
