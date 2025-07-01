@@ -5650,6 +5650,73 @@ function filterFavorites() {
     });
 }
 
+// 搜尋作物並顯示結果
+function searchCropsForFavorites() {
+    const searchInput = document.getElementById('favoritesSearchInput');
+    const searchResults = document.getElementById('favoriteSearchResults');
+    
+    if (!searchInput || !searchResults) return;
+    
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    
+    if (searchTerm.length < 2) {
+        searchResults.style.display = 'none';
+        // 如果搜尋詞太短，顯示收藏夾過濾結果
+        filterFavorites();
+        return;
+    }
+    
+    // 從作物資料中搜尋
+    const matchingCrops = [];
+    if (cropData && Array.isArray(cropData)) {
+        cropData.forEach(item => {
+            if (item.作物名稱 && item.作物名稱.toLowerCase().includes(searchTerm)) {
+                matchingCrops.push(item.作物名稱);
+            }
+        });
+    }
+    
+    // 去重並限制結果數量
+    const uniqueCrops = [...new Set(matchingCrops)].slice(0, 10);
+    
+    if (uniqueCrops.length === 0) {
+        searchResults.innerHTML = '<div class="no-results">沒有找到符合的作物</div>';
+        searchResults.style.display = 'block';
+        return;
+    }
+    
+    searchResults.innerHTML = uniqueCrops.map(crop => `
+        <div class="search-result-item" onclick="addToFavoritesFromSearch('${crop}')">
+            <span class="crop-name">${crop}</span>
+            <button class="add-favorite-btn">⭐ 加入收藏</button>
+        </div>
+    `).join('');
+    
+    searchResults.style.display = 'block';
+}
+
+// 從搜尋結果加入收藏
+function addToFavoritesFromSearch(cropName) {
+    addToFavorites(cropName, 'all');
+    
+    // 隱藏搜尋結果
+    const searchResults = document.getElementById('favoriteSearchResults');
+    if (searchResults) {
+        searchResults.style.display = 'none';
+    }
+    
+    // 清空搜尋框
+    const searchInput = document.getElementById('favoritesSearchInput');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    // 重新載入收藏列表
+    loadFavorites();
+    
+    showNotification('成功', `已將 ${cropName} 加入收藏`);
+}
+
 // 顯示新增收藏 Modal
 function showAddFavoritesModal() {
     const modal = document.getElementById('addFavoritesModal');
@@ -6597,4 +6664,4 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateCropList === 'function') updateCropList();
     });
     // 其他初始化（如有）
-});
+})})}

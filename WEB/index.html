@@ -1244,7 +1244,8 @@
                         <!-- 收藏夾搜尋和新增 -->
                         <div class="favorites-controls">
                             <div class="favorites-search">
-                                <input type="text" id="favoritesSearchInput" placeholder="🔍 搜尋收藏項目..." class="favorites-search-input">
+                                <input type="text" id="favoritesSearchInput" placeholder="🔍 搜尋收藏項目或作物..." class="favorites-search-input" oninput="searchCropsForFavorites()">
+                                <div id="favoriteSearchResults" class="search-results" style="display: none;"></div>
                             </div>
                             <div class="favorites-add">
                                 <button id="addToFavoritesBtn" class="add-favorites-btn">➕ 新增收藏</button>
