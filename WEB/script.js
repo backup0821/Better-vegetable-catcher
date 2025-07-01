@@ -6600,4 +6600,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateCropList === 'function') updateCropList();
     });
     // 其他初始化（如有）
+
+    initBottomNavigation();
 })})}
