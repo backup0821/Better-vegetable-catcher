@@ -5421,4 +5421,4 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('iconSelectSection')) {
     initAppIconSelector();
   }
-});
+});})}
