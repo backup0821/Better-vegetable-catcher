@@ -926,7 +926,9 @@ if ('serviceWorker' in navigator) {
 
 // 顯示網頁通知
 function showPageNotifications(notifications) {
-    console.log('開始顯示通知:', notifications);
+    // 只顯示 public: true 的通知
+    const filtered = notifications.filter(n => n.public);
+    console.log('開始顯示通知:', filtered);
     
     try {
         // 移除現有的通知（如果有的話）
@@ -937,6 +939,49 @@ function showPageNotifications(notifications) {
         }
         if (existingOverlay) {
             existingOverlay.remove();
+        }
+
+        // 如果沒有通知，顯示「目前沒有通知」
+        if (filtered.length === 0) {
+            const overlay = document.createElement('div');
+            overlay.className = 'notification-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+            document.body.appendChild(overlay);
+
+            const notificationContainer = document.createElement('div');
+            notificationContainer.id = 'page-notification';
+            notificationContainer.className = 'notification-window';
+            notificationContainer.style.cssText = `
+                background-color: white;
+                padding: 20px;
+                border-radius: 10px;
+                max-width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            `;
+            notificationContainer.innerHTML = `
+                <div class="notification-title" style="font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #333;">系統通知</div>
+                <div style="text-align: center; color: #888; font-size: 18px;">目前沒有通知</div>
+                <button class="notification-button" style="display: block; width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin-top: 15px;">確定</button>
+            `;
+            overlay.appendChild(notificationContainer);
+            notificationContainer.querySelector('.notification-button').onclick = () => {
+                overlay.remove();
+                notificationContainer.remove();
+            };
+            return;
         }
 
         // 創建遮罩層
@@ -989,7 +1034,7 @@ function showPageNotifications(notifications) {
             margin-bottom: 20px;
         `;
 
-        notifications.forEach((notification, index) => {
+        filtered.forEach((notification, index) => {
             console.log('處理通知項目:', notification);
             const notificationItem = document.createElement('div');
             notificationItem.className = 'notification-item';
@@ -1007,7 +1052,7 @@ function showPageNotifications(notifications) {
             }
 
             // 計算剩餘時間
-            const [startTime, endTime] = notification.time.split(' ~ ');
+            const [startTime, endTime] = notification.time ? notification.time.split(' ~ ') : [notification.startTime, notification.endTime];
             const endDate = new Date(endTime);
             const now = new Date();
             const timeLeft = endDate - now;
@@ -1032,7 +1077,7 @@ function showPageNotifications(notifications) {
                         ${notification.title}
                     </div>
                     <div class="notification-message" style="margin-bottom: 5px;">
-                        ${notification.messenge}
+                        ${notification.messenge || notification.message}
                     </div>
                     <div class="notification-time" style="color: #666; font-size: 14px; margin-bottom: 5px;">
                         通知時間：${new Date(startTime).toLocaleString('zh-TW')}
