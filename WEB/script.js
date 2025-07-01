@@ -6460,4 +6460,121 @@ function addFavoriteButtonToMainSection() {
         
         cropSelect.parentNode.appendChild(favoriteBtn);
     }
-}})}
+}
+
+// 玻璃感通知彈窗
+function showGlassNotification(title, message, onClose) {
+    // 移除舊的
+    const old = document.getElementById('glass-notification');
+    if (old) old.remove();
+
+    // 遮罩
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.25); z-index: 9999; display: flex; align-items: center; justify-content: center;
+    `;
+    overlay.id = 'glass-notification';
+
+    // 玻璃感方塊
+    const box = document.createElement('div');
+    box.style.cssText = `
+        min-width: 320px; max-width: 90vw; padding: 32px 24px;
+        background: rgba(255,255,255,0.18);
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(31,38,135,0.18);
+        backdrop-filter: blur(12px) saturate(1.2);
+        -webkit-backdrop-filter: blur(12px) saturate(1.2);
+        border: 1.5px solid rgba(255,255,255,0.25);
+        text-align: center;
+        color: #222;
+        font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        position: relative;
+        animation: fadeInGlass 0.3s;
+    `;
+
+    // 標題
+    const h2 = document.createElement('h2');
+    h2.textContent = title;
+    h2.style = 'margin-bottom: 16px; font-size: 1.5em; font-weight: bold; letter-spacing: 1px;';
+    box.appendChild(h2);
+
+    // 內容
+    const p = document.createElement('div');
+    p.innerHTML = message;
+    p.style = 'font-size: 1.1em; margin-bottom: 24px;';
+    box.appendChild(p);
+
+    // 關閉按鈕
+    const btn = document.createElement('button');
+    btn.textContent = '關閉';
+    btn.style = `
+        padding: 10px 32px; border-radius: 8px; border: none;
+        background: #4CAF50; color: #fff; font-size: 1em; cursor: pointer;
+        box-shadow: 0 2px 8px rgba(31,38,135,0.10);
+        transition: background 0.2s;
+    `;
+    btn.onclick = () => {
+        overlay.remove();
+        if (typeof onClose === 'function') onClose();
+    };
+    box.appendChild(btn);
+
+    // 動畫
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes fadeInGlass {
+        from { opacity: 0; transform: scale(0.95);}
+        to { opacity: 1; transform: scale(1);}
+    }`;
+    document.head.appendChild(style);
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+}
+
+// 取通知剩餘時間文字
+function getNotificationTimeLeft(startTime, endTime) {
+    const endDate = new Date(endTime);
+    const now = new Date();
+    const timeLeft = endDate - now;
+    const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    if (daysLeft > 0) return `剩餘 ${daysLeft} 天`;
+    if (hoursLeft > 0) return `剩餘 ${hoursLeft} 小時`;
+    return '即將過期';
+}
+
+// 玻璃感通知整合
+function showPageNotifications(notifications) {
+    // 只顯示 public: true 的通知
+    const filtered = (Array.isArray(notifications) ? notifications : []).filter(n => n && (n.public === true || n.public === 'true'));
+    if (filtered.length === 0) {
+        showGlassNotification('系統通知', '目前沒有通知');
+        return;
+    }
+    // 依序彈出每一則通知
+    let idx = 0;
+    function showNext() {
+        if (idx >= filtered.length) return;
+        const n = filtered[idx];
+        idx++;
+        // 支援欄位容錯
+        const msg = n.messenge || n.message || '';
+        const [startTime, endTime] = n.time ? n.time.split(' ~ ') : [n.startTime, n.endTime];
+        const timeLeftText = getNotificationTimeLeft(startTime, endTime);
+        const tag = n.isMarketRest
+            ? '<span style="background: #ffeeba; color: #8a6d3b; padding: 2px 8px; border-radius: 3px; font-size: 12px;">🏪 市場休市通知</span>'
+            : '<span style="background: #e9ecef; color: #333; padding: 2px 8px; border-radius: 3px; font-size: 12px;">📢 公開通知</span>';
+        const html = `
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">${n.title || ''}</div>
+            <div style="margin-bottom: 10px;">${msg}</div>
+            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">通知時間：${startTime ? new Date(startTime).toLocaleString('zh-TW') : ''}</div>
+            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">${timeLeftText}</div>
+            <div style="margin-top: 5px;">${tag}</div>
+        `;
+        showGlassNotification('系統通知', html, showNext);
+    }
+    showNext();
+}
+})}
