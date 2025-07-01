@@ -123,7 +123,7 @@ Key features:
 ### 1. Online Usage
 Visit our website directly:
 ```
-https://backup0821.github.io/Better-vegetable-catcher/
+https://backup0821.github.io/Better-vegetable-catcher/WEB
 ```
 
 ### 2. Local Deployment

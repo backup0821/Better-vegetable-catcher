@@ -123,9 +123,9 @@
 
 ### 1. 線上使用
 直接訪問我們的網站：
-```
-https://backup0821.github.io/Better-vegetable-catcher/
-```
+
+https://backup0821.github.io/Better-vegetable-catcher/WEB
+
 
 ### 2. 本地部署
 ```bash
