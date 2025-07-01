@@ -6577,4 +6577,30 @@ function showPageNotifications(notifications) {
     }
     showNext();
 }
-})}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化主題設定
+    if (typeof initThemeSettings === 'function') initThemeSettings();
+    // 初始化環境設定
+    if (typeof initEnvironmentSettings === 'function') initEnvironmentSettings();
+    // 初始化底部導航欄
+    if (typeof initBottomNavigation === 'function') initBottomNavigation();
+    // 初始化價格預警
+    if (typeof initPriceAlerts === 'function') initPriceAlerts();
+    // 初始化收藏夾
+    if (typeof initFavorites === 'function') initFavorites();
+    // 初始化設定區塊
+    if (typeof initSettings === 'function') initSettings();
+    // 初始化市場資訊
+    if (typeof initMarketInfo === 'function') initMarketInfo();
+    // 初始化通知檢查
+    if (typeof initNotificationCheck === 'function') initNotificationCheck();
+    // 初始化更新通知檢查
+    if (typeof initUpdateNotificationCheck === 'function') initUpdateNotificationCheck();
+    // 初始化資料載入
+    fetchData().then(data => {
+        cropData = data;
+        if (typeof updateCropList === 'function') updateCropList();
+    });
+    // 其他初始化（如有）
+})})}
