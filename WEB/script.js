@@ -5957,4 +5957,4 @@ function addFavoriteButtonToMainSection() {
         
         cropSelect.parentNode.appendChild(favoriteBtn);
     }
-}
+}})}
