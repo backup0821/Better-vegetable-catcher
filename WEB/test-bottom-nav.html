@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>底部導航測試</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+        
+        .section-container {
+            margin-bottom: 80px;
+            padding: 20px;
+        }
+        
+        .content-section {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        /* 底部導航欄樣式 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .nav-item:hover {
+            background: rgba(26, 115, 232, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-item.active {
+            background: rgba(26, 115, 232, 0.15);
+            color: #1a73e8;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item.active .nav-icon {
+            transform: scale(1.1);
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+
+        .nav-item.active .nav-label {
+            color: #1a73e8;
+            font-weight: 600;
+        }
+        
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info" id="debugInfo">
+        調試資訊載入中...
+    </div>
+
+    <div class="section-container">
+        <!-- 主要資料分析區塊 -->
+        <div id="main-section" class="content-section active">
+            <h1>📊 資料分析</h1>
+            <p>這是主要資料分析頁面</p>
+            <p>點擊底部導航測試切換功能</p>
+        </div>
+
+        <!-- 市場資訊區塊 -->
+        <div id="market-section" class="content-section">
+            <h1>🏪 市場資訊</h1>
+            <p>這是市場資訊頁面</p>
+        </div>
+
+        <!-- 價格預警區塊 -->
+        <div id="alerts-section" class="content-section">
+            <h1>🔔 價格預警</h1>
+            <p>這是價格預警頁面</p>
+        </div>
+
+        <!-- 收藏夾區塊 -->
+        <div id="favorites-section" class="content-section">
+            <h1>⭐ 收藏夾</h1>
+            <p>這是收藏夾頁面</p>
+        </div>
+
+        <!-- 設定區塊 -->
+        <div id="settings-section" class="content-section">
+            <h1>⚙️ 設定</h1>
+            <p>這是設定頁面</p>
+        </div>
+    </div>
+
+    <!-- 底部導航欄 -->
+    <nav class="bottom-nav">
+        <div class="nav-container">
+            <div class="nav-item active" data-section="main">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">資料分析</div>
+            </div>
+            <div class="nav-item" data-section="market">
+                <div class="nav-icon">🏪</div>
+                <div class="nav-label">市場資訊</div>
+            </div>
+            <div class="nav-item" data-section="alerts">
+                <div class="nav-icon">🔔</div>
+                <div class="nav-label">價格預警</div>
+            </div>
+            <div class="nav-item" data-section="favorites">
+                <div class="nav-icon">⭐</div>
+                <div class="nav-label">收藏夾</div>
+            </div>
+            <div class="nav-item" data-section="settings">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">設定</div>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        function updateDebugInfo() {
+            const debugInfo = document.getElementById('debugInfo');
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentSections = document.querySelectorAll('.content-section');
+            const activeSection = document.querySelector('.content-section.active');
+            
+            debugInfo.innerHTML = `
+                導航項目: ${navItems.length}<br>
+                內容區塊: ${contentSections.length}<br>
+                當前區塊: ${activeSection ? activeSection.id : '無'}<br>
+                時間: ${new Date().toLocaleTimeString()}
+            `;
+        }
+
+        function initBottomNavigation() {
+            console.log('初始化底部導航欄...');
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            console.log('找到導航項目:', navItems.length);
+            console.log('找到內容區塊:', contentSections.length);
+
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const targetSection = item.getAttribute('data-section');
+                    console.log('點擊導航項目:', targetSection);
+                    
+                    // 移除所有活動狀態
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    contentSections.forEach(section => section.classList.remove('active'));
+                    
+                    // 添加活動狀態到當前項目
+                    item.classList.add('active');
+                    const targetElement = document.getElementById(`${targetSection}-section`);
+                    if (targetElement) {
+                        targetElement.classList.add('active');
+                        console.log('切換到區塊:', targetSection);
+                    } else {
+                        console.error('找不到目標區塊:', `${targetSection}-section`);
+                    }
+                    
+                    // 儲存當前頁面狀態
+                    localStorage.setItem('currentSection', targetSection);
+                    
+                    // 更新調試資訊
+                    updateDebugInfo();
+                });
+            });
+
+            // 載入上次選擇的頁面
+            const lastSection = localStorage.getItem('currentSection') || 'main';
+            const lastNavItem = document.querySelector(`[data-section="${lastSection}"]`);
+            if (lastNavItem) {
+                console.log('載入上次選擇的頁面:', lastSection);
+                lastNavItem.click();
+            } else {
+                console.log('使用預設頁面: main');
+                const mainNavItem = document.querySelector('[data-section="main"]');
+                if (mainNavItem) mainNavItem.click();
+            }
+            
+            // 初始更新調試資訊
+            updateDebugInfo();
+        }
+
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('頁面載入完成，初始化底部導航...');
+            initBottomNavigation();
+            
+            // 每秒更新調試資訊
+            setInterval(updateDebugInfo, 1000);
+        });
+    </script>
+</body>
+</html> 

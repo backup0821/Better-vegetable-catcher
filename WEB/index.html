@@ -29,6 +29,7 @@
     <script type="module" src="script.js"></script>
     <script src="notification.js"></script>
     <script src="notification-checker.js"></script>
+    <script src="fix-bottom-nav.js"></script>
     <style>
         .notification-modal {
             position: fixed;
@@ -1369,7 +1370,7 @@
         </div>
         
         <!-- 休市日曆按鈕 -->
-        <button id="checkRestButton" style="position: absolute; bottom: 80px; right: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000;">休市日曆</button>
+        <button id="checkRestButton" style="position: fixed; bottom: 100px; right: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9998;">休市日曆</button>
         
         <!-- 休市日曆容器 -->
         <div id="calendarContainer" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 1001; max-width: 90%; max-height: 90vh; overflow-y: auto;">

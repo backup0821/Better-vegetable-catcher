@@ -156,64 +156,13 @@ function showUpdateNotification(latestVersion) {
 }
 
 // 初始化更新檢查
+// 初始化更新檢查功能
 function initUpdateCheck() {
     // 每小時檢查一次更新
     setInterval(checkForUpdates, 60 * 60 * 1000);
     // 立即執行一次檢查
     checkForUpdates();
 }
-
-// 在頁面載入時初始化更新檢查
-document.addEventListener('DOMContentLoaded', () => {
-    initUpdateCheck();
-    
-    // 檢查維護狀態
-    checkMaintenanceStatus();
-    // 每5分鐘檢查一次維護狀態
-    setInterval(checkMaintenanceStatus, 5 * 60 * 1000);
-    
-    // 檢查環境設定並顯示農業氣象影片
-    showAgriculturalWeatherVideo();
-
-    // 新增市場選擇的事件監聽器
-    const marketSelect = document.getElementById('marketSelect');
-    if (marketSelect) {
-        // 處理地區群組選擇
-        marketSelect.addEventListener('click', (event) => {
-            const target = event.target;
-            if (target.tagName === 'OPTGROUP') {
-                // 獲取該群組下的所有選項
-                const options = Array.from(target.children);
-                // 檢查是否所有選項都已選中
-                const allSelected = options.every(option => option.selected);
-                
-                // 如果全部已選中，則取消選中；否則全部選中
-                options.forEach(option => {
-                    option.selected = !allSelected;
-                });
-                
-                // 觸發 change 事件以更新圖表
-                marketSelect.dispatchEvent(new Event('change'));
-            }
-        });
-
-        // 處理市場選擇變更
-        marketSelect.addEventListener('change', () => {
-            if (selectedCrop) {
-                // 根據當前選擇的分析功能自動更新
-                if (showPriceTrendBtn.classList.contains('active')) {
-                    showPriceTrend();
-                } else if (showVolumeDistBtn.classList.contains('active')) {
-                    showVolumeDistribution();
-                } else if (showPriceDistBtn.classList.contains('active')) {
-                    showPriceDistribution();
-                } else if (showSeasonalBtn.classList.contains('active')) {
-                    showSeasonalAnalysis();
-                }
-            }
-        });
-    }
-});
 
 // 從農產品交易行情站獲取資料
 async function fetchData(retryCount = 3) {
@@ -291,11 +240,8 @@ async function clearCacheAndFetch() {
     }
 }
 
-// 初始化事件監聽器
-document.addEventListener('DOMContentLoaded', () => {
-    // ... 其他初始化程式碼 ...
-    
-    // 添加清除快取按鈕
+// 添加清除快取按鈕功能
+function addClearCacheButton() {
     const clearCacheBtn = document.createElement('button');
     clearCacheBtn.textContent = '清除快取';
     clearCacheBtn.className = 'clear-cache-btn';
@@ -323,13 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearCacheBtn.addEventListener('click', clearCacheAndFetch);
     
     document.body.appendChild(clearCacheBtn);
-    
-    // 初始化資料載入
-    fetchData().then(data => {
-        cropData = data;
-        updateCropList();
-    });
-});
+}
 
 // 強制更新資料
 async function forceUpdateData() {
@@ -351,10 +291,8 @@ async function forceUpdateData() {
     }
 }
 
-// 初始化事件監聽器
-document.addEventListener('DOMContentLoaded', () => {
-    // ... 其他初始化程式碼 ...
-    
+// 初始化強制更新按鈕功能
+function initForceUpdateButton() {
     // 添加強制更新按鈕事件
     const forceUpdateBtn = document.createElement('button');
     forceUpdateBtn.textContent = '強制更新資料';
@@ -372,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cropData = data;
         updateCropList();
     });
-});
+}
 
 // 顯示通知函數
 function showNotification(title, message) {
@@ -5333,8 +5271,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化資料載入
     fetchData().then(data => {
         cropData = data;
-        updateCropList();
+        if (typeof updateCropList === 'function') updateCropList();
     });
+    // 其他初始化（如有）
 });
 // ... existing code ...
 
@@ -6594,12 +6533,62 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof initAppIconSelector === 'function') initAppIconSelector();
     // 在作物選擇區域添加收藏按鈕
     if (typeof addFavoriteButtonToMainSection === 'function') addFavoriteButtonToMainSection();
+    // 初始化更新檢查
+    if (typeof initUpdateCheck === 'function') initUpdateCheck();
+    // 添加清除快取按鈕
+    if (typeof addClearCacheButton === 'function') addClearCacheButton();
+    // 初始化強制更新按鈕
+    if (typeof initForceUpdateButton === 'function') initForceUpdateButton();
+    // 檢查維護狀態
+    if (typeof checkMaintenanceStatus === 'function') checkMaintenanceStatus();
+    // 每5分鐘檢查一次維護狀態
+    setInterval(() => {
+        if (typeof checkMaintenanceStatus === 'function') checkMaintenanceStatus();
+    }, 5 * 60 * 1000);
+    // 檢查環境設定並顯示農業氣象影片
+    if (typeof showAgriculturalWeatherVideo === 'function') showAgriculturalWeatherVideo();
+    // 初始化市場選擇事件監聽器
+    const marketSelect = document.getElementById('marketSelect');
+    if (marketSelect) {
+        // 處理地區群組選擇
+        marketSelect.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.tagName === 'OPTGROUP') {
+                // 獲取該群組下的所有選項
+                const options = Array.from(target.children);
+                // 檢查是否所有選項都已選中
+                const allSelected = options.every(option => option.selected);
+                
+                // 如果全部已選中，則取消選中；否則全部選中
+                options.forEach(option => {
+                    option.selected = !allSelected;
+                });
+                
+                // 觸發 change 事件以更新圖表
+                marketSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // 處理市場選擇變更
+        marketSelect.addEventListener('change', () => {
+            if (selectedCrop) {
+                // 根據當前選擇的分析功能自動更新
+                if (showPriceTrendBtn && showPriceTrendBtn.classList.contains('active')) {
+                    showPriceTrend();
+                } else if (showVolumeDistBtn && showVolumeDistBtn.classList.contains('active')) {
+                    showVolumeDistribution();
+                } else if (showPriceDistBtn && showPriceDistBtn.classList.contains('active')) {
+                    showPriceDistribution();
+                } else if (showSeasonalBtn && showSeasonalBtn.classList.contains('active')) {
+                    showSeasonalAnalysis();
+                }
+            }
+        });
+    }
     // 初始化資料載入
     fetchData().then(data => {
         cropData = data;
         if (typeof updateCropList === 'function') updateCropList();
     });
     // 其他初始化（如有）
-
-    initBottomNavigation();
 })})}
