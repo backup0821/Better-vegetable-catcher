@@ -5462,32 +5462,24 @@ function initAppIconSelector() {
   if (checkedRadio) checkedRadio.checked = true;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  if (document.getElementById('iconSelectSection')) {
-    initAppIconSelector();
-  }
-  
-  // 初始化底部導航欄
-  initBottomNavigation();
-  
-  // 初始化各功能區塊
-  initPriceAlerts();
-  initFavorites();
-  initSettings();
-  initMarketInfo();
-  
-  // 在作物選擇區域添加收藏按鈕
-  addFavoriteButtonToMainSection();
-});
+// 初始化應用圖示選擇器
+if (document.getElementById('iconSelectSection')) {
+  initAppIconSelector();
+}
 
 // === 底部導航欄功能 ===
 function initBottomNavigation() {
+    console.log('初始化底部導航欄...');
     const navItems = document.querySelectorAll('.nav-item');
     const contentSections = document.querySelectorAll('.content-section');
+    
+    console.log('找到導航項目:', navItems.length);
+    console.log('找到內容區塊:', contentSections.length);
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const targetSection = item.getAttribute('data-section');
+            console.log('點擊導航項目:', targetSection);
             
             // 移除所有活動狀態
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -5495,7 +5487,13 @@ function initBottomNavigation() {
             
             // 添加活動狀態到當前項目
             item.classList.add('active');
-            document.getElementById(`${targetSection}-section`).classList.add('active');
+            const targetElement = document.getElementById(`${targetSection}-section`);
+            if (targetElement) {
+                targetElement.classList.add('active');
+                console.log('切換到區塊:', targetSection);
+            } else {
+                console.error('找不到目標區塊:', `${targetSection}-section`);
+            }
             
             // 儲存當前頁面狀態
             localStorage.setItem('currentSection', targetSection);
@@ -5506,7 +5504,12 @@ function initBottomNavigation() {
     const lastSection = localStorage.getItem('currentSection') || 'main';
     const lastNavItem = document.querySelector(`[data-section="${lastSection}"]`);
     if (lastNavItem) {
+        console.log('載入上次選擇的頁面:', lastSection);
         lastNavItem.click();
+    } else {
+        console.log('使用預設頁面: main');
+        const mainNavItem = document.querySelector('[data-section="main"]');
+        if (mainNavItem) mainNavItem.click();
     }
 }
 
@@ -6597,6 +6600,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof initNotificationCheck === 'function') initNotificationCheck();
     // 初始化更新通知檢查
     if (typeof initUpdateNotificationCheck === 'function') initUpdateNotificationCheck();
+    // 初始化應用圖示選擇器
+    if (typeof initAppIconSelector === 'function') initAppIconSelector();
+    // 在作物選擇區域添加收藏按鈕
+    if (typeof addFavoriteButtonToMainSection === 'function') addFavoriteButtonToMainSection();
     // 初始化資料載入
     fetchData().then(data => {
         cropData = data;
