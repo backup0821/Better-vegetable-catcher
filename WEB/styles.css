@@ -1533,7 +1533,7 @@ input:checked + .slider:before {
 
 /* 工作人員退出功能樣式 */
 .staff-logout-section {
-    position: fixed;
+    position: absolute;
     bottom: 20px;
     left: 20px;
     z-index: 1000;

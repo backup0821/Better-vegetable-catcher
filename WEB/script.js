@@ -1303,6 +1303,25 @@ function showPermissionPrompt() {
     if (document.getElementById('permission-prompt')) {
         return;
     }
+    
+    // 檢查是否已經被使用者關閉
+    const isDismissed = localStorage.getItem('notificationPermissionDismissed') === 'true';
+    if (isDismissed) {
+        // 檢查是否已經過了延遲時間
+        const dismissUntil = localStorage.getItem('notificationPermissionDismissUntil');
+        if (dismissUntil) {
+            const currentTime = new Date().getTime();
+            const dismissTime = parseInt(dismissUntil);
+            if (currentTime < dismissTime) {
+                // 還沒到重新顯示的時間
+                return;
+            } else {
+                // 清除過期的標記
+                localStorage.removeItem('notificationPermissionDismissed');
+                localStorage.removeItem('notificationPermissionDismissUntil');
+            }
+        }
+    }
 
     const permissionPrompt = document.createElement('div');
     permissionPrompt.id = 'permission-prompt';
@@ -1351,6 +1370,16 @@ function removePermissionPrompt() {
     if (prompt) {
         prompt.remove();
     }
+    
+    // 設定標記，防止再次顯示提示
+    localStorage.setItem('notificationPermissionDismissed', 'true');
+    
+    // 設定延遲時間，24小時後再次顯示
+    const dismissTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24小時
+    localStorage.setItem('notificationPermissionDismissUntil', dismissTime.toString());
+    
+    // 顯示確認訊息
+    showNotification('已關閉提示', '通知權限提示已關閉，24小時內不會再次顯示。您可以隨時在設定中重新啟用通知。');
 }
 
 // 檢查瀏覽器相容性
@@ -1396,8 +1425,21 @@ function checkBrowserCompatibility() {
 // 在頁面載入時檢查相容性
 document.addEventListener('DOMContentLoaded', () => {
     checkBrowserCompatibility();
-    // 立即請求通知權限
-    requestNotificationPermission();
+    
+    // 檢查通知權限狀態
+    if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+            // 如果權限狀態是預設（未決定），延遲請求
+            setTimeout(() => {
+                requestNotificationPermission();
+            }, 3000); // 3秒後請求
+        } else if (Notification.permission === 'denied') {
+            // 如果權限被拒絕，顯示提示
+            setTimeout(() => {
+                showPermissionPrompt();
+            }, 2000); // 2秒後顯示提示
+        }
+    }
 });
 
 // 裝置識別碼相關功能
@@ -2325,170 +2367,13 @@ let isDevModeActive = false;
 const CLICK_THRESHOLD = 5; // 需要點擊的次數
 const CLICK_TIMEOUT = 2000; // 點擊超時時間（毫秒）
 
-// 初始化開發者模式
-function initDevMode() {
-    console.log('開始初始化開發者模式');
-    
-    // 獲取已存在的按鈕
-    const devModeBtn = document.getElementById('devModeBtn');
-    if (!devModeBtn) {
-        console.error('找不到開發者模式按鈕');
-        return;
-    }
 
-    // 設置按鈕樣式
-    devModeBtn.style.cssText = `
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        padding: 10px 20px !important;
-        background-color: #333 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 5px !important;
-        cursor: pointer !important;
-        z-index: 9999 !important;
-        opacity: 0.7 !important;
-        transition: opacity 0.3s !important;
-        font-size: 14px !important;
-        font-weight: bold !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-        display: block !important;
-    `;
-    
-    // 滑鼠懸停效果
-    devModeBtn.addEventListener('mouseover', () => {
-        devModeBtn.style.opacity = '1';
-    });
-    devModeBtn.addEventListener('mouseout', () => {
-        devModeBtn.style.opacity = '0.7';
-    });
-    
-    // 點擊事件
-    devModeBtn.addEventListener('click', () => {
-        console.log('開發者模式按鈕被點擊');
-        const devModePanel = document.getElementById('devModePanel');
-        if (devModePanel) {
-            devModePanel.style.display = devModePanel.style.display === 'none' ? 'block' : 'none';
-        } else {
-            createDevModePanel();
-        }
-    });
-    
-    console.log('開發者模式按鈕初始化完成');
-}
-
-// 確保在頁面載入完成後初始化開發者模式
-window.addEventListener('load', () => {
-    console.log('頁面完全載入，準備初始化開發者模式');
-    initDevMode();
-});
-
-// 同時也在 DOMContentLoaded 時初始化
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM 內容載入完成，準備初始化開發者模式');
-    initDevMode();
-});
-
-// 創建開發者模式面板
-function createDevModePanel() {
-    const panel = document.createElement('div');
-    panel.id = 'devModePanel';
-    panel.className = 'dev-mode-panel';
-    panel.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.2);
-        z-index: 1001;
-        width: 80%;
-        max-width: 600px;
-        max-height: 80vh;
-        overflow-y: auto;
-    `;
-    
-    panel.innerHTML = `
-        <div class="panel-header">
-            <h3>開發者模式</h3>
-            <button class="close-btn">×</button>
-        </div>
-        <div class="action-buttons">
-            <button class="action-btn" style="background-color: #4CAF50;">查看 API 資料</button>
-            <button class="action-btn" style="background-color: #2196F3;">查看資料庫</button>
-            <button class="action-btn" style="background-color: #FF9800;">功能設定</button>
-            <button class="action-btn" style="background-color: #9C27B0;">主題設定</button>
-            <button class="action-btn" style="background-color: #607D8B;">CORS 設定</button>
-        </div>
-    `;
-    
-    // 添加樣式
-    const style = document.createElement('style');
-    style.textContent = `
-        .dev-mode-panel .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .dev-mode-panel .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-        }
-        
-        .dev-mode-panel .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-        }
-        
-        .dev-mode-panel .action-btn {
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-        
-        .dev-mode-panel .action-btn:hover {
-            opacity: 0.8;
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // 關閉按鈕事件
-    const closeBtn = panel.querySelector('.close-btn');
-    closeBtn.addEventListener('click', () => {
-        panel.style.display = 'none';
-    });
-    
-    // 按鈕事件
-    const buttons = panel.querySelectorAll('.action-btn');
-    buttons[0].addEventListener('click', showApiData);
-    buttons[1].addEventListener('click', viewDatabase);
-    buttons[2].addEventListener('click', showFeatureSettings);
-    buttons[3].addEventListener('click', showThemeSettings);
-    buttons[4].addEventListener('click', showCORSSettings);
-    
-    document.body.appendChild(panel);
-}
 
 // 初始化事件監聽器
 document.addEventListener('DOMContentLoaded', () => {
     // ... 其他初始化程式碼 ...
     
-    // 初始化開發者模式
-    initDevMode();
+
 });
 
 // 初始化環境設定
@@ -2514,44 +2399,7 @@ function initEnvironmentSettings() {
             }
         });
     });
-}
 
-// 初始化開發者模式功能
-function initDevModeFeatures() {
-    // 取得開發者面板內容區塊
-    const devModePanel = document.getElementById('devModePanel');
-    const devModeContent = document.querySelector('.dev-mode-content') || devModePanel;
-    if (!devModeContent) return;
-
-    // --- API 資料按鈕 ---
-    if (!devModeContent.querySelector('.action-btn.api-viewer')) {
-        const apiViewerBtn = document.createElement('button');
-        apiViewerBtn.textContent = '查看 API 資料';
-        apiViewerBtn.className = 'action-btn api-viewer';
-        apiViewerBtn.style.backgroundColor = '#9C27B0';
-        apiViewerBtn.addEventListener('click', showApiData);
-        // 嘗試插入到 action-buttons 區塊
-        const actionButtons = devModeContent.querySelector('.action-buttons');
-        if (actionButtons) {
-            actionButtons.appendChild(apiViewerBtn);
-        } else {
-            devModeContent.appendChild(apiViewerBtn);
-        }
-    }
-
-    // --- 農業氣象區塊/按鈕 ---
-    if (!devModeContent.querySelector('.dev-mode-section.weather-section')) {
-        const weatherSection = document.createElement('div');
-        weatherSection.className = 'dev-mode-section weather-section';
-        weatherSection.innerHTML = '<h3>農業氣象</h3>';
-        const weatherButton = document.createElement('button');
-        weatherButton.id = 'showAgriculturalWeather';
-        weatherButton.textContent = '今日農業氣象';
-        weatherButton.addEventListener('click', showAgriculturalWeatherVideo);
-        weatherSection.appendChild(weatherButton);
-        devModeContent.appendChild(weatherSection);
-    }
-}
 
 // 顯示 API 資料
 async function showApiData() {
@@ -5518,19 +5366,15 @@ async function testApiConnection(apiUrl) {
 // ... existing code ...
 // 初始化事件監聽器
 document.addEventListener('DOMContentLoaded', () => {
-    // 初始化開發者模式
-    initDevMode();
-    
     // 初始化其他功能
     initEnvironmentSettings();
-    initDevModeFeatures();
     initNotificationCheck();
     initMarketRestCheck();
     initUpdateCheck();
     initVersionCheck();
     initETagStatusCheck();
     initThemeSettings();
-})
+});
 
 // ===== 應用程式圖示選擇功能 =====
 function updateAppIcon(selected) {
@@ -5572,10 +5416,9 @@ function initAppIconSelector() {
   const checkedRadio = document.querySelector(`input[name="appIcon"][value="${savedIcon}"]`);
   if (checkedRadio) checkedRadio.checked = true;
 }
-// ... existing code ...
 
 document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('iconSelectSection')) {
     initAppIconSelector();
   }
-})})
+});})}
