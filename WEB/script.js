@@ -5608,7 +5608,199 @@ function deleteAlert(alertId) {
 
 // === 收藏夾功能 ===
 function initFavorites() {
+    console.log('初始化收藏夾功能...');
+    
+    // 收藏夾搜尋功能
+    const favoritesSearchInput = document.getElementById('favoritesSearchInput');
+    if (favoritesSearchInput) {
+        favoritesSearchInput.addEventListener('input', filterFavorites);
+    }
+    
+    // 新增收藏按鈕
+    const addToFavoritesBtn = document.getElementById('addToFavoritesBtn');
+    if (addToFavoritesBtn) {
+        addToFavoritesBtn.addEventListener('click', showAddFavoritesModal);
+    }
+    
+    // 快速新增按鈕
+    const quickAddFavoritesBtn = document.getElementById('quickAddFavoritesBtn');
+    if (quickAddFavoritesBtn) {
+        quickAddFavoritesBtn.addEventListener('click', showAddFavoritesModal);
+    }
+    
+    // Modal 關閉按鈕
+    const favoritesModalClose = document.querySelector('.favorites-modal-close');
+    if (favoritesModalClose) {
+        favoritesModalClose.addEventListener('click', closeFavoritesModal);
+    }
+    
+    // 確認新增按鈕
+    const confirmAddFavoritesBtn = document.getElementById('confirmAddFavoritesBtn');
+    if (confirmAddFavoritesBtn) {
+        confirmAddFavoritesBtn.addEventListener('click', confirmAddFavorites);
+    }
+    
+    // 取消按鈕
+    const cancelBtn = document.querySelector('.favorites-modal .cancel-btn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeFavoritesModal);
+    }
+    
+    // 作物搜尋功能
+    const cropSearchInput = document.getElementById('cropSearchInput');
+    if (cropSearchInput) {
+        cropSearchInput.addEventListener('input', filterCropOptions);
+    }
+    
+    // 載入收藏項目
     loadFavorites();
+}
+
+// 收藏夾搜尋過濾功能
+function filterFavorites() {
+    const searchTerm = document.getElementById('favoritesSearchInput').value.toLowerCase();
+    const favoriteItems = document.querySelectorAll('.favorite-item');
+    
+    favoriteItems.forEach(item => {
+        const cropName = item.querySelector('.crop-name')?.textContent.toLowerCase() || '';
+        const marketName = item.querySelector('.market-name')?.textContent.toLowerCase() || '';
+        
+        if (cropName.includes(searchTerm) || marketName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// 顯示新增收藏 Modal
+function showAddFavoritesModal() {
+    const modal = document.getElementById('addFavoritesModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        loadCropOptionsForFavorites();
+        loadMarketOptionsForFavorites();
+    }
+}
+
+// 關閉收藏 Modal
+function closeFavoritesModal() {
+    const modal = document.getElementById('addFavoritesModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 載入作物選項到收藏 Modal
+async function loadCropOptionsForFavorites() {
+    const cropSelect = document.getElementById('favoritesCropSelect');
+    if (!cropSelect) return;
+    
+    try {
+        cropSelect.innerHTML = '<option value="">載入中...</option>';
+        
+        // 使用現有的作物資料
+        if (cropData && cropData.length > 0) {
+            cropSelect.innerHTML = '<option value="">請選擇作物</option>';
+            cropData.forEach(crop => {
+                const option = document.createElement('option');
+                option.value = crop;
+                option.textContent = crop;
+                cropSelect.appendChild(option);
+            });
+        } else {
+            // 如果沒有作物資料，嘗試重新載入
+            await fetchData();
+            if (cropData && cropData.length > 0) {
+                cropSelect.innerHTML = '<option value="">請選擇作物</option>';
+                cropData.forEach(crop => {
+                    const option = document.createElement('option');
+                    option.value = crop;
+                    option.textContent = crop;
+                    cropSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('載入作物選項失敗:', error);
+        cropSelect.innerHTML = '<option value="">載入失敗</option>';
+    }
+}
+
+// 載入市場選項到收藏 Modal
+function loadMarketOptionsForFavorites() {
+    const marketSelect = document.getElementById('favoritesMarketSelect');
+    if (!marketSelect) return;
+    
+    marketSelect.innerHTML = `
+        <option value="all" selected>全部市場</option>
+        <optgroup label="北部地區">
+            <option value="台北一">台北第一果菜批發市場</option>
+            <option value="台北二">台北第二果菜批發市場</option>
+            <option value="新北">新北市果菜批發市場</option>
+        </optgroup>
+        <optgroup label="中部地區">
+            <option value="台中">台中果菜批發市場</option>
+            <option value="彰化">彰化果菜批發市場</option>
+        </optgroup>
+        <optgroup label="南部地區">
+            <option value="高雄">高雄果菜批發市場</option>
+            <option value="台南">台南果菜批發市場</option>
+        </optgroup>
+    `;
+}
+
+// 過濾作物選項
+function filterCropOptions() {
+    const searchTerm = document.getElementById('cropSearchInput').value.toLowerCase();
+    const cropSelect = document.getElementById('favoritesCropSelect');
+    
+    if (!cropSelect) return;
+    
+    Array.from(cropSelect.options).forEach(option => {
+        if (option.value === '') return; // 跳過預設選項
+        
+        if (option.textContent.toLowerCase().includes(searchTerm)) {
+            option.style.display = '';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+}
+
+// 確認新增收藏
+function confirmAddFavorites() {
+    const cropSelect = document.getElementById('favoritesCropSelect');
+    const marketSelect = document.getElementById('favoritesMarketSelect');
+    
+    if (!cropSelect || !marketSelect) return;
+    
+    const selectedCrops = Array.from(cropSelect.selectedOptions).map(option => option.value);
+    const selectedMarkets = Array.from(marketSelect.selectedOptions).map(option => option.value);
+    
+    if (selectedCrops.length === 0 || selectedCrops[0] === '') {
+        alert('請選擇至少一個作物');
+        return;
+    }
+    
+    // 新增收藏項目
+    selectedCrops.forEach(crop => {
+        if (crop === '') return;
+        
+        selectedMarkets.forEach(market => {
+            if (market === '') return;
+            
+            addToFavorites(crop, market);
+        });
+    });
+    
+    closeFavoritesModal();
+    
+    // 重新載入收藏列表
+    loadFavorites();
+    
+    // 顯示成功訊息
+    showNotification('收藏成功', '已成功新增收藏項目');
 }
 
 function addToFavorites(cropName, marketName = 'all') {
@@ -5649,15 +5841,17 @@ function loadFavorites() {
     emptyFavorites.style.display = 'none';
 
     favoritesGrid.innerHTML = favorites.map(favorite => `
-        <div class="favorite-item" onclick="loadFavoriteData('${favorite.cropName}', '${favorite.marketName}')">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <strong>${favorite.cropName}</strong>
-                    <br>
-                    <small style="color: #666;">${favorite.marketName === 'all' ? '全部市場' : favorite.marketName}</small>
-                </div>
-                <button onclick="event.stopPropagation(); removeFromFavorites('${favorite.id}')" 
-                        style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 12px;">
+        <div class="favorite-item">
+            <div class="favorite-info">
+                <div class="crop-name" style="font-weight: 600; color: #333; font-size: 16px;">${favorite.cropName}</div>
+                <div class="market-name" style="color: #666; font-size: 14px;">${getMarketDisplayName(favorite.marketName)}</div>
+                <div class="favorite-date" style="color: #888; font-size: 12px;">新增時間：${new Date(favorite.addedAt || favorite.date).toLocaleDateString()}</div>
+            </div>
+            <div class="favorite-actions">
+                <button onclick="viewFavoriteData('${favorite.cropName}', '${favorite.marketName}')" style="padding: 6px 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;">
+                    查看資料
+                </button>
+                <button onclick="removeFromFavorites('${favorite.id}')" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
                     移除
                 </button>
             </div>
@@ -5690,6 +5884,57 @@ function loadFavoriteData(cropName, marketName) {
             marketSelect.dispatchEvent(new Event('change'));
         }
     }, 300);
+}
+
+// 查看收藏資料（新版本）
+function viewFavoriteData(cropName, marketName) {
+    // 切換到主分析頁面並載入資料
+    switchToMainSection();
+    
+    // 設定作物和市場選擇
+    if (cropSelect) {
+        cropSelect.value = cropName;
+        cropSelect.dispatchEvent(new Event('change'));
+    }
+    
+    if (marketSelect) {
+        // 清除所有選擇
+        Array.from(marketSelect.options).forEach(option => {
+            option.selected = false;
+        });
+        
+        // 選擇指定市場
+        const targetOption = Array.from(marketSelect.options).find(option => 
+            option.value === marketName || 
+            (marketName === 'all' && option.value === 'all')
+        );
+        
+        if (targetOption) {
+            targetOption.selected = true;
+            marketSelect.dispatchEvent(new Event('change'));
+        }
+    }
+    
+    showNotification('已載入收藏資料', `正在載入 ${cropName} 的資料...`);
+}
+
+// 切換到主分析頁面
+function switchToMainSection() {
+    // 移除所有 active 類別
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // 啟用主分析頁面
+    const mainSection = document.getElementById('main-section');
+    const mainNavItem = document.querySelector('.nav-item[data-section="main"]');
+    
+    if (mainSection) mainSection.classList.add('active');
+    if (mainNavItem) mainNavItem.classList.add('active');
 }
 
 function removeFromFavorites(favoriteId) {
@@ -5915,6 +6160,45 @@ function resetAllSettings() {
 
 // === 市場資訊功能 ===
 function initMarketInfo() {
+    console.log('初始化市場資訊功能...');
+    
+    // 市場搜尋功能
+    const marketSearchInput = document.getElementById('marketSearchInput');
+    if (marketSearchInput) {
+        marketSearchInput.addEventListener('input', filterMarkets);
+    }
+    
+    // 市場地圖按鈕
+    document.querySelectorAll('.market-map-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const market = e.target.dataset.market;
+            showMarketMap(market);
+        });
+    });
+    
+    // 市場休市按鈕
+    document.querySelectorAll('.market-schedule-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const market = e.target.dataset.market;
+            showMarketSchedule(market);
+        });
+    });
+    
+    // Modal 關閉按鈕
+    document.querySelectorAll('.market-modal-close').forEach(btn => {
+        btn.addEventListener('click', closeMarketModal);
+    });
+    
+    // 點擊 Modal 外部關閉
+    document.querySelectorAll('.market-modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeMarketModal();
+            }
+        });
+    });
+    
+    // 原有的休市日曆按鈕
     const marketCalendarBtn = document.getElementById('marketCalendarBtn');
     if (marketCalendarBtn) {
         marketCalendarBtn.addEventListener('click', () => {
@@ -5925,6 +6209,180 @@ function initMarketInfo() {
             }
         });
     }
+}
+
+// 市場搜尋過濾功能
+function filterMarkets() {
+    const searchTerm = document.getElementById('marketSearchInput').value.toLowerCase();
+    const marketItems = document.querySelectorAll('.market-item');
+    
+    marketItems.forEach(item => {
+        const marketName = item.querySelector('.market-name').textContent.toLowerCase();
+        const marketAddress = item.querySelector('.market-address').textContent.toLowerCase();
+        
+        if (marketName.includes(searchTerm) || marketAddress.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// 顯示市場地圖
+function showMarketMap(market) {
+    const modal = document.getElementById('marketMapModal');
+    const title = document.getElementById('marketMapTitle');
+    const container = document.getElementById('marketMapContainer');
+    
+    title.textContent = `${getMarketDisplayName(market)} - 地圖`;
+    
+    // 市場地址資料
+    const marketAddresses = {
+        '台北一': '台北市萬華區環河南路二段245號',
+        '台北二': '台北市萬華區環河南路二段245號',
+        '新北': '新北市板橋區文化路一段100號',
+        '台中': '台中市西區五權路一段2號',
+        '彰化': '彰化縣彰化市中山路二段500號',
+        '高雄': '高雄市前鎮區漁港路1號',
+        '台南': '台南市安平區永華路二段6號'
+    };
+    
+    const address = marketAddresses[market] || '地址資訊載入中...';
+    
+    // 創建地圖容器（使用 Google Maps 嵌入）
+    container.innerHTML = `
+        <div style="width: 100%; height: 400px; background: #f8f9fa; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;">
+            <div style="font-size: 18px; color: #333; font-weight: 600;">${getMarketDisplayName(market)}</div>
+            <div style="font-size: 14px; color: #666; text-align: center; max-width: 300px;">${address}</div>
+            <div style="width: 100%; height: 300px; background: #e9ecef; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #666;">
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">🗺️</div>
+                    <div>地圖載入中...</div>
+                    <div style="font-size: 12px; margin-top: 10px;">請稍候，正在載入地圖服務</div>
+                </div>
+            </div>
+            <button onclick="openInGoogleMaps('${address}')" style="padding: 8px 16px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                在 Google 地圖中開啟
+            </button>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+// 顯示市場休市資訊
+function showMarketSchedule(market) {
+    const modal = document.getElementById('marketScheduleModal');
+    const title = document.getElementById('marketScheduleTitle');
+    const container = document.getElementById('marketScheduleContainer');
+    
+    title.textContent = `${getMarketDisplayName(market)} - 休市資訊`;
+    
+    // 休市資訊資料
+    const marketSchedules = {
+        '台北一': {
+            regular: '每週一休市',
+            special: ['農曆春節前後', '颱風天'],
+            hours: '02:00-12:00'
+        },
+        '台北二': {
+            regular: '每週一休市',
+            special: ['農曆春節前後', '颱風天'],
+            hours: '02:00-12:00'
+        },
+        '新北': {
+            regular: '每週一休市',
+            special: ['農曆春節前後', '颱風天'],
+            hours: '02:00-12:00'
+        },
+        '台中': {
+            regular: '每週一休市',
+            special: ['農曆春節前後', '颱風天'],
+            hours: '02:00-12:00'
+        },
+        '彰化': {
+            regular: '每週一休市',
+            special: ['農曆春節前後', '颱風天'],
+            hours: '02:00-12:00'
+        },
+        '高雄': {
+            regular: '每週一休市',
+            special: ['農曆春節前後', '颱風天'],
+            hours: '02:00-12:00'
+        },
+        '台南': {
+            regular: '每週一休市',
+            special: ['農曆春節前後', '颱風天'],
+            hours: '02:00-12:00'
+        }
+    };
+    
+    const schedule = marketSchedules[market] || {
+        regular: '資訊載入中...',
+        special: [],
+        hours: '02:00-12:00'
+    };
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">營業時間</h4>
+                <p style="margin: 0; color: #666; font-size: 16px;">${schedule.hours}</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">固定休市日</h4>
+                <p style="margin: 0; color: #666;">${schedule.regular}</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">特殊休市日</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #666;">
+                    ${schedule.special.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            </div>
+            
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                <h4 style="margin: 0 0 10px 0; color: #2e7d32;">注意事項</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #2e7d32;">
+                    <li>休市日期可能會因特殊情況調整</li>
+                    <li>建議在前往前先確認市場營業狀況</li>
+                    <li>颱風天或特殊節日可能會有額外休市</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+// 關閉市場 Modal
+function closeMarketModal() {
+    document.querySelectorAll('.market-modal').forEach(modal => {
+        modal.style.display = 'none';
+    });
+}
+
+// 獲取市場顯示名稱
+function getMarketDisplayName(marketCode) {
+    const marketNames = {
+        '台北一': '台北第一果菜批發市場',
+        '台北二': '台北第二果菜批發市場',
+        '新北': '新北市果菜批發市場',
+        '台中': '台中果菜批發市場',
+        '彰化': '彰化果菜批發市場',
+        '高雄': '高雄果菜批發市場',
+        '台南': '台南果菜批發市場'
+    };
+    
+    return marketNames[marketCode] || marketCode;
+}
+
+// 在 Google 地圖中開啟地址
+function openInGoogleMaps(address) {
+    const encodedAddress = encodeURIComponent(address);
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    window.open(googleMapsUrl, '_blank');
 }
 
 
