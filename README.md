@@ -42,7 +42,7 @@
     ```
 2.  然後進入專案資料夾：
     ```
-    cd Better-vegetable-catcher/desktop
+    cd Better-vegetable-catcher
     ```
 3.  安裝需要的套件：
     ```
