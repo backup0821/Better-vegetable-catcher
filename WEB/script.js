@@ -5421,4 +5421,540 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('iconSelectSection')) {
     initAppIconSelector();
   }
-});})}
+  
+  // 初始化底部導航欄
+  initBottomNavigation();
+  
+  // 初始化各功能區塊
+  initPriceAlerts();
+  initFavorites();
+  initSettings();
+  initMarketInfo();
+  
+  // 在作物選擇區域添加收藏按鈕
+  addFavoriteButtonToMainSection();
+});
+
+// === 底部導航欄功能 ===
+function initBottomNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const targetSection = item.getAttribute('data-section');
+            
+            // 移除所有活動狀態
+            navItems.forEach(nav => nav.classList.remove('active'));
+            contentSections.forEach(section => section.classList.remove('active'));
+            
+            // 添加活動狀態到當前項目
+            item.classList.add('active');
+            document.getElementById(`${targetSection}-section`).classList.add('active');
+            
+            // 儲存當前頁面狀態
+            localStorage.setItem('currentSection', targetSection);
+        });
+    });
+
+    // 載入上次選擇的頁面
+    const lastSection = localStorage.getItem('currentSection') || 'main';
+    const lastNavItem = document.querySelector(`[data-section="${lastSection}"]`);
+    if (lastNavItem) {
+        lastNavItem.click();
+    }
+}
+
+// === 價格預警功能 ===
+function initPriceAlerts() {
+    const addAlertBtn = document.getElementById('addAlertBtn');
+    if (addAlertBtn) {
+        addAlertBtn.addEventListener('click', addPriceAlert);
+    }
+
+    // 載入作物選項到預警表單
+    loadCropOptionsForAlerts();
+
+    // 載入現有預警
+    loadPriceAlerts();
+}
+
+function loadCropOptionsForAlerts() {
+    const alertCropSelect = document.getElementById('alertCropSelect');
+    const alertMarketSelect = document.getElementById('alertMarketSelect');
+    
+    if (alertCropSelect) {
+        // 從主頁面的作物選擇器複製選項
+        const mainCropSelect = document.getElementById('cropSelect');
+        if (mainCropSelect) {
+            Array.from(mainCropSelect.options).forEach(option => {
+                if (option.value) { // 跳過空選項
+                    const newOption = document.createElement('option');
+                    newOption.value = option.value;
+                    newOption.textContent = option.textContent;
+                    alertCropSelect.appendChild(newOption);
+                }
+            });
+        }
+    }
+    
+    if (alertMarketSelect) {
+        // 從主頁面的市場選擇器複製選項
+        const mainMarketSelect = document.getElementById('marketSelect');
+        if (mainMarketSelect) {
+            Array.from(mainMarketSelect.options).forEach(option => {
+                if (option.value && option.value !== 'all') { // 跳過 'all' 選項
+                    const newOption = document.createElement('option');
+                    newOption.value = option.value;
+                    newOption.textContent = option.textContent;
+                    alertMarketSelect.appendChild(newOption);
+                }
+            });
+        }
+    }
+}
+
+function addPriceAlert() {
+    const cropSelect = document.getElementById('alertCropSelect');
+    const marketSelect = document.getElementById('alertMarketSelect');
+    const maxPrice = document.getElementById('alertMaxPrice');
+    const minPrice = document.getElementById('alertMinPrice');
+
+    if (!cropSelect.value) {
+        showNotification('錯誤', '請選擇作物');
+        return;
+    }
+
+    const alert = {
+        id: Date.now(),
+        crop: cropSelect.value,
+        market: marketSelect.value,
+        maxPrice: maxPrice.value ? parseFloat(maxPrice.value) : null,
+        minPrice: minPrice.value ? parseFloat(minPrice.value) : null,
+        createdAt: new Date().toISOString(),
+        active: true
+    };
+
+    // 儲存預警
+    const alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
+    alerts.push(alert);
+    localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+
+    // 重新載入預警列表
+    loadPriceAlerts();
+
+    // 清空表單
+    cropSelect.value = '';
+    marketSelect.value = 'all';
+    maxPrice.value = '';
+    minPrice.value = '';
+
+    showNotification('成功', '價格預警已新增');
+}
+
+function loadPriceAlerts() {
+    const alertList = document.getElementById('alertList');
+    if (!alertList) return;
+
+    const alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
+    
+    if (alerts.length === 0) {
+        alertList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">還沒有設定任何價格預警</p>';
+        return;
+    }
+
+    alertList.innerHTML = alerts.map(alert => `
+        <div class="alert-item" style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${alert.crop}</strong> - ${alert.market === 'all' ? '全部市場' : alert.market}
+                    <br>
+                    <small style="color: #666;">
+                        ${alert.minPrice ? `最低: ${alert.minPrice}元` : ''} 
+                        ${alert.maxPrice ? `最高: ${alert.maxPrice}元` : ''}
+                    </small>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="toggleAlert(${alert.id})" class="tool-btn" style="padding: 5px 10px; font-size: 12px;">
+                        ${alert.active ? '停用' : '啟用'}
+                    </button>
+                    <button onclick="deleteAlert(${alert.id})" class="tool-btn reset" style="padding: 5px 10px; font-size: 12px;">
+                        刪除
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleAlert(alertId) {
+    const alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
+    const alertIndex = alerts.findIndex(a => a.id === alertId);
+    
+    if (alertIndex !== -1) {
+        alerts[alertIndex].active = !alerts[alertIndex].active;
+        localStorage.setItem('priceAlerts', JSON.stringify(alerts));
+        loadPriceAlerts();
+    }
+}
+
+function deleteAlert(alertId) {
+    const alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
+    const filteredAlerts = alerts.filter(a => a.id !== alertId);
+    localStorage.setItem('priceAlerts', JSON.stringify(filteredAlerts));
+    loadPriceAlerts();
+    showNotification('成功', '價格預警已刪除');
+}
+
+// === 收藏夾功能 ===
+function initFavorites() {
+    loadFavorites();
+}
+
+function addToFavorites(cropName, marketName = 'all') {
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const favoriteId = `${cropName}_${marketName}`;
+    
+    // 檢查是否已存在
+    if (!favorites.find(f => f.id === favoriteId)) {
+        favorites.push({
+            id: favoriteId,
+            cropName: cropName,
+            marketName: marketName,
+            addedAt: new Date().toISOString()
+        });
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        loadFavorites();
+        showNotification('成功', '已加入收藏夾');
+    } else {
+        showNotification('提示', '已在收藏夾中');
+    }
+}
+
+function loadFavorites() {
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    const emptyFavorites = document.getElementById('emptyFavorites');
+    
+    if (!favoritesGrid || !emptyFavorites) return;
+
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    
+    if (favorites.length === 0) {
+        favoritesGrid.style.display = 'none';
+        emptyFavorites.style.display = 'block';
+        return;
+    }
+
+    favoritesGrid.style.display = 'grid';
+    emptyFavorites.style.display = 'none';
+
+    favoritesGrid.innerHTML = favorites.map(favorite => `
+        <div class="favorite-item" onclick="loadFavoriteData('${favorite.cropName}', '${favorite.marketName}')">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${favorite.cropName}</strong>
+                    <br>
+                    <small style="color: #666;">${favorite.marketName === 'all' ? '全部市場' : favorite.marketName}</small>
+                </div>
+                <button onclick="event.stopPropagation(); removeFromFavorites('${favorite.id}')" 
+                        style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; font-size: 12px;">
+                    移除
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadFavoriteData(cropName, marketName) {
+    // 切換到主頁面
+    const mainNavItem = document.querySelector('[data-section="main"]');
+    if (mainNavItem) {
+        mainNavItem.click();
+    }
+
+    // 設定作物和市場
+    setTimeout(() => {
+        const cropSelect = document.getElementById('cropSelect');
+        const marketSelect = document.getElementById('marketSelect');
+        
+        if (cropSelect) {
+            cropSelect.value = cropName;
+            cropSelect.dispatchEvent(new Event('change'));
+        }
+        
+        if (marketSelect && marketName !== 'all') {
+            // 設定特定市場
+            Array.from(marketSelect.options).forEach(option => {
+                option.selected = option.value === marketName;
+            });
+            marketSelect.dispatchEvent(new Event('change'));
+        }
+    }, 300);
+}
+
+function removeFromFavorites(favoriteId) {
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const filteredFavorites = favorites.filter(f => f.id !== favoriteId);
+    localStorage.setItem('favorites', JSON.stringify(filteredFavorites));
+    loadFavorites();
+    showNotification('成功', '已從收藏夾移除');
+}
+
+// === 設定功能 ===
+function initSettings() {
+    // 載入設定
+    loadSettings();
+    
+    // 綁定事件
+    bindSettingsEvents();
+}
+
+function loadSettings() {
+    const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+    
+    // 主題設定
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) {
+        themeSelect.value = settings.theme || 'auto';
+    }
+    
+    // 應用程式圖示
+    const appIconSelect = document.getElementById('appIconSelect');
+    if (appIconSelect) {
+        appIconSelect.value = settings.appIcon || 'icon1';
+    }
+    
+    // 通知設定
+    const enableNotifications = document.getElementById('enableNotifications');
+    if (enableNotifications) {
+        enableNotifications.checked = settings.enableNotifications !== false;
+    }
+    
+    const enablePriceAlerts = document.getElementById('enablePriceAlerts');
+    if (enablePriceAlerts) {
+        enablePriceAlerts.checked = settings.enablePriceAlerts !== false;
+    }
+    
+    const enableMarketUpdates = document.getElementById('enableMarketUpdates');
+    if (enableMarketUpdates) {
+        enableMarketUpdates.checked = settings.enableMarketUpdates || false;
+    }
+    
+    // 資料設定
+    const updateFrequency = document.getElementById('updateFrequency');
+    if (updateFrequency) {
+        updateFrequency.value = settings.updateFrequency || '15';
+    }
+    
+    const autoRefresh = document.getElementById('autoRefresh');
+    if (autoRefresh) {
+        autoRefresh.checked = settings.autoRefresh !== false;
+    }
+}
+
+function bindSettingsEvents() {
+    // 主題變更
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', (e) => {
+            saveSetting('theme', e.target.value);
+            applyTheme(e.target.value);
+        });
+    }
+    
+    // 應用程式圖示變更
+    const appIconSelect = document.getElementById('appIconSelect');
+    if (appIconSelect) {
+        appIconSelect.addEventListener('change', (e) => {
+            saveSetting('appIcon', e.target.value);
+            applyIcon(e.target.value);
+        });
+    }
+    
+    // 通知設定
+    const notificationSettings = ['enableNotifications', 'enablePriceAlerts', 'enableMarketUpdates'];
+    notificationSettings.forEach(setting => {
+        const element = document.getElementById(setting);
+        if (element) {
+            element.addEventListener('change', (e) => {
+                saveSetting(setting, e.target.checked);
+            });
+        }
+    });
+    
+    // 資料設定
+    const dataSettings = ['updateFrequency', 'autoRefresh'];
+    dataSettings.forEach(setting => {
+        const element = document.getElementById(setting);
+        if (element) {
+            element.addEventListener('change', (e) => {
+                saveSetting(setting, e.target.type === 'checkbox' ? e.target.checked : e.target.value);
+            });
+        }
+    });
+    
+    // 工具按鈕
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', clearAllCache);
+    }
+    
+    const exportSettingsBtn = document.getElementById('exportSettingsBtn');
+    if (exportSettingsBtn) {
+        exportSettingsBtn.addEventListener('click', exportSettings);
+    }
+    
+    const importSettingsBtn = document.getElementById('importSettingsBtn');
+    if (importSettingsBtn) {
+        importSettingsBtn.addEventListener('click', importSettings);
+    }
+    
+    const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+    if (resetSettingsBtn) {
+        resetSettingsBtn.addEventListener('click', resetAllSettings);
+    }
+}
+
+function saveSetting(key, value) {
+    const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+    settings[key] = value;
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+}
+
+function clearAllCache() {
+    if (confirm('確定要清除所有快取嗎？這將重新載入所有資料。')) {
+        // 清除 localStorage
+        const keysToKeep = ['deviceId', 'appSettings', 'priceAlerts', 'favorites', 'currentSection'];
+        const allKeys = Object.keys(localStorage);
+        
+        allKeys.forEach(key => {
+            if (!keysToKeep.includes(key)) {
+                localStorage.removeItem(key);
+            }
+        });
+        
+        // 清除 IndexedDB
+        if ('indexedDB' in window) {
+            indexedDB.databases().then(databases => {
+                databases.forEach(db => {
+                    indexedDB.deleteDatabase(db.name);
+                });
+            });
+        }
+        
+        showNotification('成功', '快取已清除，頁面將重新載入');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
+
+function exportSettings() {
+    const settings = {
+        appSettings: JSON.parse(localStorage.getItem('appSettings') || '{}'),
+        priceAlerts: JSON.parse(localStorage.getItem('priceAlerts') || '[]'),
+        favorites: JSON.parse(localStorage.getItem('favorites') || '[]')
+    };
+    
+    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vegetable-catcher-settings-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showNotification('成功', '設定已匯出');
+}
+
+function importSettings() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const settings = JSON.parse(e.target.result);
+                    
+                    if (settings.appSettings) {
+                        localStorage.setItem('appSettings', JSON.stringify(settings.appSettings));
+                    }
+                    if (settings.priceAlerts) {
+                        localStorage.setItem('priceAlerts', JSON.stringify(settings.priceAlerts));
+                    }
+                    if (settings.favorites) {
+                        localStorage.setItem('favorites', JSON.stringify(settings.favorites));
+                    }
+                    
+                    showNotification('成功', '設定已匯入，頁面將重新載入');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } catch (error) {
+                    showNotification('錯誤', '設定檔案格式錯誤');
+                }
+            };
+            reader.readAsText(file);
+        }
+    };
+    input.click();
+}
+
+function resetAllSettings() {
+    if (confirm('確定要重設所有設定嗎？這將清除所有個人化設定。')) {
+        localStorage.clear();
+        showNotification('成功', '所有設定已重設，頁面將重新載入');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
+
+// === 市場資訊功能 ===
+function initMarketInfo() {
+    const marketCalendarBtn = document.getElementById('marketCalendarBtn');
+    if (marketCalendarBtn) {
+        marketCalendarBtn.addEventListener('click', () => {
+            // 觸發原有的休市日曆功能
+            const checkRestButton = document.getElementById('checkRestButton');
+            if (checkRestButton) {
+                checkRestButton.click();
+            }
+        });
+    }
+}
+
+
+
+function addFavoriteButtonToMainSection() {
+    // 在作物選擇區域添加收藏按鈕
+    const cropSelect = document.getElementById('cropSelect');
+    if (cropSelect) {
+        const favoriteBtn = document.createElement('button');
+        favoriteBtn.innerHTML = '⭐ 加入收藏';
+        favoriteBtn.style.cssText = `
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #ffc107;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        `;
+        favoriteBtn.onclick = () => {
+            const selectedCrop = cropSelect.value;
+            if (selectedCrop) {
+                addToFavorites(selectedCrop);
+            } else {
+                showNotification('提示', '請先選擇作物');
+            }
+        };
+        
+        cropSelect.parentNode.appendChild(favoriteBtn);
+    }
+}

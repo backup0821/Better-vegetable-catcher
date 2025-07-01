@@ -838,127 +838,356 @@
           </div>
         </div>
 
-        <main>
-            <div class="control-panel">
-                    <h2>作物選擇</h2>
-                    <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
-                    </div>
-                    <div class="crop-select">
-                        <select id="cropSelect">
-                            <option value="">請選擇作物</option>
-                        </select>
-                    </div>
-                    <div class="market-select">
-                        <select id="marketSelect" multiple size="6">
-                            <option value="all" selected>全部市場</option>
-                            <optgroup label="北部地區">
-                                <option value="台北一">台北第一果菜批發市場</option>
-                                <option value="台北二">台北第二果菜批發市場</option>
-                                <option value="新北">新北市果菜批發市場</option>
-                                <option value="桃園">桃園果菜批發市場</option>
-                                <option value="新竹">新竹果菜批發市場</option>
-                            </optgroup>
-                            <optgroup label="中部地區">
-                                <option value="台中">台中果菜批發市場</option>
-                                <option value="彰化">彰化果菜批發市場</option>
-                                <option value="南投">南投果菜批發市場</option>
-                                <option value="雲林">雲林果菜批發市場</option>
-                            </optgroup>
-                            <optgroup label="南部地區">
-                                <option value="嘉義">嘉義果菜批發市場</option>
-                                <option value="台南">台南果菜批發市場</option>
-                                <option value="高雄">高雄果菜批發市場</option>
-                                <option value="屏東">屏東果菜批發市場</option>
-                            </optgroup>
-                        </select>
-                        <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
-                    </div>
 
-                <!-- 載入動畫區塊 -->
-                <div id="loadingSpinner" class="loading-spinner" style="display:none;">
-                  <div class="spinner"></div>
-                  <div class="loading-text">資料載入中...</div>
-                </div>
-
-                <div class="analysis-section">
-                    <h2>分析功能</h2>
-                    <div class="analysis-buttons">
-                        <button id="showPriceTrend">📈 價格趨勢</button>
-                        <button id="showVolumeDist">📊 交易量分布</button>
-                        <button id="showPriceDist">📉 價格分布</button>
-                        <button id="showSeasonal">📅 季節性分析</button>
-                        <button id="showPricePrediction">🔮 價格預測</button>
-                        <button id="fetchMoreData" class="dev-only" style="display: none;">📥 抓取更多資料</button>
-                    </div>
-                </div>
-
-                <div class="export-section">
-                    <h2>資料匯出</h2>
-                    <div class="export-buttons">
-                        <button id="exportExcel">📥 匯出 Excel</button>
-                        <button id="exportCSV">📥 匯出 CSV</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="display-panel">
-                <div id="chartArea" class="chart-area"></div>
-                <!-- 新增：往下滑指引 -->
-                <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
-                <!-- 新增：基本統計資訊卡片區塊 -->
-                <div id="statsArea" class="stats-area">
-                    <h3>基本統計資訊</h3>
-                    <div class="stats-cards">
-                        <div class="stat-card" id="avgPriceCard">
-                            <div class="stat-icon" style="font-size:2em;">📊</div>
-                            <div class="stat-label">平均價格</div>
-                            <div class="stat-value" id="avgPrice">--</div>
-                            <div class="stat-unit">元/公斤</div>
-                        </div>
-                        <div class="stat-card" id="minPriceCard">
-                            <div class="stat-icon" style="font-size:2em;">📉</div>
-                            <div class="stat-label">最低價格</div>
-                            <div class="stat-value" id="minPrice">--</div>
-                            <div class="stat-unit">元/公斤</div>
-                        </div>
-                        <div class="stat-card" id="maxPriceCard">
-                            <div class="stat-icon" style="font-size:2em;">📈</div>
-                            <div class="stat-label">最高價格</div>
-                            <div class="stat-value" id="maxPrice">--</div>
-                            <div class="stat-unit">元/公斤</div>
-                        </div>
-                        <div class="stat-card" id="totalVolumeCard">
-                            <div class="stat-icon" style="font-size:2em;">⚖️</div>
-                            <div class="stat-label">總交易量</div>
-                            <div class="stat-value" id="totalVolume">--</div>
-                            <div class="stat-unit">公斤</div>
-                        </div>
-                    </div>
-                </div>
-                <div id="detailTableArea" class="detail-table-area">
-                    <h3>詳細價格資料</h3>
-                    <table class="detail-table">
-                        <thead>
-                            <tr>
-                                <th>日期</th>
-                                <th>市場</th>
-                                <th>價格</th>
-                                <th>交易量</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailTableBody">
-                            <!-- 資料由 JS 動態產生 -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="resultArea" class="result-area">
-                    <p>請選擇作物以查看分析結果</p>
-                </div>
-            </div>
-        </main>
 
         <div id="notificationArea"></div>
+        
+        <!-- 底部導航欄 -->
+        <nav class="bottom-nav">
+            <div class="nav-container">
+                <div class="nav-item active" data-section="main">
+                    <div class="nav-icon">📊</div>
+                    <div class="nav-label">資料分析</div>
+                </div>
+                <div class="nav-item" data-section="market">
+                    <div class="nav-icon">🏪</div>
+                    <div class="nav-label">市場資訊</div>
+                </div>
+                <div class="nav-item" data-section="alerts">
+                    <div class="nav-icon">🔔</div>
+                    <div class="nav-label">價格預警</div>
+                </div>
+                <div class="nav-item" data-section="favorites">
+                    <div class="nav-icon">⭐</div>
+                    <div class="nav-label">收藏夾</div>
+                </div>
+                <div class="nav-item" data-section="settings">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-label">設定</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 功能區塊容器 -->
+        <div class="section-container">
+            <!-- 主要資料分析區塊 -->
+            <div id="main-section" class="content-section active">
+                <main>
+                    <div class="control-panel">
+                            <h2>作物選擇</h2>
+                            <div class="search-box">
+                                <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
+                            </div>
+                            <div class="crop-select">
+                                <select id="cropSelect">
+                                    <option value="">請選擇作物</option>
+                                </select>
+                            </div>
+                            <div class="market-select">
+                                <select id="marketSelect" multiple size="6">
+                                    <option value="all" selected>全部市場</option>
+                                    <optgroup label="北部地區">
+                                        <option value="台北一">台北第一果菜批發市場</option>
+                                        <option value="台北二">台北第二果菜批發市場</option>
+                                        <option value="新北">新北市果菜批發市場</option>
+                                        <option value="桃園">桃園果菜批發市場</option>
+                                        <option value="新竹">新竹果菜批發市場</option>
+                                    </optgroup>
+                                    <optgroup label="中部地區">
+                                        <option value="台中">台中果菜批發市場</option>
+                                        <option value="彰化">彰化果菜批發市場</option>
+                                        <option value="南投">南投果菜批發市場</option>
+                                        <option value="雲林">雲林果菜批發市場</option>
+                                    </optgroup>
+                                    <optgroup label="南部地區">
+                                        <option value="嘉義">嘉義果菜批發市場</option>
+                                        <option value="台南">台南果菜批發市場</option>
+                                        <option value="高雄">高雄果菜批發市場</option>
+                                        <option value="屏東">屏東果菜批發市場</option>
+                                    </optgroup>
+                                </select>
+                                <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
+                            </div>
+
+                        <!-- 載入動畫區塊 -->
+                        <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+                          <div class="spinner"></div>
+                          <div class="loading-text">資料載入中...</div>
+                        </div>
+
+                        <div class="analysis-section">
+                            <h2>分析功能</h2>
+                            <div class="analysis-buttons">
+                                <button id="showPriceTrend">📈 價格趨勢</button>
+                                <button id="showVolumeDist">📊 交易量分布</button>
+                                <button id="showPriceDist">📉 價格分布</button>
+                                <button id="showSeasonal">📅 季節性分析</button>
+                                <button id="showPricePrediction">🔮 價格預測</button>
+                                <button id="fetchMoreData" class="dev-only" style="display: none;">📥 抓取更多資料</button>
+                            </div>
+                        </div>
+
+                        <div class="export-section">
+                            <h2>資料匯出</h2>
+                            <div class="export-buttons">
+                                <button id="exportExcel">📥 匯出 Excel</button>
+                                <button id="exportCSV">📥 匯出 CSV</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="display-panel">
+                        <div id="chartArea" class="chart-area"></div>
+                        <!-- 新增：往下滑指引 -->
+                        <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
+                        <!-- 新增：基本統計資訊卡片區塊 -->
+                        <div id="statsArea" class="stats-area">
+                            <h3>基本統計資訊</h3>
+                            <div class="stats-cards">
+                                <div class="stat-card" id="avgPriceCard">
+                                    <div class="stat-icon" style="font-size:2em;">📊</div>
+                                    <div class="stat-label">平均價格</div>
+                                    <div class="stat-value" id="avgPrice">--</div>
+                                    <div class="stat-unit">元/公斤</div>
+                                </div>
+                                <div class="stat-card" id="minPriceCard">
+                                    <div class="stat-icon" style="font-size:2em;">📉</div>
+                                    <div class="stat-label">最低價格</div>
+                                    <div class="stat-value" id="minPrice">--</div>
+                                    <div class="stat-unit">元/公斤</div>
+                                </div>
+                                <div class="stat-card" id="maxPriceCard">
+                                    <div class="stat-icon" style="font-size:2em;">📈</div>
+                                    <div class="stat-label">最高價格</div>
+                                    <div class="stat-value" id="maxPrice">--</div>
+                                    <div class="stat-unit">元/公斤</div>
+                                </div>
+                                <div class="stat-card" id="totalVolumeCard">
+                                    <div class="stat-icon" style="font-size:2em;">⚖️</div>
+                                    <div class="stat-label">總交易量</div>
+                                    <div class="stat-value" id="totalVolume">--</div>
+                                    <div class="stat-unit">公斤</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="detailTableArea" class="detail-table-area">
+                            <h3>詳細價格資料</h3>
+                            <table class="detail-table">
+                                <thead>
+                                    <tr>
+                                        <th>日期</th>
+                                        <th>市場</th>
+                                        <th>價格</th>
+                                        <th>交易量</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailTableBody">
+                                    <!-- 資料由 JS 動態產生 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="resultArea" class="result-area">
+                            <p>請選擇作物以查看分析結果</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- 市場資訊區塊 -->
+            <div id="market-section" class="content-section">
+                <div class="market-info-panel">
+                    <h2>🏪 市場資訊中心</h2>
+                    <div class="market-grid">
+                        <div class="market-card">
+                            <h3>北部地區</h3>
+                            <div class="market-list">
+                                <div class="market-item">
+                                    <span class="market-name">台北第一果菜批發市場</span>
+                                    <span class="market-status online">營運中</span>
+                                </div>
+                                <div class="market-item">
+                                    <span class="market-name">台北第二果菜批發市場</span>
+                                    <span class="market-status online">營運中</span>
+                                </div>
+                                <div class="market-item">
+                                    <span class="market-name">新北市果菜批發市場</span>
+                                    <span class="market-status online">營運中</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="market-card">
+                            <h3>中部地區</h3>
+                            <div class="market-list">
+                                <div class="market-item">
+                                    <span class="market-name">台中果菜批發市場</span>
+                                    <span class="market-status online">營運中</span>
+                                </div>
+                                <div class="market-item">
+                                    <span class="market-name">彰化果菜批發市場</span>
+                                    <span class="market-status online">營運中</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="market-card">
+                            <h3>南部地區</h3>
+                            <div class="market-list">
+                                <div class="market-item">
+                                    <span class="market-name">高雄果菜批發市場</span>
+                                    <span class="market-status online">營運中</span>
+                                </div>
+                                <div class="market-item">
+                                    <span class="market-name">台南果菜批發市場</span>
+                                    <span class="market-status online">營運中</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="market-calendar-section">
+                        <h3>📅 休市日曆</h3>
+                        <button id="marketCalendarBtn" class="calendar-btn">查看休市日曆</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 價格預警區塊 -->
+            <div id="alerts-section" class="content-section">
+                <div class="alerts-panel">
+                    <h2>🔔 價格預警系統</h2>
+                    <div class="alert-settings">
+                        <div class="alert-card">
+                            <h3>設定價格預警</h3>
+                            <div class="alert-form">
+                                <div class="form-group">
+                                    <label>選擇作物：</label>
+                                    <select id="alertCropSelect">
+                                        <option value="">請選擇作物</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>選擇市場：</label>
+                                    <select id="alertMarketSelect">
+                                        <option value="all">全部市場</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>價格上限（元/公斤）：</label>
+                                    <input type="number" id="alertMaxPrice" placeholder="例如：50">
+                                </div>
+                                <div class="form-group">
+                                    <label>價格下限（元/公斤）：</label>
+                                    <input type="number" id="alertMinPrice" placeholder="例如：10">
+                                </div>
+                                <button id="addAlertBtn" class="add-alert-btn">新增預警</button>
+                            </div>
+                        </div>
+                        <div class="alert-list">
+                            <h3>我的預警清單</h3>
+                            <div id="alertList" class="alert-items">
+                                <!-- 預警項目將由 JavaScript 動態產生 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 收藏夾區塊 -->
+            <div id="favorites-section" class="content-section">
+                <div class="favorites-panel">
+                    <h2>⭐ 我的收藏夾</h2>
+                    <div class="favorites-content">
+                        <div class="favorites-grid" id="favoritesGrid">
+                            <!-- 收藏項目將由 JavaScript 動態產生 -->
+                        </div>
+                        <div class="empty-favorites" id="emptyFavorites" style="display: none;">
+                            <div class="empty-icon">📝</div>
+                            <h3>還沒有收藏項目</h3>
+                            <p>在資料分析頁面選擇作物後，點擊 ⭐ 按鈕即可加入收藏</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 設定區塊 -->
+            <div id="settings-section" class="content-section">
+                <div class="settings-panel">
+                    <h2>⚙️ 系統設定</h2>
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <h3>🎨 外觀設定</h3>
+                            <div class="setting-options">
+                                <div class="setting-option">
+                                    <label>主題模式：</label>
+                                    <select id="themeSelect">
+                                        <option value="light">淺色模式</option>
+                                        <option value="dark">深色模式</option>
+                                        <option value="auto">自動</option>
+                                    </select>
+                                </div>
+                                <div class="setting-option">
+                                    <label>應用程式圖示：</label>
+                                    <select id="appIconSelect">
+                                        <option value="icon1">經典扁平</option>
+                                        <option value="icon2">立體質感</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-card">
+                            <h3>🔔 通知設定</h3>
+                            <div class="setting-options">
+                                <div class="setting-option">
+                                    <label>
+                                        <input type="checkbox" id="enableNotifications" checked>
+                                        啟用推播通知
+                                    </label>
+                                </div>
+                                <div class="setting-option">
+                                    <label>
+                                        <input type="checkbox" id="enablePriceAlerts" checked>
+                                        啟用價格預警
+                                    </label>
+                                </div>
+                                <div class="setting-option">
+                                    <label>
+                                        <input type="checkbox" id="enableMarketUpdates">
+                                        啟用市場更新通知
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-card">
+                            <h3>📊 資料設定</h3>
+                            <div class="setting-options">
+                                <div class="setting-option">
+                                    <label>資料更新頻率：</label>
+                                    <select id="updateFrequency">
+                                        <option value="5">每5分鐘</option>
+                                        <option value="15" selected>每15分鐘</option>
+                                        <option value="30">每30分鐘</option>
+                                        <option value="60">每小時</option>
+                                    </select>
+                                </div>
+                                <div class="setting-option">
+                                    <label>
+                                        <input type="checkbox" id="autoRefresh" checked>
+                                        自動重新整理資料
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-card">
+                            <h3>🛠️ 系統工具</h3>
+                            <div class="setting-options">
+                                <button id="clearCacheBtn" class="tool-btn">清除快取</button>
+                                <button id="exportSettingsBtn" class="tool-btn">匯出設定</button>
+                                <button id="importSettingsBtn" class="tool-btn">匯入設定</button>
+                                <button id="resetSettingsBtn" class="tool-btn reset">重設所有設定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- 休市日曆按鈕 -->
         <button id="checkRestButton" style="position: absolute; bottom: 80px; right: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000;">休市日曆</button>
