@@ -5654,8 +5654,9 @@ function filterFavorites() {
 function searchCropsForFavorites() {
     const searchInput = document.getElementById('favoritesSearchInput');
     const searchResults = document.getElementById('favoriteSearchResults');
+    const searchResultsList = document.getElementById('searchResultsList');
     
-    if (!searchInput || !searchResults) return;
+    if (!searchInput || !searchResults || !searchResultsList) return;
     
     const searchTerm = searchInput.value.trim().toLowerCase();
     
@@ -5680,19 +5681,97 @@ function searchCropsForFavorites() {
     const uniqueCrops = [...new Set(matchingCrops)].slice(0, 10);
     
     if (uniqueCrops.length === 0) {
-        searchResults.innerHTML = '<div class="no-results">沒有找到符合的作物</div>';
+        searchResultsList.innerHTML = '<div class="no-results">沒有找到符合的作物</div>';
         searchResults.style.display = 'block';
         return;
     }
     
-    searchResults.innerHTML = uniqueCrops.map(crop => `
-        <div class="search-result-item" onclick="addToFavoritesFromSearch('${crop}')">
-            <span class="crop-name">${crop}</span>
-            <button class="add-favorite-btn">⭐ 加入收藏</button>
+    searchResultsList.innerHTML = uniqueCrops.map(crop => `
+        <div class="search-result-item">
+            <div class="search-result-content">
+                <span class="crop-name">${crop}</span>
+                <div class="search-result-actions">
+                    <label class="crop-checkbox">
+                        <input type="checkbox" value="${crop}" class="crop-select-checkbox">
+                        <span class="checkmark"></span>
+                    </label>
+                    <button class="add-favorite-btn" onclick="addToFavoritesFromSearch('${crop}')">⭐ 加入收藏</button>
+                </div>
+            </div>
         </div>
     `).join('');
     
     searchResults.style.display = 'block';
+    
+    // 綁定多選功能
+    bindMultiSelectEvents();
+}
+
+// 綁定多選事件
+function bindMultiSelectEvents() {
+    const checkboxes = document.querySelectorAll('.crop-select-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCrops();
+        });
+    });
+}
+
+// 更新已選擇的作物
+function updateSelectedCrops() {
+    const checkboxes = document.querySelectorAll('.crop-select-checkbox:checked');
+    const selectedCrops = Array.from(checkboxes).map(cb => cb.value);
+    
+    // 更新批量加入按鈕
+    const batchAddBtn = document.querySelector('.batch-add-btn');
+    if (selectedCrops.length > 0) {
+        if (!batchAddBtn) {
+            const searchResults = document.getElementById('favoriteSearchResults');
+            const header = searchResults.querySelector('.search-results-header');
+            const batchBtn = document.createElement('button');
+            batchBtn.className = 'batch-add-btn';
+            batchBtn.textContent = `⭐ 批量加入收藏 (${selectedCrops.length})`;
+            batchBtn.onclick = () => addMultipleToFavorites(selectedCrops);
+            header.appendChild(batchBtn);
+        } else {
+            batchAddBtn.textContent = `⭐ 批量加入收藏 (${selectedCrops.length})`;
+        }
+    } else if (batchAddBtn) {
+        batchAddBtn.remove();
+    }
+}
+
+// 批量加入收藏
+function addMultipleToFavorites(cropNames) {
+    cropNames.forEach(cropName => {
+        addToFavorites(cropName, 'all');
+    });
+    
+    // 清空選擇
+    const checkboxes = document.querySelectorAll('.crop-select-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    // 隱藏搜尋結果
+    closeSearchResults();
+    
+    // 重新載入收藏列表
+    loadFavorites();
+    
+    showNotification('批量收藏成功', `已將 ${cropNames.length} 個作物加入收藏`);
+}
+
+// 關閉搜尋結果
+function closeSearchResults() {
+    const searchResults = document.getElementById('favoriteSearchResults');
+    const searchInput = document.getElementById('favoritesSearchInput');
+    
+    if (searchResults) {
+        searchResults.style.display = 'none';
+    }
+    
+    if (searchInput) {
+        searchInput.value = '';
+    }
 }
 
 // 從搜尋結果加入收藏
