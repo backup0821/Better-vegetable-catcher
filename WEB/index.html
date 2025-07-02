@@ -1186,8 +1186,19 @@
                     </div>
                     <div class="alerts-content">
                         <h2>🔔 價格預警系統</h2>
-                        <!-- 預警功能 -->
-                        <div class="alert-settings">
+                        <div class="coming-soon-card">
+                            <div class="coming-soon-icon">🚧</div>
+                            <h3>COMING SOON</h3>
+                            <p>價格預警功能尚未開放</p>
+                            <p class="coming-soon-desc">我們正在開發智能價格監控系統，敬請期待！</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill"></div>
+                            </div>
+                            <p class="progress-text">開發進度：75%</p>
+                        </div>
+                        
+                        <!-- 預警功能預覽（隱藏） -->
+                        <div class="alert-settings" style="display: none;">
                             <div class="alert-card">
                                 <h3>設定價格預警</h3>
                                 <div class="alert-form">
@@ -1201,42 +1212,15 @@
                                         <label>選擇市場：</label>
                                         <select id="alertMarketSelect">
                                             <option value="all">全部市場</option>
-                                            <optgroup label="北部地區">
-                                                <option value="台北一">台北第一果菜批發市場</option>
-                                                <option value="台北二">台北第二果菜批發市場</option>
-                                                <option value="新北">新北市果菜批發市場</option>
-                                                <option value="桃園">桃園果菜批發市場</option>
-                                                <option value="新竹">新竹果菜批發市場</option>
-                                            </optgroup>
-                                            <optgroup label="中部地區">
-                                                <option value="台中">台中果菜批發市場</option>
-                                                <option value="彰化">彰化果菜批發市場</option>
-                                                <option value="南投">南投果菜批發市場</option>
-                                                <option value="雲林">雲林果菜批發市場</option>
-                                            </optgroup>
-                                            <optgroup label="南部地區">
-                                                <option value="嘉義">嘉義果菜批發市場</option>
-                                                <option value="台南">台南果菜批發市場</option>
-                                                <option value="高雄">高雄果菜批發市場</option>
-                                                <option value="屏東">屏東果菜批發市場</option>
-                                            </optgroup>
                                         </select>
                                     </div>
                                     <div class="form-group">
                                         <label>價格上限（元/公斤）：</label>
-                                        <input type="number" id="alertMaxPrice" placeholder="例如：50" min="0" step="0.1">
+                                        <input type="number" id="alertMaxPrice" placeholder="例如：50">
                                     </div>
                                     <div class="form-group">
                                         <label>價格下限（元/公斤）：</label>
-                                        <input type="number" id="alertMinPrice" placeholder="例如：10" min="0" step="0.1">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>通知方式：</label>
-                                        <div class="notification-options">
-                                            <label><input type="checkbox" id="alertBrowser" checked> 瀏覽器通知</label>
-                                            <label><input type="checkbox" id="alertPush"> 推播通知</label>
-                                            <label><input type="checkbox" id="alertEmail"> 電子郵件</label>
-                                        </div>
+                                        <input type="number" id="alertMinPrice" placeholder="例如：10">
                                     </div>
                                     <button id="addAlertBtn" class="add-alert-btn">新增預警</button>
                                 </div>
@@ -1247,7 +1231,7 @@
                                     <!-- 預警項目將由 JavaScript 動態產生 -->
                                 </div>
                             </div>
-
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1260,16 +1244,8 @@
                         <!-- 收藏夾搜尋和新增 -->
                         <div class="favorites-controls">
                             <div class="favorites-search">
-                                <input type="text" id="favoritesSearchInput" placeholder="🔍 搜尋作物加入收藏..." class="favorites-search-input" oninput="searchCropsForFavorites()">
-                                <div id="favoriteSearchResults" class="search-results-dropdown" style="display: none;">
-                                    <div class="search-results-header">
-                                        <span>搜尋結果</span>
-                                        <button class="close-search-results" onclick="closeSearchResults()">×</button>
-                                    </div>
-                                    <div class="search-results-list" id="searchResultsList">
-                                        <!-- 搜尋結果將由 JavaScript 動態產生 -->
-                                    </div>
-                                </div>
+                                <input type="text" id="favoritesSearchInput" placeholder="🔍 搜尋收藏項目或作物..." class="favorites-search-input" oninput="searchCropsForFavorites()">
+                                <div id="favoriteSearchResults" class="search-results" style="display: none;"></div>
                             </div>
                             <div class="favorites-add">
                                 <button id="addToFavoritesBtn" class="add-favorites-btn">➕ 新增收藏</button>
