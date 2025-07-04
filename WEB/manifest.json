@@ -13,13 +13,8 @@
         "sizes": "192x192",
         "type": "image/png",
         "purpose": "any maskable"
-      },
-      {
-        "src": "/WEB/image/png/icon2-192.png",
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any maskable"
       }
+
     ],
     "categories": ["business", "productivity", "utilities"],
     "lang": "zh-TW",
