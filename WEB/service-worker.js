@@ -8,8 +8,7 @@ const ASSETS_TO_CACHE = [
     '/Better-vegetable-catcher/WEB/notification.js',
     '/Better-vegetable-catcher/WEB/manifest.json',
     '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
-    '/Better-vegetable-catcher/WEB/image/png/icon2-192.png',
-    '/Better-vegetable-catcher/WEB/image/png/icon-512.png',
+    '/Better-vegetable-catcher/WEB/image/png/icon-192-glass.png',
     '/Better-vegetable-catcher/WEB/image/png/favicon.ico'
 ];
 
