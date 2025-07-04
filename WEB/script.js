@@ -1,7 +1,7 @@
 import { fetchApi } from './api-config.js';
 console.log('script.js loaded!');
 // 版本資訊
-const VERSION = 'v2.4.web.2';
+const VERSION = 'v2.5.web.icon.change';
 console.log(`當前版本：${VERSION}`);
 const VERSION_CHECK_URL = 'https://api.github.com/repos/backup0821/Better-vegetable-catcher/releases/latest';
 const MAINTENANCE_CHECK_URL = 'https://backup0821.github.io/API/Better-vegetable-catcher/notify.json';
