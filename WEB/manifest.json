@@ -4,7 +4,7 @@
     "description": "快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策",
     "start_url": "./index.html",
     "display": "standalone",
-    "background_color": "#ffffff",
+    "background_color": "#000000",
     "theme_color": "#000000",
     "orientation": "portrait",
     "icons": [
