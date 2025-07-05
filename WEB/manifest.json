@@ -12,13 +12,13 @@
         "src": "/WEB/image/png/icon-192.png",
         "sizes": "192x192",
         "type": "image/png",
-        "purpose": "any maskable"
+        "purpose": "maskable"
       },
       {
         "src": "/WEB/image/png/icon-512.png",
         "sizes": "512x512",
         "type": "image/png",
-        "purpose": "any maskable"
+        "purpose": "maskable"
       }
     ],
     "categories": ["business", "productivity", "utilities"],
