@@ -393,6 +393,9 @@ function showNotification(title, message) {
     }
 }
 
+// 將函數暴露到全域作用域，以便其他模組可以使用
+window.showNotification = showNotification;
+
 // 更新作物列表
 function updateCropList() {
     const cropSelect = document.getElementById('cropSelect');
@@ -1297,6 +1300,9 @@ async function requestNotificationPermission() {
     }
 }
 
+// 將函數暴露到全域作用域，以便 HTML onclick 事件可以使用
+window.requestNotificationPermission = requestNotificationPermission;
+
 // 顯示權限提示
 function showPermissionPrompt() {
     // 檢查是否已經顯示過提示
@@ -1381,6 +1387,9 @@ function removePermissionPrompt() {
     // 顯示確認訊息
     showNotification('已關閉提示', '通知權限提示已關閉，24小時內不會再次顯示。您可以隨時在設定中重新啟用通知。');
 }
+
+// 將函數暴露到全域作用域，以便 HTML onclick 事件可以使用
+window.removePermissionPrompt = removePermissionPrompt;
 
 // 檢查瀏覽器相容性
 function checkBrowserCompatibility() {
@@ -1496,6 +1505,10 @@ function verifyAndSetDeviceId() {
     alert('裝置識別碼已更新！');
     closeVerificationDialog();
 }
+
+// 將函數暴露到全域作用域，以便 HTML onclick 事件可以使用
+window.closeVerificationDialog = closeVerificationDialog;
+window.verifyAndSetDeviceId = verifyAndSetDeviceId;
 
 // 綁定裝置識別碼按鈕事件
 document.addEventListener('DOMContentLoaded', () => {
@@ -2767,6 +2780,9 @@ async function confirmFetchData() {
     // 繼續抓取資料的流程
     await fetchMoreData();
 }
+
+// 將函數暴露到全域作用域，以便 HTML onclick 事件可以使用
+window.confirmFetchData = confirmFetchData;
 
 // 更新資料庫
 async function updateDatabase(newData) {
