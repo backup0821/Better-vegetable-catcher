@@ -6,8 +6,7 @@ const API_CONFIG = {
         url: 'https://bvc-api.deno.dev/proxy/moa',  // 主資料 API
         method: 'GET',
         headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'Accept': 'application/json'
         },
         // 資料格式處理函數
         processData: (data) => {
@@ -38,8 +37,7 @@ const API_CONFIG = {
         url: 'https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx',  // 主資料 API
         method: 'GET',
         headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'Accept': 'application/json'
         }
     },
 
