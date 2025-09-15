@@ -226,7 +226,13 @@ async function fetchData(retryCount = 3) {
 
         // 立即嘗試獲取新資料
         console.log('開始獲取新資料...');
-        const data = await fetchApi('MOA_API');
+        let data;
+        try {
+            data = await fetchApi('DATA_API');
+        } catch (proxyErr) {
+            console.warn('代理 API 失敗，回退至 MOA_API:', proxyErr?.message || proxyErr);
+            data = await fetchApi('MOA_API');
+        }
         
         // 儲存到快取
         localStorage.setItem('crop_data', JSON.stringify(data));
@@ -5509,10 +5515,13 @@ function showCORSSettings() {
 async function testApiConnection(apiUrl) {
     const options = {
         method: 'GET',
+        // 僅使用 CORS safelisted headers，避免觸發預檢請求
         headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-        }
+            'Accept': 'application/json'
+        },
+        cache: 'no-cache',
+        mode: 'cors',
+        credentials: 'omit'
     };
 
     const response = await fetch(apiUrl, options);
