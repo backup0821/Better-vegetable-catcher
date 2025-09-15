@@ -7,8 +7,20 @@
     <meta http-equiv="Access-Control-Allow-Methods" content="GET, POST, OPTIONS">
     <meta http-equiv="Access-Control-Allow-Headers" content="Content-Type, Authorization">
     <title>農產品交易資料分析系統 v2.5.web.icon.change</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="preload" href="assets/styles.min.css" as="style">
+    <link rel="preload" href="assets/style.min.css" as="style">
+    <link rel="stylesheet" href="assets/styles.min.css">
+    <link rel="stylesheet" href="assets/style.min.css">
+    <link rel="preconnect" href="https://cdn.plot.ly" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.plot.ly">
+    <link rel="preconnect" href="https://cdn.webpushr.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.webpushr.com">
+    <link rel="preconnect" href="https://data.moa.gov.tw" crossorigin>
+    <link rel="dns-prefetch" href="https://data.moa.gov.tw">
+    <link rel="preconnect" href="https://backup0821.github.io" crossorigin>
+    <link rel="dns-prefetch" href="https://backup0821.github.io">
+    <link rel="preconnect" href="https://www.youtube.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.youtube.com">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
@@ -16,19 +28,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="農產分析">
-    <link rel="apple-touch-icon" href="/Better-vegetable-catcher/image/png/icon-192.png">
-    <link rel="icon" type="image/png" href="/Better-vegetable-catcher/image/png/icon-192.png">
-    <link rel="icon" type="image/x-icon" href="/Better-vegetable-catcher/image/png/favicon.ico">
+    <link rel="apple-touch-icon" href="image/png/icon-192.png">
+    <link rel="icon" type="image/png" href="image/png/icon-192.png">
+    <link rel="icon" type="image/x-icon" href="image/png/favicon.ico">
     <meta name="mobile-web-app-capable" content="yes">
     <!-- 快取控制標籤 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta http-equiv="Last-Modified" content="0">
-    <script type="module" src="api-config.js"></script>
-    <script type="module" src="script.js"></script>
-    <script src="notification.js"></script>
-    <script src="notification-checker.js"></script>
+    <link rel="modulepreload" href="assets/script.min.js">
+    <script type="module" src="assets/script.min.js"></script>
+    <script src="assets/notification.min.js" defer></script>
+    <script src="assets/notification-checker.min.js" defer></script>
     <style>
         .notification-modal {
             position: fixed;
@@ -820,12 +832,12 @@
           <div class="icon-options" style="display: flex; justify-content: center; gap: 40px;">
             <label style="cursor:pointer;">
               <input type="radio" name="appIcon" value="icon1" style="margin-right:8px;" checked>
-              <img src="image/png/icon-192.png" alt="icon1" width="64" style="border-radius:16px; border:2px solid #4CAF50;">
+              <img src="image/png/icon-192.png" alt="icon1" width="64" loading="lazy" style="border-radius:16px; border:2px solid #4CAF50;">
               <div>經典扁平</div>
             </label>
             <label style="cursor:pointer;">
               <input type="radio" name="appIcon" value="icon2" style="margin-right:8px;">
-              <img src="image/png/icon2-192.png" alt="icon2" width="64" style="border-radius:16px; border:2px solid #2196F3;">
+              <img src="image/png/icon2-192.png" alt="icon2" width="64" loading="lazy" style="border-radius:16px; border:2px solid #2196F3;">
               <div>立體質感</div>
               <div style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3); background-size: 300% 300%; animation: gradientShift 3s ease infinite; color: white; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 12px; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">New! UI3.0(beta)</div>
             </label>

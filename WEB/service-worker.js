@@ -1,14 +1,17 @@
-const CACHE_NAME = 'vegetable-catcher-v1';
-const ICON_CACHE_NAME = 'icon-cache-v1';
+const CACHE_NAME = 'vegetable-catcher-v2';
+const ICON_CACHE_NAME = 'icon-cache-v2';
 const ASSETS_TO_CACHE = [
     '/Better-vegetable-catcher/WEB/',
     '/Better-vegetable-catcher/WEB/index.html',
-    '/Better-vegetable-catcher/WEB/styles.css',
-    '/Better-vegetable-catcher/WEB/script.js',
-    '/Better-vegetable-catcher/WEB/notification.js',
+    '/Better-vegetable-catcher/WEB/assets/styles.min.css',
+    '/Better-vegetable-catcher/WEB/assets/style.min.css',
+    '/Better-vegetable-catcher/WEB/assets/script.min.js',
+    '/Better-vegetable-catcher/WEB/assets/notification.min.js',
+    '/Better-vegetable-catcher/WEB/assets/notification-checker.min.js',
     '/Better-vegetable-catcher/WEB/manifest.json',
     '/Better-vegetable-catcher/WEB/image/png/icon-192.png',
-    '/Better-vegetable-catcher/WEB/image/png/icon-192-glass.png',
+    '/Better-vegetable-catcher/WEB/image/png/icon2-192.png',
+    '/Better-vegetable-catcher/WEB/image/png/icon-512.png',
     '/Better-vegetable-catcher/WEB/image/png/favicon.ico'
 ];
 
@@ -128,73 +131,38 @@ async function updateIconCache() {
 }
 
 // ETag 處理
-self.addEventListener('fetch', function(event) {
-    // 特殊處理 manifest.json 請求
-    if (event.request.url.includes('manifest.json')) {
+self.addEventListener('fetch', (event) => {
+    const requestUrl = new URL(event.request.url);
+
+    // Use cache-first for same-origin static assets
+    const isStaticAsset = requestUrl.origin === location.origin && (
+        requestUrl.pathname.startsWith('/Better-vegetable-catcher/WEB/assets/') ||
+        requestUrl.pathname.endsWith('.css') ||
+        requestUrl.pathname.endsWith('.js') ||
+        requestUrl.pathname.endsWith('.ico') ||
+        requestUrl.pathname.includes('/image/png/') ||
+        requestUrl.pathname.endsWith('.html')
+    );
+
+    if (isStaticAsset) {
         event.respondWith(
-            fetch(event.request, {
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'If-None-Match': event.request.headers.get('If-None-Match') || ''
-                }
-            }).then(function(response) {
-                if (response.status === 304) {
-                    return caches.match(event.request);
-                }
-                return response;
-            }).catch(function() {
-                return caches.match(event.request);
+            caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(event.request).then((response) => {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+                    return response;
+                }).catch(() => caches.match('/Better-vegetable-catcher/WEB/index.html'));
             })
         );
         return;
     }
-    
-    // 處理圖標請求
-    if (event.request.url.includes('/image/png/')) {
-        event.respondWith(
-            caches.open(ICON_CACHE_NAME).then(function(cache) {
-                return cache.match(event.request).then(function(response) {
-                    if (response) {
-                        return response;
-                    }
-                    return fetch(event.request).then(function(response) {
-                        if (response.status === 200) {
-                            cache.put(event.request, response.clone());
-                        }
-                        return response;
-                    });
-                });
-            })
-        );
-        return;
-    }
-    
+
+    // Network-first for external APIs and other requests
     event.respondWith(
-        fetch(event.request, {
-            headers: {
-                'Cache-Control': 'no-cache',
-                'If-None-Match': event.request.headers.get('If-None-Match') || ''
-            }
-        }).then(function(response) {
-            // 如果是 304 Not Modified，從快取中獲取
-            if (response.status === 304) {
-                return caches.match(event.request);
-            }
-            
-            // 如果有 ETag，保存它
-            const etag = response.headers.get('ETag');
-            if (etag) {
-                const clonedResponse = response.clone();
-                caches.open('etag-cache').then(function(cache) {
-                    cache.put(event.request, clonedResponse);
-                });
-            }
-            
+        fetch(event.request).then((response) => {
             return response;
-        }).catch(function() {
-            // 如果網路請求失敗，嘗試從快取中獲取
-            return caches.match(event.request);
-        })
+        }).catch(() => caches.match(event.request))
     );
 });
 
