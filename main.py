@@ -505,7 +505,7 @@ class FarmDataApp:
     
     def fetch_data(self, max_retries=3):
         """從農產品交易資料平台下載資料，加入重試機制"""
-        url = "https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx"
+        url = "https://bvc-api.deno.dev/proxy/moa"
         last_error = None
         
         for attempt in range(max_retries):
@@ -1801,4 +1801,5 @@ if __name__ == "__main__":
     print("GitHub API URL：", GITHUB_API_URL)
     print("GitHub Releases URL：", GITHUB_RELEASES_URL)
     main() 
+
     
