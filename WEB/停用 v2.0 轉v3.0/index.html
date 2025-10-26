@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta http-equiv="Access-Control-Allow-Methods" content="GET, POST, OPTIONS">
+    <meta http-equiv="Access-Control-Allow-Headers" content="Content-Type, Authorization">
+    <title>農產品交易資料分析系統 v2.5.web.icon.change</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="農產分析">
+    <link rel="apple-touch-icon" href="/Better-vegetable-catcher/image/png/icon-192.png">
+    <link rel="icon" type="image/png" href="/Better-vegetable-catcher/image/png/icon-192.png">
+    <link rel="icon" type="image/x-icon" href="/Better-vegetable-catcher/image/png/favicon.ico">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 快取控制標籤 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="0">
+    <script type="module" src="api-config.js"></script>
+    <script type="module" src="script.js"></script>
+    <script src="notification.js"></script>
+    <script src="notification-checker.js"></script>
+    <style>
+        .notification-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .notification-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .notification-modal-content h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .notification-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .notification-item h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+
+        .notification-item p {
+            margin: 0;
+            color: #666;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .notification-item .remaining-time {
+            color: #4CAF50;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: right;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .close-notification-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .close-notification-btn:hover {
+            background-color: #45a049;
+        }
+
+        .check-update-btn,
+        .tv-version-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .check-update-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .tv-version-btn {
+            background-color: #FF9800;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .version-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* 添加通知測試區域的樣式 */
+        .notification-test-area {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-notification-btn {
+            display: block;
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .test-notification-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .test-notification-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 更新通知樣式 */
+        .update-notification {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .update-content {
+            text-align: center;
+        }
+
+        .update-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .update-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .update-content button {
+            background-color: white;
+            color: #4CAF50;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .update-content button:hover {
+            background-color: #f0f0f0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ETag 狀態檢查樣式更新 */
+        .etag-status-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 1001;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 600px;
+        }
+
+        .etag-status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .etag-status-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f5f5f5;
+            transition: all 0.3s ease;
+        }
+
+        .etag-status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .etag-status-item.latest {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .etag-status-item.outdated {
+            border-left: 4px solid #FF9800;
+        }
+
+        .etag-status-item.error {
+            border-left: 4px solid #F44336;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .status-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .status-title {
+            font-weight: bold;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .status-details {
+            font-size: 14px;
+            color: #666;
+            padding-left: 30px;
+        }
+
+        .status-details p {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+
+        .refresh-status-btn,
+        .close-status-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-status-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .close-status-btn {
+            background-color: #F44336;
+            color: white;
+        }
+
+        .refresh-status-btn:hover,
+        .close-status-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* 遮罩層 */
+        .etag-status-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .etag-status-container {
+                width: 95%;
+                margin: 10px;
+            }
+
+            .status-details {
+                padding-left: 15px;
+            }
+        }
+
+        /* ETag 狀態按鈕樣式 */
+        .etag-status-btn-container {
+            display: none !important;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .etag-status-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .etag-status-btn:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .etag-status-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+
+
+
+
+        /* CORS 設定對話框樣式 */
+        .cors-settings-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+        }
+
+        .cors-settings-dialog .dialog-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .cors-settings-dialog .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .cors-settings-dialog .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cors-settings-dialog .api-select,
+        .cors-settings-dialog .cors-select {
+            margin-bottom: 15px;
+        }
+
+        .cors-settings-dialog select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .cors-settings-dialog .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .cors-settings-dialog .test-btn,
+        .cors-settings-dialog .save-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .cors-settings-dialog .test-btn {
+            background-color: #2196F3;
+        }
+
+        .cors-settings-dialog .save-btn {
+            background-color: #4CAF50;
+        }
+
+        .cors-settings-dialog .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .cors-settings-dialog .test-result.success {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            display: block;
+        }
+
+        .cors-settings-dialog .test-result.error {
+            background-color: #FFEBEE;
+            color: #C62828;
+            display: block;
+        }
+
+        /* 玻璃感 UI 樣式 - 優化版本 */
+        .glass-ui {
+            background: rgba(255, 255, 255, 0.12) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.15) !important;
+        }
+
+        .glass-ui .container {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui header {
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .control-panel {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .display-panel {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .chart-area {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .stats-area {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .stat-card {
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .glass-ui .stat-card:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 3px 12px rgba(31, 38, 135, 0.15) !important;
+        }
+
+        .glass-ui .detail-table-area {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .detail-table {
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .glass-ui .detail-table th,
+        .glass-ui .detail-table td {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .glass-ui .result-area {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui footer {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .footer {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui button {
+            background: rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 0 1px 4px rgba(31, 38, 135, 0.1) !important;
+            color: #2c3e50 !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .glass-ui button:hover {
+            background: rgba(255, 255, 255, 0.3) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.15) !important;
+        }
+
+        .glass-ui select {
+            background: rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 0 1px 4px rgba(31, 38, 135, 0.1) !important;
+            color: #2c3e50 !important;
+            font-weight: 500 !important;
+        }
+
+        .glass-ui input {
+            background: rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 0 1px 4px rgba(31, 38, 135, 0.1) !important;
+            color: #2c3e50 !important;
+            font-weight: 500 !important;
+        }
+
+        .glass-ui .version-info {
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+        }
+
+        .glass-ui .icon-select-section {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.1) !important;
+            border-radius: 15px !important;
+            padding: 20px !important;
+        }
+
+        /* 玻璃感背景漸層 - 更簡化版本 */
+        .glass-ui body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            min-height: 100vh !important;
+        }
+
+        /* 玻璃感文字顏色調整 - 提高對比度 */
+        .glass-ui h1,
+        .glass-ui h2,
+        .glass-ui h3,
+        .glass-ui p,
+        .glass-ui label {
+            color: #1a1a1a !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+            font-weight: 600 !important;
+        }
+
+        /* 玻璃感連結顏色 */
+        .glass-ui a {
+            color: #2c5aa0 !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+            font-weight: 600 !important;
+        }
+
+        .glass-ui a:hover {
+            color: #1e3a8a !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* 簡化的圖示懸停效果 */
+        .glass-ui .icon-option img {
+            transition: transform 0.15s ease !important;
+        }
+
+        .glass-ui .icon-option:hover img {
+            transform: scale(1.03) !important;
+        }
+
+        /* 優化表格可讀性 */
+        .glass-ui .detail-table th {
+            background: rgba(255, 255, 255, 0.25) !important;
+            color: #1a1a1a !important;
+            font-weight: 700 !important;
+        }
+
+        .glass-ui .detail-table td {
+            color: #2c3e50 !important;
+            font-weight: 500 !important;
+        }
+
+        /* 優化統計卡片 */
+        .glass-ui .stat-value {
+            color: #1a1a1a !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+        }
+
+        .glass-ui .stat-label,
+        .glass-ui .stat-unit {
+            color: #2d3748 !important;
+            font-weight: 600 !important;
+        }
+
+        /* 優化搜尋框和選擇器 */
+        .glass-ui .search-box input:focus,
+        .glass-ui .crop-select select:focus,
+        .glass-ui .market-select select:focus {
+            border-color: rgba(255, 255, 255, 0.5) !important;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15) !important;
+        }
+
+        /* 簡化的圖示描述樣式 */
+        .glass-ui .icon-option .icon-description {
+            background: linear-gradient(45deg, #667eea, #764ba2) !important;
+            color: white !important;
+            font-size: 12px !important;
+            font-weight: bold !important;
+            padding: 4px 8px !important;
+            border-radius: 12px !important;
+            margin-top: 4px !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+        }
+    </style>
+    <!-- start webpushr code -->
+    <script>
+        (function(w,d, s, id) {
+            if(typeof(w.webpushr)!=='undefined') return;
+            w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};
+            var js, fjs = d.getElementsByTagName(s)[0];
+            js = d.createElement(s); 
+            js.id = id;
+            js.async=1;
+            js.src = "https://cdn.webpushr.com/app.min.js";
+            fjs.parentNode.appendChild(js);
+        }(window,document, 'script', 'webpushr-jssdk'));
+        webpushr('setup',{
+            'key':'BJRxEWk2LsfD-uq6nHeb9E_UuLc1x6MsWqG34wFESI8EAGj_d2DOJiJvcbndQaOaOt8VHurO5kxCJ7Ip3xmQHr4'
+        });
+    </script>
+    <!-- end webpushr code -->
+</head>
+<body>
+    <div class="container" style="position: relative;">
+
+        <!-- 新增通知介面 -->
+        <div id="notificationModal" class="notification-modal" style="display: none;">
+            <div class="notification-modal-content">
+                <h2>系統通知</h2>
+                <div id="notificationList"></div>
+                <button id="closeNotificationBtn" class="close-notification-btn">我知道了</button>
+            </div>
+        </div>
+
+
+
+        <header>
+            <h1>農產品交易資料分析系統</h1>
+            <p>快速查詢與分析農產品價格趨勢，協助您做出更好的交易決策</p>
+            <div class="version-info">
+                <p class="version">版本：<span id="versionNumber">v2.5.web.icon.change</span></p>
+                <p class="last-update">最後更新：<span id="lastUpdate">載入中...</span></p>
+                <div class="button-group">
+                    <button id="checkUpdateBtn" class="check-update-btn">檢查更新通知</button>
+                    <a href="./maket_TV/index.html" class="tv-version-btn">📺 電視版本</a>
+                    <a href="./monitor/index.html" class="tv-version-btn">監管介面</a>
+                </div>
+                <!-- 新增 Web Pushr 訂閱按鈕 -->
+                <div id="webpushrsubscription-button" data-button-text="訂閱通知" data-subscriber-counttext="已經訂閱了"></div>
+            </div>
+        </header>
+
+        <!-- 應用程式圖示選擇區塊（可放在設定區或 header 下方） -->
+        <div id="iconSelectSection" class="icon-select-section" style="margin: 20px 0; text-align: center;">
+          <h3>選擇應用程式圖示</h3>
+          <div class="icon-options" style="display: flex; justify-content: center; gap: 40px;">
+            <label style="cursor:pointer;">
+              <input type="radio" name="appIcon" value="icon1" style="margin-right:8px;" checked>
+              <img src="image/png/icon-192.png" alt="icon1" width="64" style="border-radius:16px; border:2px solid #4CAF50;">
+              <div>經典扁平</div>
+            </label>
+            <label style="cursor:pointer;">
+              <input type="radio" name="appIcon" value="icon2" style="margin-right:8px;">
+              <img src="image/png/icon2-192.png" alt="icon2" width="64" style="border-radius:16px; border:2px solid #2196F3;">
+              <div>立體質感</div>
+              <div style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3); background-size: 300% 300%; animation: gradientShift 3s ease infinite; color: white; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 12px; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">New! UI3.0(beta)</div>
+            </label>
+          </div>
+          <!-- 新增預覽和重設按鈕 -->
+          <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <button id="previewIconBtn" class="test-notification-btn" style="min-width: 120px; padding: 10px 20px; font-size: 14px;">預覽圖示</button>
+            <button id="resetIconBtn" class="test-notification-btn" style="background-color: #FF9800; min-width: 120px; padding: 10px 20px; font-size: 14px;">重設為預設</button>
+            <button id="reinstallBtn" class="test-notification-btn" style="background-color: #2196F3; min-width: 120px; padding: 10px 20px; font-size: 14px;">重新安裝應用</button>
+          </div>
+        </div>
+
+        <main>
+            <div class="control-panel">
+                    <h2>作物選擇</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="🔍 搜尋作物...">
+                    </div>
+                    <div class="crop-select">
+                        <select id="cropSelect">
+                            <option value="">請選擇作物</option>
+                        </select>
+                    </div>
+                    <div class="market-select">
+                        <select id="marketSelect" multiple size="6">
+                            <option value="all" selected>全部市場</option>
+                            <optgroup label="北部地區">
+                                <option value="台北一">台北第一果菜批發市場</option>
+                                <option value="台北二">台北第二果菜批發市場</option>
+                                <option value="新北">新北市果菜批發市場</option>
+                                <option value="桃園">桃園果菜批發市場</option>
+                                <option value="新竹">新竹果菜批發市場</option>
+                            </optgroup>
+                            <optgroup label="中部地區">
+                                <option value="台中">台中果菜批發市場</option>
+                                <option value="彰化">彰化果菜批發市場</option>
+                                <option value="南投">南投果菜批發市場</option>
+                                <option value="雲林">雲林果菜批發市場</option>
+                            </optgroup>
+                            <optgroup label="南部地區">
+                                <option value="嘉義">嘉義果菜批發市場</option>
+                                <option value="台南">台南果菜批發市場</option>
+                                <option value="高雄">高雄果菜批發市場</option>
+                                <option value="屏東">屏東果菜批發市場</option>
+                            </optgroup>
+                        </select>
+                        <div class="market-select-hint">按住 Ctrl 鍵（Mac 用戶按住 Command 鍵）可進行多選</div>
+                    </div>
+
+                <!-- 載入動畫區塊 -->
+                <div id="loadingSpinner" class="loading-spinner" style="display:none;">
+                  <div class="spinner"></div>
+                  <div class="loading-text">資料載入中...</div>
+                </div>
+
+                <div class="analysis-section">
+                    <h2>分析功能</h2>
+                    <div class="analysis-buttons">
+                        <button id="showPriceTrend">📈 價格趨勢</button>
+                        <button id="showVolumeDist">📊 交易量分布</button>
+                        <button id="showPriceDist">📉 價格分布</button>
+                        <button id="showSeasonal">📅 季節性分析</button>
+                        <button id="showPricePrediction">🔮 價格預測</button>
+                        <button id="fetchMoreData" class="dev-only" style="display: none;">📥 抓取更多資料</button>
+                    </div>
+                </div>
+
+                <div class="export-section">
+                    <h2>資料匯出</h2>
+                    <div class="export-buttons">
+                        <button id="exportExcel">📥 匯出 Excel</button>
+                        <button id="exportCSV">📥 匯出 CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="display-panel">
+                <div id="chartArea" class="chart-area"></div>
+                <!-- 新增：往下滑指引 -->
+                <div id="scrollHint" class="scroll-hint">⬇️ 請往下滑查看更多資料 ⬇️</div>
+                <!-- 新增：基本統計資訊卡片區塊 -->
+                <div id="statsArea" class="stats-area">
+                    <h3>基本統計資訊</h3>
+                    <div class="stats-cards">
+                        <div class="stat-card" id="avgPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📊</div>
+                            <div class="stat-label">平均價格</div>
+                            <div class="stat-value" id="avgPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="minPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📉</div>
+                            <div class="stat-label">最低價格</div>
+                            <div class="stat-value" id="minPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="maxPriceCard">
+                            <div class="stat-icon" style="font-size:2em;">📈</div>
+                            <div class="stat-label">最高價格</div>
+                            <div class="stat-value" id="maxPrice">--</div>
+                            <div class="stat-unit">元/公斤</div>
+                        </div>
+                        <div class="stat-card" id="totalVolumeCard">
+                            <div class="stat-icon" style="font-size:2em;">⚖️</div>
+                            <div class="stat-label">總交易量</div>
+                            <div class="stat-value" id="totalVolume">--</div>
+                            <div class="stat-unit">公斤</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="detailTableArea" class="detail-table-area">
+                    <h3>詳細價格資料</h3>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>市場</th>
+                                <th>價格</th>
+                                <th>交易量</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody">
+                            <!-- 資料由 JS 動態產生 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="resultArea" class="result-area">
+                    <p>請選擇作物以查看分析結果</p>
+                </div>
+            </div>
+        </main>
+
+        <div id="notificationArea"></div>
+        
+        <!-- 休市日曆按鈕 -->
+        <button id="checkRestButton" style="position: absolute; bottom: 80px; right: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000;">休市日曆</button>
+        
+        <!-- 休市日曆容器 -->
+        <div id="calendarContainer" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 1001; max-width: 90%; max-height: 90vh; overflow-y: auto;">
+        </div>
+        
+        <!-- 遮罩層 -->
+        <div id="calendarOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;"></div>
+
+        <footer>
+            <p>資料來源：行政院農業委員會農產品交易行情站</p>
+            <p>資料更新時間：<span id="dataUpdateTime">載入中...</span></p>
+            <p><a href="license.html" target="_blank">授權與開源說明</a></p>
+            <p>
+                <a href="https://github.com/backup0821/Better-vegetable-catcher">農產品分析</a>© 2025 by 
+                <a href="https://creativecommons.org">Yo-Code LKJH Maker</a>已獲得
+                <a href="https://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International 許可</a>
+                <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+                <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+                <img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+            </p>
+        </footer>
+
+        <div class="footer">
+            <p>© 2024 果菜市場總整理</p>
+            <div class="device-id-buttons">
+                <button id="deviceIdBtn" class="device-id-btn">裝置識別碼</button>
+                <button id="resetDeviceIdBtn" class="device-id-btn reset-btn">重設識別碼</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 圖示預覽 Modal -->
+    <div id="iconPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
+      <div style="background:white; border-radius:12px; padding:32px 24px; min-width:300px; max-width:90vw; text-align:center; position:relative;">
+        <button class="close-preview-btn" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:24px; cursor:pointer;">×</button>
+        <h3>圖示預覽</h3>
+        <div style="display:flex; justify-content:center; gap:32px; margin-top:20px;">
+          <div>
+            <div>Favicon</div>
+            <div class="preview-favicon" style="margin:8px 0;"></div>
+          </div>
+          <div>
+            <div>桌面</div>
+            <div class="preview-desktop" style="margin:8px 0;"></div>
+          </div>
+          <div>
+            <div>行動裝置</div>
+            <div class="preview-mobile" style="margin:8px 0;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker 已註冊：', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker 註冊失敗：', error);
+                    });
+            });
+        }
+
+        // 處理安裝提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPromotion();
+        });
+
+        function showInstallPromotion() {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return;
+            }
+            
+            const installButton = document.createElement('button');
+            installButton.textContent = '安裝應用程式';
+            installButton.style.cssText = `
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 1000;
+            `;
+            
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`使用者選擇：${outcome}`);
+                    deferredPrompt = null;
+                }
+            });
+            
+            document.body.appendChild(installButton);
+        }
+    </script>
+    <!-- 工作人員退出按鈕 -->
+    <div class="staff-logout-section">
+        <button class="staff-logout-button">
+            <span class="icon">🚪</span>
+            工作人員退出
+        </button>
+    </div>
+
+    <!-- 退出確認對話框 -->
+    <div class="staff-logout-dialog">
+        <h3>確認退出</h3>
+        <p>您確定要以工作人員身份退出系統嗎？</p>
+        <div class="buttons">
+            <button class="confirm-btn">確認退出</button>
+            <button class="cancel-btn">取消</button>
+        </div>
+    </div>
+
+    <script>
+    // --- App Icon 選擇功能完善 ---
+    const iconMap = {
+      icon1: {
+        favicon: 'image/png/icon-192.png',
+        manifest: 'manifest.json', // 預設
+        apple: 'image/png/icon-192.png',
+        label: '經典扁平',
+        desktop: 'image/png/icon-192.png',
+        mobile: 'image/png/icon-192.png',
+      },
+      icon2: {
+        favicon: 'image/png/icon2-192.png',
+        manifest: 'manifest.json', // 若有不同manifest可換
+        apple: 'image/png/icon2-192.png',
+        label: '立體質感',
+        desktop: 'image/png/icon2-192.png',
+        mobile: 'image/png/icon2-192.png',
+      },
+      icon3: {
+        favicon: 'image/png/icon-512.png',
+        manifest: 'manifest.json',
+        apple: 'image/png/icon-512.png',
+        label: '高清版本',
+        desktop: 'image/png/icon-512.png',
+        mobile: 'image/png/icon-512.png',
+      }
+    };
+
+    const ICON_KEY = 'selectedAppIcon';
+
+    // 動態更新 manifest.json
+    async function updateManifest(iconKey) {
+      const icon = iconMap[iconKey] || iconMap.icon1;
+      
+      try {
+        // 讀取原始 manifest
+        const response = await fetch('manifest.json');
+        const manifest = await response.json();
+        
+        // 更新圖標路徑
+        manifest.icons = [
+          {
+            "src": icon.desktop,
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+          },
+          {
+            "src": icon.desktop,
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+          }
+        ];
+        
+        // 創建新的 manifest blob
+        const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], {
+          type: 'application/json'
+        });
+        
+        // 更新 manifest link
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        if (manifestLink) {
+          manifestLink.href = URL.createObjectURL(manifestBlob);
+        }
+        
+        console.log('✅ Manifest 已更新為:', iconKey);
+      } catch (error) {
+        console.error('❌ 更新 manifest 失敗:', error);
+      }
+    }
+
+    // 強制更新 PWA
+    async function forcePWAUpdate() {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            // 強制更新 Service Worker
+            await registration.update();
+            
+            // 清除快取
+            if ('caches' in window) {
+              const cacheNames = await caches.keys();
+              await Promise.all(
+                cacheNames.map(cacheName => caches.delete(cacheName))
+              );
+            }
+            
+            console.log('✅ PWA 已強制更新');
+            
+            // 顯示更新提示
+            showUpdateNotification();
+          }
+        } catch (error) {
+          console.error('❌ PWA 更新失敗:', error);
+        }
+      }
+    }
+
+    // 顯示更新提示
+    function showUpdateNotification() {
+      const notification = document.createElement('div');
+      notification.className = 'update-notification';
+      notification.innerHTML = `
+        <div class="update-content">
+          <h3>圖標已更新</h3>
+          <p>桌面圖標可能需要重新安裝才能顯示新圖標</p>
+          <p>請重新安裝應用程式以套用新圖標</p>
+          <button onclick="this.parentElement.parentElement.remove()">知道了</button>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // 5秒後自動移除
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 5000);
+    }
+
+    // 顯示重新安裝提示
+    function showReinstallNotification() {
+      const notification = document.createElement('div');
+      notification.className = 'update-notification';
+      notification.style.backgroundColor = '#2196F3';
+      notification.innerHTML = `
+        <div class="update-content">
+          <h3>正在重新安裝應用程式</h3>
+          <p>正在清除快取並重新載入...</p>
+          <p>請稍候，頁面將自動重新載入</p>
+          <div style="margin-top: 10px;">
+            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px;">
+              <div style="width: 0%; height: 100%; background: white; border-radius: 2px; animation: progress 2s linear forwards;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // 添加進度條動畫樣式
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes progress {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function setFavicon(url) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = url;
+    }
+
+    function setAppleIcon(url) {
+      let link = document.querySelector("link[rel='apple-touch-icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'apple-touch-icon';
+        document.head.appendChild(link);
+      }
+      link.href = url;
+    }
+
+    function setManifest(url) {
+      let link = document.querySelector("link[rel='manifest']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'manifest';
+        document.head.appendChild(link);
+      }
+      link.href = url;
+    }
+
+    async function applyIcon(iconKey) {
+      const icon = iconMap[iconKey] || iconMap.icon1;
+      setFavicon(icon.favicon);
+      setAppleIcon(icon.apple);
+      
+      // 動態更新 manifest
+      await updateManifest(iconKey);
+      
+      // 玻璃感 UI 切換
+      const body = document.body;
+      if (iconKey === 'icon2') {
+        // 立體質感圖示 - 啟用玻璃感 UI
+        body.classList.add('glass-ui');
+      } else {
+        // 其他圖示 - 移除玻璃感 UI
+        body.classList.remove('glass-ui');
+      }
+      
+      // 預覽區同步
+      updatePreview(iconKey);
+      
+      // 通知 Service Worker 更新圖標
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration && registration.active) {
+            registration.active.postMessage({
+              type: 'UPDATE_ICON',
+              iconKey: iconKey
+            });
+          }
+        } catch (error) {
+          console.error('通知 Service Worker 失敗:', error);
+        }
+      }
+      
+      // 強制更新 PWA
+      await forcePWAUpdate();
+    }
+
+    function updatePreview(iconKey) {
+      const icon = iconMap[iconKey] || iconMap.icon1;
+      // 預覽區
+      const faviconPreview = document.querySelector('.preview-favicon');
+      const desktopPreview = document.querySelector('.preview-desktop');
+      const mobilePreview = document.querySelector('.preview-mobile');
+      
+      if (faviconPreview) {
+        faviconPreview.innerHTML = `<img src='${icon.favicon}' width='32' height='32' style='border-radius:6px;'>`;
+      }
+      if (desktopPreview) {
+        desktopPreview.innerHTML = `<img src='${icon.desktop}' width='48' height='48' style='border-radius:10px;'>`;
+      }
+      if (mobilePreview) {
+        mobilePreview.innerHTML = `<img src='${icon.mobile}' width='48' height='48' style='border-radius:10px;'>`;
+      }
+    }
+
+    function saveIconChoice(iconKey) {
+      localStorage.setItem(ICON_KEY, iconKey);
+    }
+
+    function loadIconChoice() {
+      return localStorage.getItem(ICON_KEY) || 'icon1';
+    }
+
+    // 初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      // 載入已儲存的選擇
+      const savedIcon = loadIconChoice();
+      
+      // 設定 radio 選中狀態
+      const radioButton = document.querySelector(`input[name='appIcon'][value='${savedIcon}']`);
+      if (radioButton) {
+        radioButton.checked = true;
+      }
+      
+      // 應用圖示
+      applyIcon(savedIcon);
+
+      // radio 綁定
+      document.querySelectorAll('input[name="appIcon"]').forEach(radio => {
+        radio.addEventListener('change', async (e) => {
+          const iconKey = e.target.value;
+          await applyIcon(iconKey);
+          saveIconChoice(iconKey);
+        });
+      });
+
+      // 重設按鈕
+      const resetBtn = document.getElementById('resetIconBtn');
+      if (resetBtn) {
+        resetBtn.onclick = async () => {
+          document.querySelector(`input[name='appIcon'][value='icon1']`).checked = true;
+          await applyIcon('icon1');
+          saveIconChoice('icon1');
+        };
+      }
+
+      // 重新安裝按鈕
+      const reinstallBtn = document.getElementById('reinstallBtn');
+      if (reinstallBtn) {
+        reinstallBtn.onclick = async () => {
+          try {
+            // 清除所有快取
+            if ('caches' in window) {
+              const cacheNames = await caches.keys();
+              await Promise.all(
+                cacheNames.map(cacheName => caches.delete(cacheName))
+              );
+            }
+            
+            // 強制更新 Service Worker
+            if ('serviceWorker' in navigator) {
+              const registration = await navigator.serviceWorker.getRegistration();
+              if (registration) {
+                await registration.unregister();
+                console.log('✅ Service Worker 已卸載');
+              }
+            }
+            
+            // 顯示重新安裝提示
+            showReinstallNotification();
+            
+            // 延遲重新載入頁面
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+            
+          } catch (error) {
+            console.error('❌ 重新安裝失敗:', error);
+          }
+        };
+      }
+
+      // 預覽按鈕
+      const previewBtn = document.getElementById('previewIconBtn');
+      if (previewBtn) {
+        previewBtn.onclick = () => {
+          const iconKey = document.querySelector('input[name="appIcon"]:checked').value;
+          updatePreview(iconKey);
+          const modal = document.getElementById('iconPreviewModal');
+          if (modal) {
+            modal.style.display = 'flex';
+          }
+        };
+      }
+      
+      // 關閉預覽
+      const closePreviewBtn = document.querySelector('.close-preview-btn');
+      if (closePreviewBtn) {
+        closePreviewBtn.onclick = () => {
+          const modal = document.getElementById('iconPreviewModal');
+          if (modal) {
+            modal.style.display = 'none';
+          }
+        };
+      }
+
+      // 點擊modal外部關閉
+      const modal = document.getElementById('iconPreviewModal');
+      if (modal) {
+        modal.addEventListener('click', e => {
+          if (e.target === e.currentTarget) {
+            e.currentTarget.style.display = 'none';
+          }
+        });
+      }
+    });
+    </script>
+</body>
+</html> 
