@@ -129,6 +129,14 @@ async function updateIconCache() {
 
 // ETag 處理
 self.addEventListener('fetch', function(event) {
+    const requestUrl = new URL(event.request.url);
+    const isSameOrigin = requestUrl.origin === self.location.origin;
+
+    // 對跨來源請求不修改任何標頭，避免觸發 CORS Preflight 造成失敗
+    if (!isSameOrigin) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
     // 特殊處理 manifest.json 請求
     if (event.request.url.includes('manifest.json')) {
         event.respondWith(
